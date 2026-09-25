@@ -11,6 +11,9 @@
 
   let staticLayer = null;
   let scale = 3, dpr = 1, camX = 0, camY = 0;
+  // Zoom: null = automático según la pantalla; si no, pixeles de pantalla por pixel del mundo.
+  // `fit` muestra el piso completo.
+  let zoom = null, fit = false;
   const keys = new Set();
 
   // ————————————————————————————————— Personajes
@@ -151,7 +154,7 @@
       const idle = npcs.filter((n) => !n.bubble);
       if (idle.length) {
         const n = idle[Math.floor(Math.random() * idle.length)];
-        n.bubble = { text: n.statuses[Math.floor(Math.random() * n.statuses.length)], until: t + 4 };
+        n.bubble = { text: status(n, Math.floor(Math.random() * n.statuses.es.length)), until: t + 4 };
       }
     }
 
@@ -173,6 +176,11 @@
       showToast(room);
       $('#hud-room').textContent = room.name;
     }
+  }
+
+  // Un estado en los dos idiomas, para que la burbuja cambie si cambias de idioma.
+  function status(n, i) {
+    return { es: n.statuses.es[i], en: n.statuses.en[i] };
   }
 
   function animate(c, moving, dt) {
@@ -213,9 +221,49 @@
     const w = canvas.clientWidth, h = canvas.clientHeight;
     canvas.width = Math.round(w * dpr);
     canvas.height = Math.round(h * dpr);
-    const tilesWide = w < 700 ? 11 : 24;
-    scale = Math.max(2, Math.floor(Math.min(canvas.width / (tilesWide * T), canvas.height / (11 * T))));
+    applyZoom();
   }
+
+  function autoScale() {
+    const tilesWide = canvas.clientWidth < 700 ? 11 : 24;
+    return Math.max(2, Math.floor(Math.min(canvas.width / (tilesWide * T), canvas.height / (11 * T))));
+  }
+  function fitScale() {
+    return Math.min(canvas.width / (world.W * T), canvas.height / (world.H * T));
+  }
+  const maxScale = () => Math.round(8 * dpr);
+
+  function applyZoom() {
+    if (fit) scale = fitScale();
+    else scale = Math.min(maxScale(), Math.max(Math.ceil(fitScale()), zoom === null ? autoScale() : zoom));
+    const b = $('#zoom-fit');
+    b.setAttribute('aria-pressed', String(fit));
+    $('#zoom-in').disabled = !fit && scale >= maxScale();
+    $('#zoom-out').disabled = fit;
+  }
+
+  // Pasos enteros para que el pixel art no se deforme. Alejar más allá del mínimo = ver todo.
+  function zoomBy(dir) {
+    const step = Math.max(1, Math.round(dpr));
+    if (fit) {
+      if (dir < 0) return;
+      fit = false;
+      zoom = Math.ceil(fitScale());
+      if (zoom <= fitScale() + 0.01) zoom += step;
+    } else {
+      const next = Math.round(scale) + dir * step;
+      if (next <= fitScale()) fit = true;
+      else zoom = Math.min(maxScale(), next);
+    }
+    applyZoom();
+  }
+  function toggleFit() {
+    fit = !fit;
+    applyZoom();
+  }
+  $('#zoom-in').addEventListener('click', () => zoomBy(1));
+  $('#zoom-out').addEventListener('click', () => zoomBy(-1));
+  $('#zoom-fit').addEventListener('click', toggleFit);
 
   function updateCamera() {
     const vw = canvas.width / scale, vh = canvas.height / scale;
@@ -256,8 +304,11 @@
 
     // Capa de interfaz en pixeles de pantalla.
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    for (const n of npcs) drawNameTag(n);
-    for (const n of npcs) if (n.bubble) drawBubble(n, n.bubble.text);
+    // Muy lejos las etiquetas taparían todo.
+    if (scale / dpr >= 1.6) {
+      for (const n of npcs) drawNameTag(n);
+      for (const n of npcs) if (n.bubble) drawBubble(n, TGL.t(n.bubble.text));
+    }
     if (hoverNpc && hoverNpc !== nearNpc) drawRing(hoverNpc);
     if (nearNpc) drawRing(nearNpc);
     drawMinimap();
@@ -375,18 +426,18 @@
     const room = TGL.rooms.find((r) => r.id === n.room);
     const role = TGL.roles[n.role];
     $('#dlg-name').textContent = n.name;
-    $('#dlg-role').textContent = (n.kind === 'agent' ? 'Agente IA · ' : 'Humano · ') + role.label;
+    $('#dlg-role').textContent = TGL.ui(n.kind === 'agent' ? 'agentIA' : 'human') + ' · ' + TGL.t(role.label);
     $('#dlg-role').style.setProperty('--role', role.color);
     $('#dlg-room').textContent = room.name;
     $('#dlg-tasks').innerHTML = '';
-    for (const task of n.tasks) {
+    for (const task of TGL.t(n.tasks)) {
       const li = document.createElement('li');
       li.textContent = task;
       $('#dlg-tasks').appendChild(li);
     }
-    $('#dlg-now').textContent = n.bubble ? n.bubble.text : n.statuses[0];
+    $('#dlg-now').textContent = TGL.t(n.bubble ? n.bubble.text : status(n, 0));
     drawPortrait(n);
-    const text = n.bio, out = $('#dlg-bio');
+    const text = TGL.t(n.bio), out = $('#dlg-bio');
     out.textContent = '';
     clearInterval(typeTimer);
     let i = 0;
@@ -436,7 +487,7 @@
     const target = dialogOpen() ? null : nearNpc ? nearNpc.name : nearKiosk ? 'directorio' : null;
     if (target) {
       hint.hidden = false;
-      hint.querySelector('span').textContent = nearNpc ? 'Hablar con ' + target : 'Ver directorio';
+      hint.querySelector('span').textContent = nearNpc ? TGL.ui('talkTo') + ' ' + target : TGL.ui('seeDirectory');
     } else hint.hidden = true;
   }
   hint.addEventListener('click', interact);
@@ -450,7 +501,7 @@
   function showToast(room) {
     const el = $('#toast');
     el.querySelector('strong').textContent = room.name;
-    el.querySelector('span').textContent = room.blurb;
+    el.querySelector('span').textContent = TGL.t(room.blurb);
     el.style.setProperty('--room', room.color);
     el.hidden = false;
     el.classList.remove('show');
@@ -462,8 +513,19 @@
 
   // ————————————————————————————————— Directorio (también es el contenido indexable)
   const panel = $('#directory');
+  // Carita para el directorio: la cabeza del sprite, recortada.
+  function drawFace(c, n) {
+    const p = c.getContext('2d');
+    p.imageSmoothingEnabled = false;
+    p.save();
+    p.scale(c.width / 13, c.height / 13);
+    TGL.drawCharacter(p, { kind: n.kind, role: n.role, body: n.body, look: n.look, px: 6, py: n.kind === 'agent' ? 25 : 23, dir: 'down', frame: 0 }, 0.2);
+    p.restore();
+  }
+
   function buildDirectory() {
     const list = $('#dir-rooms');
+    list.innerHTML = '';
     for (const room of TGL.rooms) {
       const members = npcs.filter((n) => n.room === room.id);
       if (!members.length) continue;
@@ -474,7 +536,7 @@
       h.textContent = room.name;
       sec.appendChild(h);
       const p = document.createElement('p');
-      p.textContent = room.blurb;
+      p.textContent = TGL.t(room.blurb);
       if (room.link) {
         const a = document.createElement('a');
         a.href = room.link;
@@ -490,9 +552,11 @@
         const b = document.createElement('button');
         b.type = 'button';
         b.style.setProperty('--role', TGL.roles[n.role].color);
-        b.innerHTML = '<i></i><strong></strong><small></small><em>Ir →</em>';
+        b.innerHTML = '<canvas width="48" height="48" aria-hidden="true"></canvas><strong></strong><small></small><em></em>';
+        drawFace(b.querySelector('canvas'), n);
+        b.querySelector('em').textContent = TGL.ui('go');
         b.querySelector('strong').textContent = n.name;
-        b.querySelector('small').textContent = (n.kind === 'agent' ? 'Agente · ' : '') + TGL.roles[n.role].label;
+        b.querySelector('small').textContent = (n.kind === 'agent' ? TGL.ui('agent') + ' · ' : '') + TGL.t(TGL.roles[n.role].label);
         b.addEventListener('click', () => {
           toggleDirectory(false);
           closeDialog();
@@ -525,6 +589,9 @@
     const inPanel = !panel.hidden && panel.contains(document.activeElement);
     if (k === 'Escape') { closeDialog(); toggleDirectory(false); return; }
     if (inPanel) return;
+    if (k === '+' || k === '=') return zoomBy(1);
+    if (k === '-' || k === '_') return zoomBy(-1);
+    if (k === '0') return toggleFit();
     if (MOVE.has(k)) {
       e.preventDefault();
       keys.add(k);
@@ -553,6 +620,7 @@
   });
   canvas.addEventListener('pointerleave', () => { hoverNpc = null; });
   canvas.addEventListener('click', (e) => {
+    if (performance.now() - pinchEnded < 400) return;
     const [wx, wy] = worldFromEvent(e);
     const n = npcAt(wx, wy);
     if (n) {
@@ -564,6 +632,54 @@
     const kiosk = world.objects.find((o) => o.interact && wx >= o.x && wx < o.x + o.w && wy >= o.y - o.top && wy < o.y + o.h);
     if (kiosk) return walkTo(Math.floor(kiosk.x / T), Math.floor(kiosk.y / T) - 1, () => toggleDirectory(true));
     walkTo(Math.floor(wx / T), Math.floor((wy - 4) / T));
+  });
+
+  // Rueda del mouse / trackpad: un paso de zoom por cada tanto de desplazamiento.
+  let wheelAcc = 0;
+  canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    wheelAcc += e.deltaY;
+    if (Math.abs(wheelAcc) >= 80) {
+      zoomBy(wheelAcc < 0 ? 1 : -1);
+      wheelAcc = 0;
+    }
+  }, { passive: false });
+
+  // Pellizco en pantallas táctiles.
+  const touches = new Map();
+  let pinchBase = 0, pinchEnded = 0;
+  const pinchDist = () => { const [a, b] = [...touches.values()]; return Math.hypot(a.x - b.x, a.y - b.y); };
+  canvas.addEventListener('pointerdown', (e) => {
+    if (e.pointerType !== 'touch') return;
+    touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (touches.size === 2) pinchBase = pinchDist();
+  });
+  canvas.addEventListener('pointermove', (e) => {
+    if (!touches.has(e.pointerId)) return;
+    touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (touches.size !== 2 || !pinchBase) return;
+    const ratio = pinchDist() / pinchBase;
+    if (ratio > 1.25 || ratio < 0.8) {
+      zoomBy(ratio > 1 ? 1 : -1);
+      pinchBase = pinchDist();
+    }
+  });
+  const endTouch = (e) => {
+    if (!touches.delete(e.pointerId)) return;
+    if (pinchBase) pinchEnded = performance.now();
+    if (touches.size < 2) pinchBase = 0;
+  };
+  canvas.addEventListener('pointerup', endTouch);
+  canvas.addEventListener('pointercancel', endTouch);
+
+  // ————————————————————————————————— Idioma
+  document.querySelectorAll('[data-lang]').forEach((b) => b.addEventListener('click', () => TGL.setLang(b.dataset.lang)));
+  window.addEventListener('langchange', () => {
+    staticLayer = world.renderStatic();
+    buildDirectory();
+    if (dialogFor) openDialog(dialogFor);
+    if (currentRoom) showToast(currentRoom);
+    updateHint();
   });
 
   // ————————————————————————————————— Arranque

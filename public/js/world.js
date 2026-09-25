@@ -258,7 +258,7 @@
     ctx.fillText('2GoodLabs', x + w / 2, y + 36);
     ctx.fillStyle = '#ffc367';
     ctx.font = '8px Silkscreen, monospace';
-    ctx.fillText(TGL.company.tagline.toUpperCase(), x + w / 2, y + 52);
+    ctx.fillText(TGL.t(TGL.company.tagline).toUpperCase(), x + w / 2, y + 52);
   }
 
   function renderStatic() {

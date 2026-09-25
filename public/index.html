@@ -5,42 +5,57 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>2GoodLabs — una empresa liderada por IA</title>
   <meta name="description" content="2GoodLabs es una empresa liderada por IA: dos fundadores humanos, Cesar y Ricardo, y un equipo de agentes que construye Zumi y Pickpals. Recorre nuestra oficina.">
-  <meta property="og:title" content="2GoodLabs — una empresa liderada por IA">
-  <meta property="og:description" content="Dos fundadores humanos y un equipo de agentes de IA. Recorre nuestra oficina.">
+  <meta property="og:title" content="2GoodLabs">
+  <meta property="og:description" content="Una empresa liderada por IA · An AI-led company">
   <meta property="og:type" content="website">
   <meta name="theme-color" content="#17140f">
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Silkscreen&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=1">
+  <link rel="stylesheet" href="styles.css?v=2">
 </head>
 <body>
-  <canvas id="office" tabindex="0" aria-label="Oficina de 2GoodLabs en pixel art. Usa las flechas o WASD para caminar, E para hablar. El directorio tiene el mismo contenido en texto."></canvas>
+  <canvas id="office" tabindex="0" data-i18n-attr="aria-label:officeLabel"></canvas>
 
-  <header class="hud panel">
+  <header class="brand panel">
     <h1 class="logo">2GoodLabs</h1>
-    <p class="tagline">Una empresa liderada por IA</p>
-    <dl class="bars">
-      <div class="bar bar-human"><dt>HUM</dt><dd><span id="hud-humans">2</span> fundadores</dd></div>
-      <div class="bar bar-agent"><dt>IA</dt><dd><span id="hud-agents">7</span> agentes activos</dd></div>
-    </dl>
-    <p class="where">📍 <span id="hud-room">Lobby</span></p>
   </header>
 
-  <button id="btn-directory" class="panel btn-dir" type="button" aria-controls="directory" aria-expanded="false">
-    <span aria-hidden="true">☰</span> Directorio
-  </button>
+  <div class="top-right">
+    <div class="lang panel" role="group" data-i18n-attr="aria-label:langLabel">
+      <button type="button" data-lang="es">ES</button>
+      <button type="button" data-lang="en">EN</button>
+    </div>
+    <button id="btn-directory" class="panel btn-dir" type="button" aria-controls="directory" aria-expanded="false">
+      <span aria-hidden="true">☰</span> <span data-i18n="directory">Directorio</span>
+    </button>
+  </div>
 
   <div id="toast" class="toast panel" hidden aria-live="polite"><strong></strong><span></span></div>
 
-  <aside class="controls panel" aria-label="Controles">
-    <p><kbd>WASD</kbd>/<kbd>↑↓←→</kbd> caminar · <kbd>E</kbd> hablar · clic para ir</p>
+  <aside class="status panel" data-i18n-attr="aria-label:controlsLabel">
+    <p class="tagline" data-i18n="tagline">Una empresa liderada por IA</p>
+    <dl class="bars">
+      <div class="bar bar-human"><dt data-i18n="hum">HUM</dt><dd><span id="hud-humans">2</span> <span data-i18n="founders">fundadores</span></dd></div>
+      <div class="bar bar-agent"><dt data-i18n="ai">IA</dt><dd><span id="hud-agents">7</span> <span data-i18n="agentsActive">agentes activos</span></dd></div>
+    </dl>
+    <p class="where">📍 <span id="hud-room">Lobby</span></p>
+    <p class="controls"><kbd>WASD</kbd>/<kbd>↑↓←→</kbd> <span data-i18n="controls">caminar · <kbd>E</kbd> hablar · clic para ir</span></p>
   </aside>
 
-  <div class="minimap panel">
-    <canvas id="minimap" aria-label="Minimapa: clic para caminar a ese punto"></canvas>
-    <span class="minimap-label">MAP</span>
+  <div class="map-dock">
+    <div class="zoom panel" role="group" data-i18n-attr="aria-label:zoomLabel">
+      <button id="zoom-in" type="button" data-i18n-attr="aria-label:zoomIn;title:zoomIn">+</button>
+      <button id="zoom-out" type="button" data-i18n-attr="aria-label:zoomOut;title:zoomOut">−</button>
+      <button id="zoom-fit" type="button" data-i18n-attr="aria-label:zoomFit;title:zoomFit" aria-pressed="false">
+        <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M1 5V1h4M11 1h4v4M15 11v4h-4M5 15H1v-4" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+      </button>
+    </div>
+    <div class="minimap panel">
+      <canvas id="minimap" data-i18n-attr="aria-label:minimapLabel"></canvas>
+      <span class="minimap-label">MAP</span>
+    </div>
   </div>
 
   <button id="hint" class="hint panel" type="button" hidden><kbd>E</kbd> <span></span></button>
@@ -51,21 +66,21 @@
       <header>
         <h2 id="dlg-name"></h2>
         <span id="dlg-role" class="chip"></span>
-        <span class="chip chip-room">Sala: <span id="dlg-room"></span></span>
+        <span class="chip chip-room"><span data-i18n="room">Sala</span>: <span id="dlg-room"></span></span>
       </header>
       <p id="dlg-bio"></p>
       <ul id="dlg-tasks"></ul>
-      <p class="now"><span class="dot"></span> Ahora mismo: <span id="dlg-now"></span></p>
+      <p class="now"><span class="dot"></span> <span data-i18n="now">Ahora mismo</span>: <span id="dlg-now"></span></p>
     </div>
-    <button id="dlg-close" class="close" type="button" aria-label="Cerrar">✕</button>
+    <button id="dlg-close" class="close" type="button" data-i18n-attr="aria-label:close">✕</button>
   </section>
 
-  <aside id="directory" class="directory panel" hidden aria-label="Directorio">
+  <aside id="directory" class="directory panel" hidden data-i18n-attr="aria-label:directory">
     <header>
-      <h2>Directorio</h2>
-      <button id="dir-close" class="close" type="button" aria-label="Cerrar directorio">✕</button>
+      <h2 data-i18n="directory">Directorio</h2>
+      <button id="dir-close" class="close" type="button" data-i18n-attr="aria-label:closeDirectory">✕</button>
     </header>
-    <p class="about">Dos fundadores humanos y un equipo de agentes de IA que diseñan, construyen y lanzan productos. Esta es nuestra oficina: camina, entra a cada sala y habla con quien quieras.</p>
+    <p class="about" data-i18n="about"></p>
     <div id="dir-rooms"></div>
   </aside>
 
@@ -73,13 +88,14 @@
     <div class="noscript">
       <h2>2GoodLabs</h2>
       <p>Una empresa liderada por IA. Fundadores: Cesar y Ricardo. Productos: Zumi y Pickpals, construidos por equipos de agentes de desarrollo, marketing y diseño (y en Pickpals, un agente de datos deportivos).</p>
-      <p>La oficina interactiva necesita JavaScript.</p>
+      <p>An AI-led company. Founders: Cesar and Ricardo. Products: Zumi and Pickpals, built by teams of development, marketing and design agents (plus a sports data agent at Pickpals).</p>
     </div>
   </noscript>
 
-  <script src="js/data.js?v=1"></script>
-  <script src="js/art.js?v=1"></script>
-  <script src="js/world.js?v=1"></script>
-  <script src="js/game.js?v=1"></script>
+  <script src="js/data.js?v=2"></script>
+  <script src="js/i18n.js?v=2"></script>
+  <script src="js/art.js?v=2"></script>
+  <script src="js/world.js?v=2"></script>
+  <script src="js/game.js?v=2"></script>
 </body>
 </html>
