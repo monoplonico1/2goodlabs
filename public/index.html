@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>2GoodLabs — una empresa liderada por IA</title>
+  <meta name="description" content="2GoodLabs es una empresa liderada por IA: dos fundadores humanos, Cesar y Ricardo, y un equipo de agentes que construye Zumi y Pickpals. Recorre nuestra oficina.">
+  <meta property="og:title" content="2GoodLabs — una empresa liderada por IA">
+  <meta property="og:description" content="Dos fundadores humanos y un equipo de agentes de IA. Recorre nuestra oficina.">
+  <meta property="og:type" content="website">
+  <meta name="theme-color" content="#17140f">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Silkscreen&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=1">
+</head>
+<body>
+  <canvas id="office" tabindex="0" aria-label="Oficina de 2GoodLabs en pixel art. Usa las flechas o WASD para caminar, E para hablar. El directorio tiene el mismo contenido en texto."></canvas>
+
+  <header class="hud panel">
+    <h1 class="logo">2GoodLabs</h1>
+    <p class="tagline">Una empresa liderada por IA</p>
+    <dl class="bars">
+      <div class="bar bar-human"><dt>HUM</dt><dd><span id="hud-humans">2</span> fundadores</dd></div>
+      <div class="bar bar-agent"><dt>IA</dt><dd><span id="hud-agents">7</span> agentes activos</dd></div>
+    </dl>
+    <p class="where">📍 <span id="hud-room">Lobby</span></p>
+  </header>
+
+  <button id="btn-directory" class="panel btn-dir" type="button" aria-controls="directory" aria-expanded="false">
+    <span aria-hidden="true">☰</span> Directorio
+  </button>
+
+  <div id="toast" class="toast panel" hidden aria-live="polite"><strong></strong><span></span></div>
+
+  <aside class="controls panel" aria-label="Controles">
+    <p><kbd>WASD</kbd>/<kbd>↑↓←→</kbd> caminar · <kbd>E</kbd> hablar · clic para ir</p>
+  </aside>
+
+  <div class="minimap panel">
+    <canvas id="minimap" aria-label="Minimapa: clic para caminar a ese punto"></canvas>
+    <span class="minimap-label">MAP</span>
+  </div>
+
+  <button id="hint" class="hint panel" type="button" hidden><kbd>E</kbd> <span></span></button>
+
+  <section id="dialog" class="dialog panel" hidden role="dialog" aria-labelledby="dlg-name">
+    <canvas id="dlg-portrait" width="80" height="100" aria-hidden="true"></canvas>
+    <div class="dlg-body">
+      <header>
+        <h2 id="dlg-name"></h2>
+        <span id="dlg-role" class="chip"></span>
+        <span class="chip chip-room">Sala: <span id="dlg-room"></span></span>
+      </header>
+      <p id="dlg-bio"></p>
+      <ul id="dlg-tasks"></ul>
+      <p class="now"><span class="dot"></span> Ahora mismo: <span id="dlg-now"></span></p>
+    </div>
+    <button id="dlg-close" class="close" type="button" aria-label="Cerrar">✕</button>
+  </section>
+
+  <aside id="directory" class="directory panel" hidden aria-label="Directorio">
+    <header>
+      <h2>Directorio</h2>
+      <button id="dir-close" class="close" type="button" aria-label="Cerrar directorio">✕</button>
+    </header>
+    <p class="about">Dos fundadores humanos y un equipo de agentes de IA que diseñan, construyen y lanzan productos. Esta es nuestra oficina: camina, entra a cada sala y habla con quien quieras.</p>
+    <div id="dir-rooms"></div>
+  </aside>
+
+  <noscript>
+    <div class="noscript">
+      <h2>2GoodLabs</h2>
+      <p>Una empresa liderada por IA. Fundadores: Cesar y Ricardo. Productos: Zumi y Pickpals, construidos por equipos de agentes de desarrollo, marketing y diseño (y en Pickpals, un agente de datos deportivos).</p>
+      <p>La oficina interactiva necesita JavaScript.</p>
+    </div>
+  </noscript>
+
+  <script src="js/data.js?v=1"></script>
+  <script src="js/art.js?v=1"></script>
+  <script src="js/world.js?v=1"></script>
+  <script src="js/game.js?v=1"></script>
+</body>
+</html>

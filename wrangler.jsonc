@@ -1,0 +1,9 @@
+{
+  "name": "2goodlabs",
+  "compatibility_date": "2025-08-01",
+  "assets": {
+    // Solo se publica lo que está dentro de public/.
+    "directory": "./public",
+    "html_handling": "auto-trailing-slash"
+  }
+}
