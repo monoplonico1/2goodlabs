@@ -10,9 +10,9 @@ caminando: un piso con tres salas y un lobby.
 | **Pickpals** | Agentes de desarrollo (Kernel), diseño (Lienzo), marketing (Hype) y datos deportivos (Stats) |
 | **Terraza** | Al aire libre, a la derecha de Pickpals y del lobby: mesas con sombrilla, barra y luces |
 
-Cada agente se toma 5 minutos de descanso por hora en la terraza (hora local del
-visitante), en parejas por rol: desarrollo a las :00, diseño a las :15, marketing a
-las :30 y Stats a las :45. Se configura con `breakAt` en `data.js`. Para verlo sin
+Todos se toman 5 minutos de descanso por hora en la terraza (hora local del
+visitante), en parejas: desarrollo a las :00, diseño a las :15, marketing a las :30,
+Stats a las :45 y Cesar y Ricardo a las :50. Se configura con `breakAt` en `data.js`. Para verlo sin
 esperar: `?break=all` o `?break=<id>` (por ejemplo `?break=stats`).
 
 Controles: `WASD`/flechas para caminar, `E` para hablar, clic o tap para ir a un

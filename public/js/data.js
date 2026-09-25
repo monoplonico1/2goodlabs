@@ -89,7 +89,7 @@ TGL.team = [
   // ——— Board ———
   {
     id: 'cesar', name: 'Cesar', kind: 'human', role: 'founder', room: 'board',
-    x: 3.25, row: 4, dir: 'down',
+    x: 3.25, row: 4, dir: 'down', breakAt: 50,
     look: { skin: '#e0ac7e', hair: '#2b1d14', hairStyle: 'short', body: '#2d3e5c', legs: '#1f2533' },
     bio: {
       es: 'Co-fundador de 2GoodLabs. Define la visión, pone las prioridades y decide qué construimos después. Los agentes le reportan a él y a Ricardo.',
@@ -106,7 +106,7 @@ TGL.team = [
   },
   {
     id: 'ricardo', name: 'Ricardo', kind: 'human', role: 'founder', room: 'board',
-    x: 9.25, row: 4, dir: 'down',
+    x: 9.25, row: 4, dir: 'down', breakAt: 50,
     look: { skin: '#d49a6a', hair: '#4a2e1c', hairStyle: 'side', beard: '#3b2416', body: '#8a3b3b', legs: '#262b36' },
     bio: {
       es: 'Co-fundador de 2GoodLabs. Define la visión, pone las prioridades y decide qué construimos después. Los agentes le reportan a él y a Cesar.',
@@ -245,14 +245,20 @@ TGL.team = [
   },
 ];
 
-// Descansos: cada agente se toma 5 minutos por hora en la terraza, a partir del
-// minuto `breakAt` (hora local del visitante). Van en parejas por rol.
+// Descansos: cada quien se toma 5 minutos por hora en la terraza, a partir del
+// minuto `breakAt` (hora local del visitante). Van en parejas: los agentes por rol
+// y los fundadores juntos.
 TGL.breakTalk = {
   leave: { es: '¡Descanso! 5 min en la terraza', en: 'Break! 5 min on the terrace' },
   back: { es: 'De vuelta al trabajo', en: 'Back to work' },
   statuses: {
     es: ['Café en la terraza', 'Tomando aire', 'Descanso de 5 minutos', 'Enfriando los circuitos', 'Charlando con el equipo'],
     en: ['Coffee on the terrace', 'Getting some air', '5-minute break', 'Cooling my circuits', 'Chatting with the team'],
+  },
+  // Los fundadores no tienen circuitos que enfriar.
+  humanStatuses: {
+    es: ['Café en la terraza', 'Tomando aire', 'Pensando en grande', 'Charlando de producto'],
+    en: ['Coffee on the terrace', 'Getting some air', 'Thinking big', 'Talking product'],
   },
 };
 

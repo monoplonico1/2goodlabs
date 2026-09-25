@@ -37,7 +37,7 @@
   for (const n of npcs) if (!n.patrol) world.solid[seatIndex(n)] = 1;
 
   // ————————————————————————————————— Descansos en la terraza
-  // Cada agente descansa BREAK_MIN minutos por hora desde el minuto `breakAt`.
+  // Cada quien descansa BREAK_MIN minutos por hora desde el minuto `breakAt`.
   // Los que comparten minuto se van juntos a la misma mesa.
   // ?break=all (o ?break=<id>) los manda ya mismo, para verlo sin esperar.
   const BREAK_MIN = 5;
@@ -271,7 +271,8 @@
 
   // Un estado en los dos idiomas, para que la burbuja cambie si cambias de idioma.
   function statusesOf(n) {
-    return onBreak(n) ? TGL.breakTalk.statuses : n.statuses;
+    if (!onBreak(n)) return n.statuses;
+    return n.kind === 'human' ? TGL.breakTalk.humanStatuses : TGL.breakTalk.statuses;
   }
   function status(n, i) {
     const list = statusesOf(n);
