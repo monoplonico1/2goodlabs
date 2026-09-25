@@ -289,6 +289,51 @@ kbd {
 }
 .close:hover, .close:focus-visible { border-color: var(--gold); outline: none; }
 
+/* ——— Panel de los bloques "?" ——— */
+.info {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(480px, calc(100vw - 2 * var(--gap)));
+  padding: 18px;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  border-color: var(--room, var(--gold));
+  background: rgba(20, 22, 28, 0.97);
+  z-index: 6;
+}
+.info-q {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  font-family: Silkscreen, monospace;
+  font-size: 30px;
+  color: #fff;
+  text-shadow: 2px 2px 0 #6b3f0e;
+  background: var(--gold);
+  border: 3px solid #8a5a1a;
+  border-radius: 4px;
+  box-shadow: inset 3px 3px 0 #ffe3a8, inset -3px -3px 0 #d48f2c;
+}
+.info-body { flex: 1; min-width: 0; padding-right: 24px; }
+.info h2 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.02em; color: var(--room); }
+#info-text { margin: 8px 0 14px; font-size: 14px; line-height: 1.55; }
+.info-links { display: flex; flex-wrap: wrap; gap: 8px; }
+.info-links a {
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: var(--room);
+  color: #14161b;
+  font-weight: 700;
+  font-size: 14px;
+  text-decoration: none;
+}
+.info-links a:hover, .info-links a:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
 /* ——— Directorio ——— */
 .directory {
   position: fixed;

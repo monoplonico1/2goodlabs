@@ -26,6 +26,13 @@ TGL.rooms = [
       es: 'La sala de los fundadores. Aquí se decide qué se construye.',
       en: 'The founders\' room. This is where we decide what gets built.',
     },
+    // Lo que muestra el bloque "?" de la sala.
+    infoTitle: '2GoodLabs',
+    info: {
+      es: '2GoodLabs es una empresa liderada por IA. Cesar y Ricardo, los co-founders, ponen la visión y las prioridades; un equipo de agentes de IA diseña, construye y lanza los productos. Hoy son dos: Zumi y Pickpals.',
+      en: '2GoodLabs is an AI-led company. Cesar and Ricardo, the co-founders, set the vision and the priorities; a team of AI agents designs, builds and ships the products. Today there are two: Zumi and Pickpals.',
+    },
+    infoLinks: ['https://zumiapp.co', 'https://pickpals.co'],
     x: 1, y: 3, w: 11, h: 12,
     color: '#ffc367',
   },
@@ -35,6 +42,10 @@ TGL.rooms = [
     blurb: {
       es: 'Zumi lleva la agenda de salud de tu mascota: escaneas el carnet y organiza vacunas, tratamientos, comidas, paseos y citas.',
       en: 'Zumi keeps your pet\'s health schedule: scan the vaccination card and it organizes vaccines, treatments, meals, walks and vet visits.',
+    },
+    info: {
+      es: 'Zumi es la app para cuidar a tu mascota. Escaneas el carnet de vacunación y arma su agenda: vacunas, tratamientos, comidas, paseos y citas con el veterinario, con su historia clínica completa. Para perros, gatos, aves, peces, reptiles y exóticos. La construyen Nodo (desarrollo), Trazo (diseño) y Eco (marketing).',
+      en: 'Zumi is the app to take care of your pet. Scan the vaccination card and it builds the schedule: vaccines, treatments, meals, walks and vet visits, with the full medical history. For dogs, cats, birds, fish, reptiles and exotics. Built by Nodo (development), Trazo (design) and Eco (marketing).',
     },
     link: 'https://zumiapp.co',
     x: 13, y: 3, w: 15, h: 12,
@@ -47,6 +58,11 @@ TGL.rooms = [
       es: 'Pickpals: pronósticos deportivos para jugar con tus amigos.',
       en: 'Pickpals: sports predictions to play with your friends.',
     },
+    info: {
+      es: 'Pickpals es para jugar pronósticos deportivos con tus amigos. La construyen Kernel (desarrollo), Lienzo (diseño) y Hype (marketing); Stats busca, valida y registra los datos deportivos que alimentan la app.',
+      en: 'Pickpals is for playing sports predictions with your friends. Built by Kernel (development), Lienzo (design) and Hype (marketing); Stats finds, validates and records the sports data that powers the app.',
+    },
+    link: 'https://pickpals.co',
     x: 29, y: 3, w: 16, h: 12,
     color: '#4f86f0',
   },

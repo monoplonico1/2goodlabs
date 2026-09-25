@@ -28,6 +28,10 @@
     home: { x: m.x * T, y: m.row * T + 12 },
     bubble: null, path: null, waitUntil: 0, patrolIdx: 0,
   }));
+  // El perro de Zumi: pasea por la sala y ladra si le haces clic.
+  const zumiRoom = TGL.rooms.find((r) => r.id === 'zumi');
+  const dog = { px: 21 * T + 8, py: 12 * T + 12, dir: 'right', face: 'right', frame: 0, walkT: 0, path: null, waitUntil: 2, bubble: null };
+
   // Los que no se mueven también estorban el paso.
   for (const n of npcs) if (!n.patrol) world.solid[n.row * world.W + Math.floor(n.x)] = 1;
 
@@ -111,7 +115,7 @@
 
   // ————————————————————————————————— Actualización
   const SPEED = 80, AUTO_SPEED = 120;
-  let bubbleTimer = 1.5, currentRoom = null, nearNpc = null, nearKiosk = false;
+  let bubbleTimer = 1.5, currentRoom = null, nearNpc = null, nearObj = null;
 
   function update(dt, t) {
     if (!dialogOpen()) {
@@ -148,6 +152,8 @@
       if (n.bubble && t > n.bubble.until) n.bubble = null;
     }
 
+    updateDog(dt, t);
+
     bubbleTimer -= dt;
     if (bubbleTimer <= 0) {
       bubbleTimer = 2.2 + Math.random() * 1.5;
@@ -166,8 +172,8 @@
       if (d < best) { best = d; nearNpc = n; }
     }
     const pt = tileOf(player.px, player.py);
-    nearKiosk = !nearNpc && world.objects.some((o) => o.interact === 'directory' &&
-      pt.x >= o.x / T - 1 && pt.x <= (o.x + o.w) / T && pt.y >= o.y / T - 1 && pt.y <= (o.y + o.h) / T);
+    nearObj = nearNpc ? null : world.objects.find((o) => o.interact &&
+      pt.x >= o.x / T - 1 && pt.x <= (o.x + o.w) / T && pt.y >= o.y / T - 1 && pt.y <= (o.y + o.h) / T) || null;
     updateHint();
 
     const room = world.roomAt(pt.x, pt.y);
@@ -176,6 +182,29 @@
       showToast(room);
       $('#hud-room').textContent = room.name;
     }
+  }
+
+  function updateDog(dt, t) {
+    if (dog.bubble && t > dog.bubble.until) dog.bubble = null;
+    if (dog.path && dog.path.length) {
+      followPath(dog, 34, dt);
+      if (dog.dir === 'left' || dog.dir === 'right') dog.face = dog.dir;
+      animate(dog, true, dt);
+      if (!dog.path.length) { dog.path = null; dog.waitUntil = t + 2 + Math.random() * 4; }
+      return;
+    }
+    animate(dog, false, dt);
+    if (t < dog.waitUntil) return;
+    dog.waitUntil = t + 1;
+    const r = zumiRoom;
+    const gx = r.x + Math.floor(Math.random() * r.w), gy = r.y + 3 + Math.floor(Math.random() * (r.h - 3));
+    if (world.isSolid(gx, gy)) return;
+    const path = findPath(tileOf(dog.px, dog.py), (x, y) => x === gx && y === gy);
+    if (path && path.length < 16) dog.path = path;
+    if (Math.random() < 0.25) bark(t);
+  }
+  function bark(t) {
+    dog.bubble = { until: t + 1.8 };
   }
 
   // Un estado en los dos idiomas, para que la burbuja cambie si cambias de idioma.
@@ -282,7 +311,7 @@
     const ox = Math.round(-camX * scale), oy = Math.round(-camY * scale);
     ctx.setTransform(scale, 0, 0, scale, ox, oy);
     ctx.drawImage(staticLayer, 0, 0);
-    world.drawScoreboard(ctx, t);
+    world.drawWallAnims(ctx, t);
 
     const vx0 = camX - T * 2, vx1 = camX + canvas.width / scale + T * 2;
     const vy0 = camY - T * 2, vy1 = camY + canvas.height / scale + T * 3;
@@ -292,11 +321,14 @@
         items.push({ y: o.floor ? -1 : o.sortY, o });
     for (const n of npcs) items.push({ y: n.py, c: n });
     items.push({ y: player.py + 0.1, c: player });
+    items.push({ y: dog.py, dog: true });
     items.sort((a, b) => a.y - b.y);
     for (const it of items) {
       if (it.o) {
         ctx.drawImage(it.o.canvas, it.o.x, it.o.y - it.o.top);
         if (it.o.anim) it.o.anim(ctx, it.o.x, it.o.y - it.o.top, t);
+      } else if (it.dog) {
+        TGL.art.drawDog(ctx, dog.px, dog.py, dog.face, dog.frame, t, !dog.path);
       } else {
         TGL.drawCharacter(ctx, it.c, t);
       }
@@ -308,6 +340,7 @@
     if (scale / dpr >= 1.6) {
       for (const n of npcs) drawNameTag(n);
       for (const n of npcs) if (n.bubble) drawBubble(n, TGL.t(n.bubble.text));
+      if (dog.bubble) drawBubble(dog, TGL.ui('bark'), 14);
     }
     if (hoverNpc && hoverNpc !== nearNpc) drawRing(hoverNpc);
     if (nearNpc) drawRing(nearNpc);
@@ -334,8 +367,8 @@
     ctx.fillText(text, x + 11 * dpr, y + h / 2 + 0.5 * dpr);
   }
 
-  function drawBubble(n, text) {
-    const [sx, sy] = toScreen(n.px, n.py - 27);
+  function drawBubble(n, text, lift) {
+    const [sx, sy] = toScreen(n.px, n.py - (lift || 27));
     ctx.font = font(11, '600');
     const pad = 7 * dpr, w = Math.min(ctx.measureText(text).width + pad * 2, 240 * dpr), h = 22 * dpr;
     const x = Math.round(sx - w / 2), y = Math.round(sy - h - 22 * dpr);
@@ -419,7 +452,8 @@
   // ————————————————————————————————— Diálogo
   let dialogFor = null, typeTimer = null;
   const dialog = $('#dialog');
-  const dialogOpen = () => dialogFor !== null;
+  let infoRoom = null;
+  const dialogOpen = () => dialogFor !== null || infoRoom !== null;
 
   function openDialog(n) {
     dialogFor = n;
@@ -458,6 +492,7 @@
     return Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : dy > 0 ? 'down' : 'up';
   }
   function closeDialog() {
+    if (infoRoom) closeInfo();
     if (!dialogFor) return;
     const n = dialogFor;
     if (!n.patrol) n.dir = 'down';
@@ -481,20 +516,59 @@
   }
   $('#dlg-close').addEventListener('click', closeDialog);
 
+  // ————————————————————————————————— Bloques "?": información de la sala y su sitio web
+  const infoBox = $('#info');
+  function openInfo(roomId) {
+    if (dialogFor) closeDialog();
+    const room = TGL.rooms.find((r) => r.id === roomId);
+    infoRoom = room;
+    infoBox.style.setProperty('--room', room.color);
+    $('#info-title').textContent = room.infoTitle || room.name;
+    $('#info-text').textContent = TGL.t(room.info);
+    const links = $('#info-links');
+    links.innerHTML = '';
+    for (const url of room.infoLinks || (room.link ? [room.link] : [])) {
+      const a = document.createElement('a');
+      a.href = url;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.textContent = TGL.ui('visit') + ' ' + url.replace(/^https?:\/\//, '') + ' ↗';
+      links.appendChild(a);
+    }
+    infoBox.hidden = false;
+    (links.querySelector('a') || $('#info-close')).focus({ preventScroll: true });
+  }
+  function closeInfo() {
+    infoRoom = null;
+    infoBox.hidden = true;
+    canvas.focus({ preventScroll: true });
+  }
+  $('#info-close').addEventListener('click', closeInfo);
+
+  function useObject(o) {
+    if (o.interact.type === 'directory') toggleDirectory(true);
+    else if (o.interact.type === 'info') openInfo(o.interact.room);
+  }
+
   // ————————————————————————————————— Pista para hablar, avisos
   const hint = $('#hint');
   function updateHint() {
-    const target = dialogOpen() ? null : nearNpc ? nearNpc.name : nearKiosk ? 'directorio' : null;
-    if (target) {
-      hint.hidden = false;
-      hint.querySelector('span').textContent = nearNpc ? TGL.ui('talkTo') + ' ' + target : TGL.ui('seeDirectory');
-    } else hint.hidden = true;
+    let text = null;
+    if (dialogOpen()) text = null;
+    else if (nearNpc) text = TGL.ui('talkTo') + ' ' + nearNpc.name;
+    else if (nearObj && nearObj.interact.type === 'directory') text = TGL.ui('seeDirectory');
+    else if (nearObj) {
+      const room = TGL.rooms.find((r) => r.id === nearObj.interact.room);
+      text = TGL.ui('moreInfo') + ' ' + (room.infoTitle || room.name);
+    }
+    hint.hidden = !text;
+    if (text) hint.querySelector('span').textContent = text;
   }
   hint.addEventListener('click', interact);
   function interact() {
     if (dialogOpen()) return closeDialog();
     if (nearNpc) { facePlayerTo(nearNpc); openDialog(nearNpc); }
-    else if (nearKiosk) toggleDirectory(true);
+    else if (nearObj) useObject(nearObj);
   }
 
   let toastTimer = null;
@@ -612,11 +686,15 @@
   function npcAt(wx, wy) {
     return npcs.find((n) => wx > n.px - 8 && wx < n.px + 8 && wy > n.py - 26 && wy < n.py + 2) || null;
   }
+  const linkAt = (wx, wy) => world.links.find((l) => wx >= l.x && wx < l.x + l.w && wy >= l.y && wy < l.y + l.h) || null;
+  // Los bloques "?" flotan por encima de su tile: el área de clic sube con ellos.
+  const objectAt = (wx, wy) => world.objects.find((o) => o.interact && wx >= o.x && wx < o.x + o.w && wy >= o.y - Math.max(o.top, 8) && wy < o.y + o.h) || null;
+  const dogAt = (wx, wy) => Math.abs(wx - dog.px) < 10 && wy > dog.py - 13 && wy < dog.py + 2;
   let hoverNpc = null;
   canvas.addEventListener('pointermove', (e) => {
     const [wx, wy] = worldFromEvent(e);
     hoverNpc = npcAt(wx, wy);
-    canvas.style.cursor = hoverNpc ? 'pointer' : 'default';
+    canvas.style.cursor = hoverNpc || linkAt(wx, wy) || objectAt(wx, wy) || dogAt(wx, wy) ? 'pointer' : 'default';
   });
   canvas.addEventListener('pointerleave', () => { hoverNpc = null; });
   canvas.addEventListener('click', (e) => {
@@ -629,8 +707,15 @@
       return;
     }
     closeDialog();
-    const kiosk = world.objects.find((o) => o.interact && wx >= o.x && wx < o.x + o.w && wy >= o.y - o.top && wy < o.y + o.h);
-    if (kiosk) return walkTo(Math.floor(kiosk.x / T), Math.floor(kiosk.y / T) - 1, () => toggleDirectory(true));
+    const link = linkAt(wx, wy);
+    if (link) return void window.open(link.url, '_blank', 'noopener');
+    if (dogAt(wx, wy)) return bark(performance.now() / 1000);
+    const obj = objectAt(wx, wy);
+    if (obj) {
+      const near = Math.abs(player.px - (obj.x + obj.w / 2)) < obj.w / 2 + 20 && Math.abs(player.py - (obj.y + obj.h / 2)) < obj.h / 2 + 20;
+      if (near) return useObject(obj);
+      return walkTo(Math.floor(obj.x / T), Math.floor(obj.y / T), () => useObject(obj));
+    }
     walkTo(Math.floor(wx / T), Math.floor((wy - 4) / T));
   });
 
@@ -678,6 +763,7 @@
     staticLayer = world.renderStatic();
     buildDirectory();
     if (dialogFor) openDialog(dialogFor);
+    if (infoRoom) openInfo(infoRoom.id);
     if (currentRoom) showToast(currentRoom);
     updateHint();
   });
@@ -710,6 +796,7 @@
     ? Promise.all([
         document.fonts.load('800 25px Inter'),
         document.fonts.load('700 10px Inter'),
+        document.fonts.load('700 6px Inter'),
         document.fonts.load('8px Silkscreen'),
       ])
     : Promise.resolve();

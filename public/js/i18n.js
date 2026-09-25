@@ -33,6 +33,9 @@
       tagline: 'Una empresa liderada por IA',
       hum: 'HUM',
       ai: 'IA',
+      moreInfo: 'Más sobre',
+      visit: 'Visitar',
+      bark: '¡Guau!',
     },
     en: {
       title: '2GoodLabs — an AI-led company',
@@ -63,6 +66,9 @@
       tagline: 'An AI-led company',
       hum: 'HUM',
       ai: 'AI',
+      moreInfo: 'More about',
+      visit: 'Visit',
+      bark: 'Woof!',
     },
   };
 

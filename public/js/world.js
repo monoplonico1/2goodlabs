@@ -60,32 +60,38 @@
   const desk = (x, y, role, variant) =>
     put(art.desk(variant === 'dual' ? 3 : 2, variant), x, y, variant === 'dual' ? 3 : 2, 1, { anim: art.deskScreens(variant, role) });
 
-  // Board
-  put(art.coatRack(), 1, 3, 1, 1);
-  desk(2, 5, 'founder');
-  desk(8, 5, 'founder');
-  put(art.plant(1), 11, 3, 1, 1);
-  put(art.whiteboard(2, 'roadmap'), 1, 8, 2, 1);
-  put(art.table(4, 3), 4, 8, 4, 3);
-  put(art.chair('#6b3a3a', 'down'), 5, 7, 1, 1);
-  put(art.chair('#6b3a3a', 'down'), 6, 7, 1, 1);
-  put(art.chair('#6b3a3a', 'down'), 3, 9, 1, 1);
-  put(art.chair('#6b3a3a', 'down'), 8, 9, 1, 1);
-  put(art.chair('#6b3a3a', 'up'), 5, 11, 1, 1);
-  put(art.chair('#6b3a3a', 'up'), 6, 11, 1, 1);
-  put(art.sofa(3, '#7a5a3a'), 1, 13, 3, 1);
-  put(art.bookshelf(2, 4), 9, 13, 2, 1);
-  put(art.plant(2), 11, 14, 1, 1);
+  // Bloque "?" de información de una sala.
+  const info = (x, y, room) => put(art.qblock(), x, y, 1, 1, { anim: art.qblockAnim, interact: { type: 'info', room } });
 
-  // Zumi
+  // Board: blanco, aluminio y madera clara
+  put(art.whitePlant(1), 1, 3, 1, 1);
+  put(art.imacDesk(), 2, 5, 2, 1, { anim: art.imacScreen });
+  put(art.imacDesk(), 8, 5, 2, 1, { anim: art.imacScreen });
+  put(art.whitePlant(2), 11, 3, 1, 1);
+  put(art.displayStand(), 1, 8, 2, 1, { anim: art.displayChart });
+  put(art.oakTable(4, 3), 4, 8, 4, 3, { anim: art.oakTableScreens(4, 3) });
+  put(art.whiteChair('down'), 5, 7, 1, 1);
+  put(art.whiteChair('down'), 6, 7, 1, 1);
+  put(art.whiteChair('down'), 3, 9, 1, 1);
+  put(art.whiteChair('down'), 8, 9, 1, 1);
+  put(art.whiteChair('up'), 5, 11, 1, 1);
+  put(art.whiteChair('up'), 6, 11, 1, 1);
+  put(art.sofa(3, '#c9c9ce'), 1, 13, 3, 1);
+  put(art.whiteShelf(2), 9, 13, 2, 1);
+  put(art.whitePlant(3), 11, 14, 1, 1);
+  info(7, 13, 'board');
+
+  // Zumi: el equipo comparte la sala con mascotas
   put(art.serverRack(), 13, 3, 1, 1, { anim: art.serverLeds });
   desk(15, 5, 'dev');
   desk(19, 5, 'design');
   desk(23, 5, 'marketing');
-  put(art.whiteboard(2, 'moodboard'), 21, 3, 2, 1);
   put(art.whiteboard(2, 'chart'), 25, 3, 2, 1);
   put(art.plant(3), 27, 3, 1, 1);
-  put(art.bookshelf(2, 11), 26, 8, 2, 1);
+  put(art.birdcage(), 13, 8, 1, 1, { anim: art.parrot });
+  put(art.aquarium(), 26, 8, 2, 1, { anim: art.fish });
+  put(art.terrarium(), 26, 11, 2, 1, { anim: art.turtle });
+  put(art.pawRug(3, 2), 22, 9, 3, 2, { solid: false, floor: true });
   put(art.table(3, 2), 18, 9, 3, 2);
   put(art.chair('#3f8f5a', 'down'), 19, 8, 1, 1);
   put(art.chair('#3f8f5a', 'up'), 18, 11, 1, 1);
@@ -93,22 +99,26 @@
   put(art.table(3, 1), 14, 11, 3, 1);
   put(art.sofa(3, '#2c4a35'), 14, 13, 3, 1);
   put(art.petBed(), 23, 12, 2, 1, { anim: art.cat });
+  put(art.bowls(), 25, 12, 1, 1, { solid: false, floor: true });
   put(art.plant(4), 13, 14, 1, 1);
   put(art.plant(5), 27, 14, 1, 1);
+  info(21, 13, 'zumi');
 
-  // Pickpals
+  // Pickpals: pantallas con deportes y ping-pong
   put(art.plant(6), 29, 3, 1, 1);
   desk(30, 5, 'dev');
   desk(34, 5, 'marketing');
   desk(30, 10, 'design');
   desk(39, 10, 'data', 'dual');
-  put(art.whiteboard(2, 'kanban'), 36, 3, 2, 1);
   put(art.fileCabinet(), 44, 6, 1, 2);
-  put(art.ballGoal(), 32, 13, 2, 1);
+  put(art.pingPong(), 34, 8, 4, 2, { anim: art.pingPongPlay });
+  put(art.ballGoal(), 30, 13, 2, 1);
+  put(art.tvConsole(4), 32, 13, 4, 1, { anim: art.tvConsoleScreens(4, ['soccer', 'baseball']) });
   put(art.sofa(3, '#2f5fc4'), 39, 13, 3, 1);
   put(art.trophyShelf(), 42, 13, 2, 1);
   put(art.plant(7), 29, 14, 1, 1);
   put(art.plant(8), 44, 14, 1, 1);
+  info(38, 13, 'pickpals');
 
   // Lobby
   put(art.fridge(), 1, 18, 1, 1);
@@ -118,9 +128,9 @@
   put(art.waterCooler(), 17, 18, 1, 1);
   put(art.plant(9), 24, 18, 1, 1);
   put(art.plant(10), 34, 18, 1, 1);
-  put(art.waterCooler(), 39, 18, 1, 1);
+  put(art.waterCooler(), 41, 18, 1, 1);
   put(art.plant(11), 44, 18, 1, 1);
-  put(art.kiosk(), 22, 25, 2, 1, { interact: 'directory' });
+  put(art.kiosk(), 22, 25, 2, 1, { interact: { type: 'directory' } });
   put(art.sofa(3, '#6a4c93'), 2, 25, 3, 1);
   put(art.sofa(3, '#6a4c93'), 7, 25, 3, 1);
   put(art.sofa(3, '#6a4c93'), 33, 25, 3, 1);
@@ -141,7 +151,7 @@
 
   // ————————————————————————————————— Capa estática
   const WALL_TOP = '#2f2925', WALL_EDGE = '#51473f';
-  const FACE_COLOR = { board: '#efe4d0', zumi: '#e2eedc', pickpals: '#dde6f3', lobby: '#ece6da' };
+  const FACE_COLOR = { board: '#f7f7f9', zumi: '#e2eedc', pickpals: '#dde6f3', lobby: '#ece6da' };
 
   function roomAt(tx, ty) {
     for (const room of TGL.rooms)
@@ -159,12 +169,11 @@
   function drawFloor(ctx, x, y, v, rnd) {
     const px = x * T, py = y * T;
     if (v === FLOOR.board) {
-      r(ctx, px, py, T, T, '#a57446');
-      for (let k = 0; k < 4; k++) {
-        r(ctx, px, py + k * 4 + 3, T, 1, '#8d6139');
-        const seam = ((x * 7 + (y * 4 + k) * 5) % 16);
-        r(ctx, px + seam, py + k * 4, 1, 3, '#94673d');
-      }
+      // concreto pulido claro
+      r(ctx, px, py, T, T, '#e6e6ea');
+      r(ctx, px, py, T, 1, '#d9d9df');
+      r(ctx, px, py, 1, T, '#d9d9df');
+      for (let k = 0; k < 3; k++) r(ctx, px + Math.floor(rnd() * 16), py + Math.floor(rnd() * 16), 1, 1, '#eeeef2');
     } else if (v === FLOOR.zumi) {
       r(ctx, px, py, T, T, (x + y) % 2 ? '#78a37a' : '#729d74');
       for (let k = 0; k < 3; k++) r(ctx, px + Math.floor(rnd() * 16), py + Math.floor(rnd() * 16), 1, 1, '#86b087');
@@ -182,23 +191,29 @@
 
   const decor = [
     // Board
-    { k: 'window', x: 2, y: 1, w: 2 }, { k: 'plate', x: 5, y: 1, w: 2, text: '2G', bg: '#1d1f24', fg: '#ffc367' },
-    { k: 'window', x: 8, y: 1, w: 2 },
+    { k: 'glass', x: 1, y: 1, w: 3 }, { k: 'wallDisplay', x: 4, y: 1, w: 4 }, { k: 'glass', x: 8, y: 1, w: 3 },
     // Zumi
-    { k: 'window', x: 16, y: 1, w: 2 }, { k: 'plate', x: 19, y: 1, w: 2, text: 'zumi', bg: '#2c4a35', fg: '#ffc367' },
-    { k: 'window', x: 23, y: 1, w: 2 },
+    { k: 'window', x: 14, y: 1, w: 2 },
+    { k: 'plate', x: 18, y: 1, w: 3, text: 'zumi', bg: '#2c4a35', fg: '#ffc367', url: 'https://zumiapp.co', link: '#2c6b3f' },
+    { k: 'pawPoster', x: 22, y: 1, w: 1 }, { k: 'petPhoto', x: 23, y: 1, w: 2 },
     // Pickpals
-    { k: 'window', x: 30, y: 1, w: 2 }, { k: 'plate', x: 33, y: 1, w: 3, text: 'pickpals', bg: '#1b2a4a', fg: '#9cff57' },
+    { k: 'tv', x: 30, y: 1, w: 2, sport: 'tennis' },
+    { k: 'plate', x: 33, y: 1, w: 3, text: 'pickpals', bg: '#1b2a4a', fg: '#9cff57', url: 'https://pickpals.co', link: '#2f5fc4' },
+    { k: 'tv', x: 37, y: 1, w: 2, sport: 'basket' },
     { k: 'scoreboard', x: 39, y: 1, w: 5 },
     // Lobby
     { k: 'sign', x: 7, y: 16, w: 3, text: 'BOARD', fg: '#ffc367' },
     { k: 'painting', x: 13, y: 16, w: 2 },
-    { k: 'sign', x: 21, y: 16, w: 3, text: 'ZUMI', fg: '#86d19a' },
+    { k: 'sign', x: 21, y: 16, w: 3, text: 'ZUMI', fg: '#86d19a', url: 'https://zumiapp.co', link: '#2c6b3f' },
     { k: 'clock', x: 27, y: 16, w: 1 },
     { k: 'painting', x: 30, y: 16, w: 2 },
-    { k: 'sign', x: 38, y: 16, w: 3, text: 'PICKPALS', fg: '#9cc0ff' },
+    { k: 'sign', x: 38, y: 16, w: 3, text: 'PICKPALS', fg: '#9cc0ff', url: 'https://pickpals.co', link: '#2f5fc4' },
     { k: 'elevator', x: 42, y: 16, w: 2 },
   ];
+
+  // Zonas clicables del mundo (los links bajo los letreros). Se llenan al pintar.
+  const links = [];
+  const LINK_FONT = '700 6px Inter, system-ui, sans-serif';
 
   function drawDecor(ctx, d) {
     const px = d.x * T, py = d.y * T, pw = d.w * T;
@@ -210,7 +225,7 @@
       r(ctx, px + pw / 2 + 3, py + 7, 1, 5, '#e8f6ff');
       r(ctx, px + 1, py + 23, pw - 2, 2, '#a8835c');
     } else if (d.k === 'plate' || d.k === 'sign') {
-      const ph = d.k === 'sign' ? 11 : 13, top = d.k === 'sign' ? py + 5 : py + 7;
+      const ph = d.k === 'sign' ? 11 : 13, top = d.k === 'sign' ? py + 5 : py + 4;
       r(ctx, px + 2, top + 1, pw - 4, ph, 'rgba(0,0,0,.18)');
       r(ctx, px + 1, top, pw - 2, ph, d.bg || '#23262d');
       ctx.fillStyle = d.fg;
@@ -218,6 +233,36 @@
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(d.text, px + pw / 2, top + ph / 2 + 1);
+      if (d.url) {
+        // El link se pinta cada frame (drawWallAnims) para que el texto quede nítido con cualquier zoom.
+        const label = d.url.replace(/^https?:\/\//, ''), ly = top + ph + 5;
+        ctx.font = LINK_FONT;
+        const lw = ctx.measureText(label).width;
+        links.push({ x: px + pw / 2 - lw / 2 - 2, y: ly - 5, w: lw + 4, h: 10, cx: px + pw / 2, ty: ly, lw, label, url: d.url, color: d.link });
+      }
+    } else if (d.k === 'glass') {
+      r(ctx, px + 1, py + 2, pw - 2, 27, '#c7c7cc');
+      r(ctx, px + 2, py + 3, pw - 4, 25, '#cfe7f7');
+      r(ctx, px + 2, py + 3, pw - 4, 8, '#e3f2fc');
+      for (let i = 1; i < d.w; i++) r(ctx, px + i * T - 1, py + 3, 1, 25, '#c7c7cc');
+      for (let i = 0; i < d.w; i++) {
+        r(ctx, px + i * T + 5, py + 6, 1, 6, 'rgba(255,255,255,.8)');
+        r(ctx, px + i * T + 7, py + 5, 1, 4, 'rgba(255,255,255,.8)');
+      }
+    } else if (d.k === 'wallDisplay') {
+      r(ctx, px + 1, py + 2, pw - 2, 25, '#2a2b30');
+      r(ctx, px + 2, py + 3, pw - 4, 23, '#050507');
+    } else if (d.k === 'tv') {
+      r(ctx, px + 1, py + 3, pw - 2, 21, '#111318');
+      r(ctx, px + pw / 2 - 1, py + 24, 2, 2, '#23262d');
+    } else if (d.k === 'pawPoster') {
+      r(ctx, px + 2, py + 3, pw - 4, 20, '#2c4a35');
+      r(ctx, px + 3, py + 4, pw - 6, 18, '#ffc367');
+      art.paw(ctx, px + 4, py + 9, '#2c4a35');
+    } else if (d.k === 'petPhoto') {
+      r(ctx, px + 3, py + 4, pw - 6, 18, '#7a5230');
+      r(ctx, px + 4, py + 5, pw - 8, 16, '#d0e1fa');
+      art.drawDog(ctx, px + pw / 2 - 2, py + 20, 'right', 0, 0, true);
     } else if (d.k === 'painting') {
       r(ctx, px + 3, py + 4, pw - 6, 16, '#7a5230');
       r(ctx, px + 5, py + 6, pw - 10, 12, '#9fd3f0');
@@ -262,6 +307,7 @@
   }
 
   function renderStatic() {
+    links.length = 0;
     const c = TGL.canvas(W * T, H * T), ctx = c.getContext('2d');
     const rnd = TGL.rng(2025);
     for (let y = 0; y < H; y++)
@@ -305,7 +351,44 @@
     return c;
   }
 
-  // Marcador animado sobre el muro de Pickpals (se pinta cada frame).
+  // Todo lo animado de los muros: marcador, televisores y la pantalla del Board.
+  function drawWallAnims(ctx, t) {
+    drawScoreboard(ctx, t);
+    ctx.font = LINK_FONT;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (const l of links) {
+      ctx.fillStyle = l.color;
+      ctx.fillText(l.label, l.cx, l.ty);
+      ctx.fillRect(l.cx - l.lw / 2, l.ty + 3.5, l.lw, 0.5);
+    }
+    for (const d of decor) {
+      if (d.k === 'tv') art.sportScreen(ctx, d.x * T + 2, d.y * T + 4, d.w * T - 4, 19, d.sport, t + d.x);
+      else if (d.k === 'wallDisplay') drawBoardDisplay(ctx, d, t);
+    }
+  }
+
+  // Pantalla del Board: el logo y unas métricas que se mueven.
+  function drawBoardDisplay(ctx, d, t) {
+    const x = d.x * T + 3, y = d.y * T + 4, w = d.w * T - 6;
+    ctx.font = '8px Silkscreen, monospace';
+    ctx.textBaseline = 'top';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#f5f5f7';
+    ctx.fillText('2GoodLabs', x + 2, y);
+    const cols = ['#ffc367', '#4dd6ff', '#34c759', '#ff6fa8'];
+    for (let i = 0; i < 4; i++) {
+      const v = 4 + Math.round((Math.sin(t * 0.8 + i * 1.3) + 1) * 4);
+      r(ctx, x + 3 + i * 5, y + 20 - v, 3, v, cols[i]);
+    }
+    for (let i = 0; i < 30; i++) {
+      const v = Math.sin((i + t * 4) * 0.3) * 3 + i * 0.2;
+      r(ctx, x + 26 + i, Math.round(y + 16 - v), 1, 1, '#34c759');
+    }
+    r(ctx, x + 26, y + 20, 30, 1, '#2a2d35');
+  }
+
+  // Marcador animado sobre el muro de Pickpals.
   function drawScoreboard(ctx, t) {
     const d = decor.find((q) => q.k === 'scoreboard');
     const px = d.x * T + 3, py = d.y * T + 4, pw = d.w * T - 6;
@@ -331,7 +414,7 @@
   }
 
   TGL.world = {
-    W, H, grid, solid, objects, roomAt, drawScoreboard, renderStatic,
+    W, H, grid, solid, objects, links, roomAt, drawWallAnims, renderStatic,
     isSolid(tx, ty) {
       return tx < 0 || ty < 0 || tx >= W || ty >= H || solid[ty * W + tx] === 1;
     },
