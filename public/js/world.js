@@ -175,6 +175,7 @@
   put(art.waterCooler(), 41, 18, 1, 1);
   put(art.plant(11), 44, 18, 1, 1);
   put(art.kiosk(), 22, 25, 2, 1, { interact: { type: 'directory' } });
+  put(art.mailbox(), 25, 25, 1, 1, { anim: art.mailboxAnim, interact: { type: 'contact' } });
   put(art.sofa(3, '#6a4c93'), 2, 25, 3, 1);
   put(art.sofa(3, '#6a4c93'), 7, 25, 3, 1);
   put(art.sofa(3, '#6a4c93'), 33, 25, 3, 1);

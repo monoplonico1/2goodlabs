@@ -1,9 +1,26 @@
 {
   "name": "2goodlabs",
+  "main": "worker/index.js",
   "compatibility_date": "2025-08-01",
   "assets": {
     // Solo se publica lo que está dentro de public/.
     "directory": "./public",
-    "html_handling": "auto-trailing-slash"
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    // El worker corre primero para poder redirigir 2goodlabs.com → 2goodlabs.io.
+    "run_worker_first": true
+  },
+  "routes": [
+    { "pattern": "2goodlabs.io", "custom_domain": true },
+    { "pattern": "www.2goodlabs.io", "custom_domain": true },
+    { "pattern": "2goodlabs.com", "custom_domain": true },
+    { "pattern": "www.2goodlabs.com", "custom_domain": true }
+  ],
+  // Formulario de contacto (ver README → Contacto). CONTACT_TO debe ser una
+  // dirección verificada en Email Routing de Cloudflare.
+  "send_email": [{ "name": "CONTACT_EMAIL" }],
+  "vars": {
+    "CONTACT_FROM": "contacto@2goodlabs.io",
+    "CONTACT_TO": "CAMBIAR@ejemplo.com"
   }
 }

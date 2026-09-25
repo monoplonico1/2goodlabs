@@ -557,4 +557,31 @@
       }
     }
   };
+
+  // ————————————————————————————————— Lobby: buzón de contacto
+  art.mailbox = function () {
+    const top = 14, c = canvas(T, T + top), x = c.getContext('2d');
+    r(x, 7, 14, 2, 15, '#6b717c');
+    r(x, 4, 28, 8, 2, '#4a4f58');
+    r(x, 2, 4, 12, 11, '#e04a4a');
+    r(x, 3, 2, 10, 3, '#e04a4a');
+    r(x, 3, 2, 10, 1, '#ff7a6e');
+    r(x, 2, 14, 12, 1, '#a83232');
+    r(x, 4, 7, 8, 2, '#5a1a1a');
+    r(x, 13, 3, 1, 6, '#8a8f98');
+    return { canvas: c, top };
+  };
+  art.mailboxAnim = function (ctx, wx, wy, t) {
+    // banderita que sube y baja, y un sobre flotando que invita a escribir
+    const up = Math.floor(t) % 4 < 2;
+    r(ctx, wx + 14, wy + (up ? 2 : 6), 3, 3, '#ffd24d');
+    const bob = Math.round(Math.sin(t * 3) * 1.5);
+    const ex = wx + 3, ey = wy - 9 + bob;
+    r(ctx, ex, ey, 10, 7, '#ffffff');
+    r(ctx, ex, ey, 10, 1, '#c7c7cc');
+    for (let i = 0; i < 5; i++) {
+      r(ctx, ex + i, ey + 1 + Math.floor(i * 0.7), 1, 1, '#8a8f98');
+      r(ctx, ex + 9 - i, ey + 1 + Math.floor(i * 0.7), 1, 1, '#8a8f98');
+    }
+  };
 })();

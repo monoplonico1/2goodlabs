@@ -1,0 +1,134 @@
+<!doctype html>
+<!--
+  Plantilla. NO edites public/index.html ni public/en/index.html: se generan con
+  `node build.js` a partir de este archivo. Los {{…}} los llena build.js.
+-->
+<html lang="{{lang}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <script>document.documentElement.classList.add('js')</script>
+  <title>{{t:title}}</title>
+  <meta name="description" content="{{t:description}}">
+  <link rel="canonical" href="{{canonical}}">
+{{alternates}}
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="2GoodLabs">
+  <meta property="og:title" content="{{t:title}}">
+  <meta property="og:description" content="{{t:description}}">
+  <meta property="og:url" content="{{canonical}}">
+  <meta property="og:image" content="{{site}}/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="{{t:officeAlt}}">
+  <meta property="og:locale" content="{{ogLocale}}">
+  <meta property="og:locale:alternate" content="{{ogLocaleAlt}}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#17140f">
+  <link rel="icon" href="{{base}}favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="{{base}}logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Silkscreen&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{base}}styles.css?v={{v}}">
+  <script type="application/ld+json">
+{{jsonld}}
+  </script>
+</head>
+<body>
+  <canvas id="office" tabindex="0" data-i18n-attr="aria-label:officeLabel" aria-label="{{t:officeLabel}}"></canvas>
+
+  <header class="brand panel">
+    <p class="logo">2GoodLabs</p>
+  </header>
+
+  <div class="top-right">
+    <div class="lang panel" role="group" data-i18n-attr="aria-label:langLabel" aria-label="{{t:langLabel}}">
+      <button type="button" data-lang="es">ES</button>
+      <button type="button" data-lang="en">EN</button>
+    </div>
+    <button id="btn-simple" class="panel btn-dir" type="button" aria-controls="simple" aria-expanded="false">
+      <span data-i18n="simpleView">{{t:simpleView}}</span>
+    </button>
+    <button id="btn-directory" class="panel btn-dir" type="button" aria-controls="directory" aria-expanded="false">
+      <span aria-hidden="true">☰</span> <span data-i18n="directory">{{t:directory}}</span>
+    </button>
+  </div>
+
+  <div id="toast" class="toast panel" hidden aria-live="polite"><strong></strong><span></span></div>
+
+  <aside class="status panel" data-i18n-attr="aria-label:controlsLabel" aria-label="{{t:controlsLabel}}">
+    <p class="tagline" data-i18n="tagline">{{t:tagline}}</p>
+    <dl class="bars">
+      <div class="bar bar-human"><dt data-i18n="hum">{{t:hum}}</dt><dd><span id="hud-humans">2</span> <span data-i18n="founders">{{t:founders}}</span></dd></div>
+      <div class="bar bar-agent"><dt data-i18n="ai">{{t:ai}}</dt><dd><span id="hud-agents">7</span> <span data-i18n="agentsActive">{{t:agentsActive}}</span></dd></div>
+    </dl>
+    <p class="where">📍 <span id="hud-room">Lobby</span></p>
+    <p class="controls"><kbd>WASD</kbd>/<kbd>↑↓←→</kbd> <span data-i18n="controls">{{t:controls}}</span></p>
+  </aside>
+
+  <div class="map-dock">
+    <div class="zoom panel" role="group" data-i18n-attr="aria-label:zoomLabel" aria-label="{{t:zoomLabel}}">
+      <button id="zoom-in" type="button" data-i18n-attr="aria-label:zoomIn;title:zoomIn" aria-label="{{t:zoomIn}}" title="{{t:zoomIn}}">+</button>
+      <button id="zoom-out" type="button" data-i18n-attr="aria-label:zoomOut;title:zoomOut" aria-label="{{t:zoomOut}}" title="{{t:zoomOut}}">−</button>
+      <button id="zoom-fit" type="button" data-i18n-attr="aria-label:zoomFit;title:zoomFit" aria-label="{{t:zoomFit}}" title="{{t:zoomFit}}" aria-pressed="false">
+        <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M1 5V1h4M11 1h4v4M15 11v4h-4M5 15H1v-4" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+      </button>
+    </div>
+    <div class="minimap panel">
+      <canvas id="minimap" data-i18n-attr="aria-label:minimapLabel" aria-label="{{t:minimapLabel}}"></canvas>
+      <span class="minimap-label">MAP</span>
+    </div>
+  </div>
+
+  <button id="hint" class="hint panel" type="button" hidden><kbd>E</kbd> <span></span></button>
+
+  <section id="dialog" class="dialog panel" hidden role="dialog" aria-labelledby="dlg-name">
+    <canvas id="dlg-portrait" width="80" height="100" aria-hidden="true"></canvas>
+    <div class="dlg-body">
+      <header>
+        <h2 id="dlg-name"></h2>
+        <span id="dlg-role" class="chip"></span>
+        <span class="chip chip-room"><span data-i18n="room">{{t:room}}</span>: <span id="dlg-room"></span></span>
+      </header>
+      <p id="dlg-bio"></p>
+      <ul id="dlg-tasks"></ul>
+      <p id="dlg-links" class="dlg-links" hidden></p>
+      <p class="now"><span class="dot"></span> <span data-i18n="now">{{t:now}}</span>: <span id="dlg-now"></span></p>
+    </div>
+    <button id="dlg-close" class="close" type="button" data-i18n-attr="aria-label:close" aria-label="{{t:close}}">✕</button>
+  </section>
+
+  <section id="info" class="info panel" hidden role="dialog" aria-labelledby="info-title">
+    <div class="info-q" aria-hidden="true">?</div>
+    <div class="info-body">
+      <h2 id="info-title"></h2>
+      <p id="info-text"></p>
+      <div id="info-links" class="info-links"></div>
+    </div>
+    <button id="info-close" class="close" type="button" data-i18n-attr="aria-label:close" aria-label="{{t:close}}">✕</button>
+  </section>
+
+  <aside id="directory" class="directory panel" hidden data-i18n-attr="aria-label:directory" aria-label="{{t:directory}}">
+    <header>
+      <h2 data-i18n="directory">{{t:directory}}</h2>
+      <button id="dir-close" class="close" type="button" data-i18n-attr="aria-label:closeDirectory" aria-label="{{t:closeDirectory}}">✕</button>
+    </header>
+    <p class="about" data-i18n="about">{{t:about}}</p>
+    <div id="dir-rooms"></div>
+  </aside>
+
+  <!-- Vista simple: el contenido completo en HTML. Sin JavaScript es lo único que se ve. -->
+  <main id="simple" class="simple" aria-label="2GoodLabs">
+{{simple}}
+  </main>
+
+  <script src="{{base}}js/data.js?v={{v}}"></script>
+  <script src="{{base}}js/i18n.js?v={{v}}"></script>
+  <script src="{{base}}js/art.js?v={{v}}"></script>
+  <script src="{{base}}js/art-rooms.js?v={{v}}"></script>
+  <script src="{{base}}js/world.js?v={{v}}"></script>
+  <script src="{{base}}js/game.js?v={{v}}"></script>
+  <script src="{{base}}js/simple.js?v={{v}}"></script>
+</body>
+</html>

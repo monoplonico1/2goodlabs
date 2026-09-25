@@ -6,7 +6,13 @@ window.TGL = window.TGL || {};
 
 TGL.company = {
   name: '2GoodLabs',
-  tagline: { es: 'Una empresa liderada por IA', en: 'An AI-led company' },
+  tagline: { es: 'Laboratorio de producto con IA', en: 'An AI-powered product lab' },
+  // Dominio principal; 2goodlabs.com redirige aquí (ver worker/index.js).
+  url: 'https://2goodlabs.io',
+  about: {
+    es: 'Somos Cesar y Ricardo, dos diseñadores de producto y experiencia de usuario. La IA es nuestra herramienta principal: cada agente de esta oficina representa tareas que hacemos con ella. Aquí construimos nuestros productos, Zumi y Pickpals.',
+    en: 'We are Cesar and Ricardo, two product and user experience designers. AI is our main tool: every agent in this office stands for work we do with it. This is where we build our products, Zumi and Pickpals.',
+  },
 };
 
 // Colores por rol: son los ojos del agente, su etiqueta y su punto en el minimapa.
@@ -29,8 +35,8 @@ TGL.rooms = [
     // Lo que muestra el bloque "?" de la sala.
     infoTitle: '2GoodLabs',
     info: {
-      es: '2GoodLabs es una empresa liderada por IA. Cesar y Ricardo, los co-founders, ponen la visión y las prioridades; un equipo de agentes de IA diseña, construye y lanza los productos. Hoy son dos: Zumi y Pickpals.',
-      en: '2GoodLabs is an AI-led company. Cesar and Ricardo, the co-founders, set the vision and the priorities; a team of AI agents designs, builds and ships the products. Today there are two: Zumi and Pickpals.',
+      es: '2GoodLabs es un laboratorio de producto. Lo lideran Cesar y Ricardo, dos expertos en diseño y experiencia de usuario, y la IA es su herramienta principal: cada agente de esta oficina representa tareas que hacen con ella. Hoy trabajan en sus propios productos: Zumi y Pickpals.',
+      en: '2GoodLabs is a product lab. It is led by Cesar and Ricardo, two design and user experience experts, and AI is their main tool: every agent in this office stands for work they do with it. Today they are working on their own products: Zumi and Pickpals.',
     },
     infoLinks: ['https://zumiapp.co', 'https://pickpals.co'],
     x: 1, y: 3, w: 11, h: 12,
@@ -92,12 +98,13 @@ TGL.team = [
     x: 3.25, row: 4, dir: 'down', breakAt: 50,
     look: { skin: '#e0ac7e', hair: '#2b1d14', hairStyle: 'short', body: '#2d3e5c', legs: '#1f2533' },
     bio: {
-      es: 'Co-fundador de 2GoodLabs. Define la visión, pone las prioridades y decide qué construimos después. Los agentes le reportan a él y a Ricardo.',
-      en: 'Co-founder of 2GoodLabs. Sets the vision, the priorities and what we build next. The agents report to him and Ricardo.',
+      es: 'Co-fundador de 2GoodLabs. Diseñador de producto y experiencia de usuario: decide qué construimos y cómo se siente usarlo, y trabaja con IA todos los días.',
+      en: 'Co-founder of 2GoodLabs. Product and user experience designer: decides what we build and how it feels to use, and works with AI every day.',
     },
+    title: { es: 'Co-founder · Diseño de producto y UX', en: 'Co-founder · Product design & UX' },
     tasks: {
-      es: ['Visión y estrategia', 'Prioridades de Zumi y Pickpals', 'Dirección del equipo de agentes'],
-      en: ['Vision and strategy', 'Zumi and Pickpals priorities', 'Leading the agent team'],
+      es: ['Diseño de producto', 'Experiencia de usuario', 'Rumbo de Zumi y Pickpals'],
+      en: ['Product design', 'User experience', 'Direction of Zumi and Pickpals'],
     },
     statuses: {
       es: ['Revisando el roadmap', 'Priorizando el backlog', 'Dándole feedback a los agentes', 'Café. Mucho café.'],
@@ -109,12 +116,14 @@ TGL.team = [
     x: 9.25, row: 4, dir: 'down', breakAt: 50,
     look: { skin: '#d49a6a', hair: '#4a2e1c', hairStyle: 'side', beard: '#3b2416', body: '#8a3b3b', legs: '#262b36' },
     bio: {
-      es: 'Co-fundador de 2GoodLabs. Define la visión, pone las prioridades y decide qué construimos después. Los agentes le reportan a él y a Cesar.',
-      en: 'Co-founder of 2GoodLabs. Sets the vision, the priorities and what we build next. The agents report to him and Cesar.',
+      es: 'Co-fundador de 2GoodLabs. Diseñador de producto y experiencia de usuario: decide qué construimos y cómo se siente usarlo, y trabaja con IA todos los días.',
+      en: 'Co-founder of 2GoodLabs. Product and user experience designer: decides what we build and how it feels to use, and works with AI every day.',
     },
+    title: { es: 'Co-founder · Diseño de producto y UX', en: 'Co-founder · Product design & UX' },
+    links: ['https://rickorozco.co'],
     tasks: {
-      es: ['Visión y estrategia', 'Producto', 'Dirección del equipo de agentes'],
-      en: ['Vision and strategy', 'Product', 'Leading the agent team'],
+      es: ['Diseño de producto', 'Experiencia de usuario', 'Rumbo de Zumi y Pickpals'],
+      en: ['Product design', 'User experience', 'Direction of Zumi and Pickpals'],
     },
     statuses: {
       es: ['Aprobando el siguiente release', 'Revisando métricas', 'Probando la nueva versión', 'Pensando en el próximo producto'],

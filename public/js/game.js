@@ -539,6 +539,17 @@
       $('#dlg-tasks').appendChild(li);
     }
     $('#dlg-now').textContent = TGL.t(n.bubble ? n.bubble.text : status(n, 0));
+    const links = $('#dlg-links');
+    links.innerHTML = '';
+    for (const url of n.links || []) {
+      const a = document.createElement('a');
+      a.href = url;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.textContent = TGL.ui('portfolio') + ': ' + url.replace(/^https?:\/\//, '') + ' ↗';
+      links.appendChild(a);
+    }
+    links.hidden = !links.childNodes.length;
     drawPortrait(n);
     const text = TGL.t(n.bio), out = $('#dlg-bio');
     out.textContent = '';
@@ -617,6 +628,7 @@
   function useObject(o) {
     if (o.interact.type === 'directory') toggleDirectory(true);
     else if (o.interact.type === 'link') window.open(o.interact.url, '_blank', 'noopener');
+    else if (o.interact.type === 'contact') TGL.openSimple('contacto');
     else if (o.interact.type === 'info') openInfo(o.interact.room);
   }
 
@@ -628,6 +640,7 @@
     else if (nearNpc) text = TGL.ui('talkTo') + ' ' + nearNpc.name;
     else if (nearObj && nearObj.interact.type === 'directory') text = TGL.ui('seeDirectory');
     else if (nearObj && nearObj.interact.type === 'link') text = TGL.ui(nearObj.interact.hint);
+    else if (nearObj && nearObj.interact.type === 'contact') text = TGL.ui('writeUs');
     else if (nearObj) {
       const room = TGL.rooms.find((r) => r.id === nearObj.interact.room);
       text = TGL.ui('moreInfo') + ' ' + (room.infoTitle || TGL.t(room.name));
@@ -659,6 +672,7 @@
   // ————————————————————————————————— Directorio (también es el contenido indexable)
   const panel = $('#directory');
   // Carita para el directorio: la cabeza del sprite, recortada.
+  TGL.drawFace = drawFace;
   function drawFace(c, n) {
     const p = c.getContext('2d');
     p.imageSmoothingEnabled = false;
@@ -739,6 +753,13 @@
   const MOVE = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'a', 'd', 'w', 's']);
   window.addEventListener('keydown', (e) => {
     const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    // Con la vista simple abierta (o escribiendo en un campo) el teclado no mueve a nadie.
+    if (TGL.simpleOpen && TGL.simpleOpen()) {
+      if (k === 'Escape') TGL.closeSimple();
+      return;
+    }
+    const tag = document.activeElement && document.activeElement.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
     const inPanel = !panel.hidden && panel.contains(document.activeElement);
     if (k === 'Escape') { closeDialog(); toggleDirectory(false); return; }
     if (inPanel) return;
