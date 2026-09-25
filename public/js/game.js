@@ -33,7 +33,69 @@
   const dog = { px: 21 * T + 8, py: 12 * T + 12, dir: 'right', face: 'right', frame: 0, walkT: 0, path: null, waitUntil: 2, bubble: null };
 
   // Los que no se mueven también estorban el paso.
-  for (const n of npcs) if (!n.patrol) world.solid[n.row * world.W + Math.floor(n.x)] = 1;
+  const seatIndex = (n) => n.row * world.W + Math.floor(n.x);
+  for (const n of npcs) if (!n.patrol) world.solid[seatIndex(n)] = 1;
+
+  // ————————————————————————————————— Descansos en la terraza
+  // Cada agente descansa BREAK_MIN minutos por hora desde el minuto `breakAt`.
+  // Los que comparten minuto se van juntos a la misma mesa.
+  // ?break=all (o ?break=<id>) los manda ya mismo, para verlo sin esperar.
+  const BREAK_MIN = 5;
+  const forcedBreak = new URLSearchParams(location.search).get('break');
+  const loadedAt = Date.now();
+  const breakGroups = [...new Set(npcs.filter((n) => n.breakAt !== undefined).map((n) => n.breakAt))].sort((a, b) => a - b);
+  for (const n of npcs) {
+    n.mode = 'work';
+    if (n.breakAt === undefined) continue;
+    const group = npcs.filter((m) => m.breakAt === n.breakAt);
+    n.spot = world.breakSpots[(breakGroups.indexOf(n.breakAt) * 2 + group.indexOf(n)) % world.breakSpots.length];
+  }
+
+  function wantsBreak(n) {
+    if (n.breakAt === undefined) return false;
+    if (forcedBreak && (forcedBreak === 'all' || forcedBreak === n.id)) return Date.now() - loadedAt < BREAK_MIN * 60000;
+    return (new Date().getMinutes() - n.breakAt + 60) % 60 < BREAK_MIN;
+  }
+
+  // Devuelve true si el agente está fuera de su puesto (yendo, en descanso o volviendo).
+  function updateBreak(n, dt, t) {
+    if (n.breakAt === undefined) return false;
+    const want = wantsBreak(n);
+    if (n.mode === 'work') {
+      if (!want || dialogFor === n) return false;
+      const path = findPath(tileOf(n.px, n.py), (x, y) => x === n.spot.x && y === n.spot.y);
+      if (!path) return false;
+      if (!n.patrol) world.solid[seatIndex(n)] = 0;
+      n.path = path;
+      n.mode = 'going';
+      n.bubble = { text: TGL.breakTalk.leave, until: t + 3 };
+    }
+    if (n.mode === 'break') {
+      animate(n, false, dt);
+      if (want) return true;
+      const hx = Math.floor(n.home.x / T), hy = n.row;
+      n.path = findPath(tileOf(n.px, n.py), (x, y) => x === hx && y === hy) || [];
+      n.mode = 'back';
+      n.bubble = { text: TGL.breakTalk.back, until: t + 3 };
+    }
+    if (followPath(n, 70, dt)) animate(n, true, dt);
+    if (n.path && n.path.length) return true;
+    n.path = null;
+    animate(n, false, dt);
+    if (n.mode === 'going') {
+      n.mode = 'break';
+      n.dir = n.spot.dir;
+    } else {
+      n.mode = 'work';
+      n.px = n.home.x;
+      n.py = n.home.y;
+      n.dir = 'down';
+      if (n.patrol) { n.patrolIdx = 0; n.waitUntil = t + 3; }
+      else world.solid[seatIndex(n)] = 1;
+    }
+    return true;
+  }
+  const onBreak = (n) => n.mode === 'break' || n.mode === 'going';
 
   // ————————————————————————————————— Rutas (BFS en la cuadrícula)
   const tileOf = (px, py) => ({ x: Math.floor(px / T), y: Math.floor((py - 4) / T) });
@@ -148,7 +210,7 @@
     }
 
     for (const n of npcs) {
-      if (n.patrol) updatePatrol(n, dt, t);
+      if (!updateBreak(n, dt, t) && n.patrol) updatePatrol(n, dt, t);
       if (n.bubble && t > n.bubble.until) n.bubble = null;
     }
 
@@ -160,7 +222,7 @@
       const idle = npcs.filter((n) => !n.bubble);
       if (idle.length) {
         const n = idle[Math.floor(Math.random() * idle.length)];
-        n.bubble = { text: status(n, Math.floor(Math.random() * n.statuses.es.length)), until: t + 4 };
+        n.bubble = { text: status(n, Math.floor(Math.random() * statusesOf(n).es.length)), until: t + 4 };
       }
     }
 
@@ -208,8 +270,12 @@
   }
 
   // Un estado en los dos idiomas, para que la burbuja cambie si cambias de idioma.
+  function statusesOf(n) {
+    return onBreak(n) ? TGL.breakTalk.statuses : n.statuses;
+  }
   function status(n, i) {
-    return { es: n.statuses.es[i], en: n.statuses.en[i] };
+    const list = statusesOf(n);
+    return { es: list.es[i], en: list.en[i] };
   }
 
   function animate(c, moving, dt) {
@@ -497,7 +563,7 @@
     if (infoRoom) closeInfo();
     if (!dialogFor) return;
     const n = dialogFor;
-    if (!n.patrol) n.dir = 'down';
+    if (!n.patrol && n.mode === 'work') n.dir = 'down';
     dialogFor = null;
     clearInterval(typeTimer);
     dialog.hidden = true;

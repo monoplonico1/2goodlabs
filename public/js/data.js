@@ -72,7 +72,7 @@ TGL.rooms = [
     id: 'terrace',
     name: { es: 'Terraza', en: 'Terrace' },
     blurb: { es: 'Aire libre, café y buenas ideas.', en: 'Fresh air, coffee and good ideas.' },
-    x: 46, y: 3, w: 15, h: 24,
+    x: 46, y: 3, w: 8, h: 24,
     color: '#f2a65a',
   },
   {
@@ -125,7 +125,7 @@ TGL.team = [
   // ——— Zumi ———
   {
     id: 'nodo', name: 'Nodo', kind: 'agent', role: 'dev', room: 'zumi',
-    x: 16.25, row: 4, dir: 'down', body: '#3f8f5a',
+    x: 16.25, row: 4, dir: 'down', body: '#3f8f5a', breakAt: 0,
     bio: {
       es: 'Agente de desarrollo de Zumi. Escribe, prueba y despliega el código de la app y del sitio.',
       en: 'Zumi\'s development agent. Writes, tests and ships the code for the app and the website.',
@@ -141,7 +141,7 @@ TGL.team = [
   },
   {
     id: 'trazo', name: 'Trazo', kind: 'agent', role: 'design', room: 'zumi',
-    x: 20.25, row: 4, dir: 'down', body: '#3f8f5a',
+    x: 20.25, row: 4, dir: 'down', body: '#3f8f5a', breakAt: 15,
     bio: {
       es: 'Agente de diseño de Zumi. Diseña pantallas, ilustraciones y el sistema visual de la marca.',
       en: 'Zumi\'s design agent. Designs the screens, illustrations and the brand\'s visual system.',
@@ -157,7 +157,7 @@ TGL.team = [
   },
   {
     id: 'eco', name: 'Eco', kind: 'agent', role: 'marketing', room: 'zumi',
-    x: 24.25, row: 4, dir: 'down', body: '#3f8f5a',
+    x: 24.25, row: 4, dir: 'down', body: '#3f8f5a', breakAt: 30,
     bio: {
       es: 'Agente de marketing de Zumi. Cuenta la historia de Zumi: contenido, campañas, redes y SEO.',
       en: 'Zumi\'s marketing agent. Tells Zumi\'s story: content, campaigns, social and SEO.',
@@ -175,7 +175,7 @@ TGL.team = [
   // ——— Pickpals ———
   {
     id: 'kernel', name: 'Kernel', kind: 'agent', role: 'dev', room: 'pickpals',
-    x: 31.25, row: 4, dir: 'down', body: '#2f5fc4',
+    x: 31.25, row: 4, dir: 'down', body: '#2f5fc4', breakAt: 0,
     bio: {
       es: 'Agente de desarrollo de Pickpals. Construye la app, la API de picks y las tablas de posiciones.',
       en: 'Pickpals\' development agent. Builds the app, the picks API and the leaderboards.',
@@ -191,7 +191,7 @@ TGL.team = [
   },
   {
     id: 'hype', name: 'Hype', kind: 'agent', role: 'marketing', room: 'pickpals',
-    x: 35.25, row: 4, dir: 'down', body: '#2f5fc4',
+    x: 35.25, row: 4, dir: 'down', body: '#2f5fc4', breakAt: 30,
     bio: {
       es: 'Agente de marketing de Pickpals. Llena las quinielas: campañas, redes y comunidad.',
       en: 'Pickpals\' marketing agent. Fills the pools: campaigns, social and community.',
@@ -207,7 +207,7 @@ TGL.team = [
   },
   {
     id: 'lienzo', name: 'Lienzo', kind: 'agent', role: 'design', room: 'pickpals',
-    x: 31.25, row: 9, dir: 'down', body: '#2f5fc4',
+    x: 31.25, row: 9, dir: 'down', body: '#2f5fc4', breakAt: 15,
     bio: {
       es: 'Agente de diseño de Pickpals. Diseña la app, las tarjetas para compartir picks y la marca.',
       en: 'Pickpals\' design agent. Designs the app, the shareable pick cards and the brand.',
@@ -223,7 +223,7 @@ TGL.team = [
   },
   {
     id: 'stats', name: 'Stats', kind: 'agent', role: 'data', room: 'pickpals',
-    x: 40.75, row: 9, dir: 'down', body: '#2f5fc4',
+    x: 40.75, row: 9, dir: 'down', body: '#2f5fc4', breakAt: 45,
     bio: {
       es: 'Agente de datos deportivos. Busca, valida y registra partidos, resultados, alineaciones y estadísticas para que Pickpals siempre tenga la información al día.',
       en: 'Sports data agent. Finds, validates and records matches, results, lineups and stats so Pickpals always has up-to-date information.',
@@ -244,6 +244,17 @@ TGL.team = [
     ],
   },
 ];
+
+// Descansos: cada agente se toma 5 minutos por hora en la terraza, a partir del
+// minuto `breakAt` (hora local del visitante). Van en parejas por rol.
+TGL.breakTalk = {
+  leave: { es: '¡Descanso! 5 min en la terraza', en: 'Break! 5 min on the terrace' },
+  back: { es: 'De vuelta al trabajo', en: 'Back to work' },
+  statuses: {
+    es: ['Café en la terraza', 'Tomando aire', 'Descanso de 5 minutos', 'Enfriando los circuitos', 'Charlando con el equipo'],
+    en: ['Coffee on the terrace', 'Getting some air', '5-minute break', 'Cooling my circuits', 'Chatting with the team'],
+  },
+};
 
 // Marcador del muro de Pickpals. Son de ejemplo: el agente de datos los reemplazaría por reales.
 TGL.scoreboard = [

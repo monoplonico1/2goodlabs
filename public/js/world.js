@@ -1,18 +1,18 @@
 // El piso de la oficina: plano de tiles, muebles, colisiones y la capa estática ya pintada.
 //
-//  x:  0          12              28                45               61
+//  x:  0          12              28                45       54
 //  y0  ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀  cielo y ciudad
-//  1-2 │  Board    │     Zumi       │    Pickpals    │  ═══ baranda ═══
-//  3-14│           │                │                ⇆                 ║
-//  15  ▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀│    Terraza      ║
-//  16-17  cara del muro del lobby                    │  (al aire libre) ║
-//  18-26            Lobby                            ⇆                 ║
-//  27  ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀═══════════════════
+//  1-2 │  Board    │     Zumi       │    Pickpals    │ ═ baranda ═
+//  3-14│           │                │                ⇆           ║
+//  15  ▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀│  Terraza  ║
+//  16-17  cara del muro del lobby                    │ (abierta) ║
+//  18-26            Lobby                            ⇆           ║
+//  27  ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀═════════════
 //  Puertas: x 5-6, 19-20, 36-37 hacia el lobby; filas 8-9 y 21-22 hacia la terraza.
 
 (function () {
   const T = TGL.T, r = TGL.rect, art = TGL.art;
-  const W = 62, H = 28;
+  const W = 55, H = 28;
   const TOP = 1, FACE = 2, SKY = 3, RAIL = 4;
   const FLOOR = { lobby: 10, board: 11, zumi: 12, pickpals: 13, terrace: 14 };
   const TERRACE_DOORS = [8, 9, 21, 22];
@@ -143,21 +143,26 @@
     put(art.patioChair(), x + 2, y, 1, 1);
   };
   patio(48, 6, '#e04a4a');
-  patio(55, 6, '#2f6fec');
-  patio(51, 11, '#3f8f5a');
-  patio(48, 16, '#f2a65a');
-  patio(55, 16, '#e04a4a');
+  patio(51, 10, '#2f6fec');
+  patio(48, 14, '#3f8f5a');
+  patio(51, 18, '#f2a65a');
   put(art.tree(3), 46, 3, 2, 1);
-  put(art.tree(8), 59, 11, 2, 1);
-  put(art.planter(3, 1), 51, 3, 3, 1);
-  put(art.planter(3, 2), 56, 3, 3, 1);
-  put(art.barCounter(3), 57, 22, 3, 1);
-  put(art.sofa(3, '#e9e2d4'), 50, 25, 3, 1);
-  put(art.table(2, 1), 50, 23, 2, 1);
+  put(art.planter(3, 1), 50, 3, 3, 1);
+  put(art.plant(18), 53, 3, 1, 1);
+  put(art.planter(2, 3), 46, 11, 2, 1);
+  put(art.barCounter(3), 51, 23, 3, 1);
+  put(art.table(2, 1), 47, 23, 2, 1);
+  put(art.sofa(3, '#e9e2d4'), 47, 25, 3, 1);
   put(art.plant(16), 46, 26, 1, 1);
-  put(art.plant(17), 60, 26, 1, 1);
-  put(art.plant(18), 60, 3, 1, 1);
-  put(art.planter(2, 3), 46, 12, 2, 1);
+  put(art.plant(17), 53, 26, 1, 1);
+
+  // Dónde se paran los agentes en su descanso (tile y hacia dónde miran).
+  const breakSpots = [
+    { x: 47, y: 7, dir: 'right' }, { x: 50, y: 7, dir: 'left' },
+    { x: 50, y: 11, dir: 'right' }, { x: 53, y: 11, dir: 'left' },
+    { x: 47, y: 15, dir: 'right' }, { x: 50, y: 15, dir: 'left' },
+    { x: 51, y: 24, dir: 'up' }, { x: 53, y: 24, dir: 'up' },
+  ];
 
   // Lobby
   put(art.fridge(), 1, 18, 1, 1);
@@ -375,7 +380,7 @@
     ctx.fillStyle = g;
     ctx.fillRect(x0, 0, w, h);
     const rnd = TGL.rng(77);
-    for (const [cx, cy] of [[10, 4], [70, 7], [150, 3], [210, 8]]) {
+    for (const [cx, cy] of [[8, 4], [60, 8], [100, 3]]) {
       r(ctx, x0 + cx, cy, 16, 3, '#ffffff');
       r(ctx, x0 + cx + 4, cy - 2, 8, 3, '#ffffff');
     }
@@ -509,12 +514,12 @@
 
   // Por encima de todo: la guirnalda de luces de la terraza.
   function drawOverlay(ctx, t) {
-    art.stringLights(ctx, 46 * T, (W - 1) * T, 9 * T + 4, t);
-    art.stringLights(ctx, 46 * T, (W - 1) * T, 19 * T + 4, t + 1);
+    art.stringLights(ctx, 46 * T, (W - 1) * T, 9 * T + 4, t, 2);
+    art.stringLights(ctx, 46 * T, (W - 1) * T, 17 * T + 4, t + 1, 2);
   }
 
   TGL.world = {
-    W, H, grid, solid, objects, links, roomAt, drawWallAnims, drawOverlay, renderStatic,
+    W, H, grid, solid, objects, links, breakSpots, roomAt, drawWallAnims, drawOverlay, renderStatic,
     isSolid(tx, ty) {
       return tx < 0 || ty < 0 || tx >= W || ty >= H || solid[ty * W + tx] === 1;
     },

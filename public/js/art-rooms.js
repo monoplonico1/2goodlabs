@@ -541,8 +541,9 @@
   };
 
   // Guirnalda de focos colgando sobre la terraza.
-  art.stringLights = function (ctx, x0, x1, y, t) {
-    const segs = 3, len = (x1 - x0) / segs;
+  art.stringLights = function (ctx, x0, x1, y, t, segs) {
+    segs = segs || 3;
+    const len = (x1 - x0) / segs;
     for (let s = 0; s < segs; s++) {
       const a = x0 + s * len;
       for (let i = 0; i <= len; i += 1) {
