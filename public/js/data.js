@@ -48,6 +48,8 @@ TGL.rooms = [
       en: 'Zumi is the app to take care of your pet. Scan the vaccination card and it builds the schedule: vaccines, treatments, meals, walks and vet visits, with the full medical history. For dogs, cats, birds, fish, reptiles and exotics. Built by Nodo (development), Trazo (design) and Eco (marketing).',
     },
     link: 'https://zumiapp.co',
+    appStore: 'https://apps.apple.com/us/app/zumi-pet-health-care/id6767697574',
+    infoLinks: ['https://zumiapp.co', 'https://apps.apple.com/us/app/zumi-pet-health-care/id6767697574'],
     x: 13, y: 3, w: 15, h: 12,
     color: '#5fae74',
   },
@@ -65,6 +67,13 @@ TGL.rooms = [
     link: 'https://pickpals.co',
     x: 29, y: 3, w: 16, h: 12,
     color: '#4f86f0',
+  },
+  {
+    id: 'terrace',
+    name: { es: 'Terraza', en: 'Terrace' },
+    blurb: { es: 'Aire libre, café y buenas ideas.', en: 'Fresh air, coffee and good ideas.' },
+    x: 46, y: 3, w: 15, h: 24,
+    color: '#f2a65a',
   },
   {
     id: 'lobby',
@@ -98,7 +107,7 @@ TGL.team = [
   {
     id: 'ricardo', name: 'Ricardo', kind: 'human', role: 'founder', room: 'board',
     x: 9.25, row: 4, dir: 'down',
-    look: { skin: '#d49a6a', hair: '#4a2e1c', hairStyle: 'side', body: '#8a3b3b', legs: '#262b36' },
+    look: { skin: '#d49a6a', hair: '#4a2e1c', hairStyle: 'side', beard: '#3b2416', body: '#8a3b3b', legs: '#262b36' },
     bio: {
       es: 'Co-fundador de 2GoodLabs. Define la visión, pone las prioridades y decide qué construimos después. Los agentes le reportan a él y a Cesar.',
       en: 'Co-founder of 2GoodLabs. Sets the vision, the priorities and what we build next. The agents report to him and Cesar.',

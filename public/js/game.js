@@ -114,7 +114,7 @@
   }
 
   // ————————————————————————————————— Actualización
-  const SPEED = 80, AUTO_SPEED = 120;
+  const SPEED = 130, AUTO_SPEED = 210;
   let bubbleTimer = 1.5, currentRoom = null, nearNpc = null, nearObj = null;
 
   function update(dt, t) {
@@ -180,7 +180,7 @@
     if (room && room !== currentRoom) {
       currentRoom = room;
       showToast(room);
-      $('#hud-room').textContent = room.name;
+      $('#hud-room').textContent = TGL.t(room.name);
     }
   }
 
@@ -325,7 +325,7 @@
     items.sort((a, b) => a.y - b.y);
     for (const it of items) {
       if (it.o) {
-        ctx.drawImage(it.o.canvas, it.o.x, it.o.y - it.o.top);
+        ctx.drawImage(it.o.canvas, it.o.x - it.o.ox, it.o.y - it.o.top);
         if (it.o.anim) it.o.anim(ctx, it.o.x, it.o.y - it.o.top, t);
       } else if (it.dog) {
         TGL.art.drawDog(ctx, dog.px, dog.py, dog.face, dog.frame, t, !dog.path);
@@ -333,6 +333,8 @@
         TGL.drawCharacter(ctx, it.c, t);
       }
     }
+
+    world.drawOverlay(ctx, t);
 
     // Capa de interfaz en pixeles de pantalla.
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -462,7 +464,7 @@
     $('#dlg-name').textContent = n.name;
     $('#dlg-role').textContent = TGL.ui(n.kind === 'agent' ? 'agentIA' : 'human') + ' · ' + TGL.t(role.label);
     $('#dlg-role').style.setProperty('--role', role.color);
-    $('#dlg-room').textContent = room.name;
+    $('#dlg-room').textContent = TGL.t(room.name);
     $('#dlg-tasks').innerHTML = '';
     for (const task of TGL.t(n.tasks)) {
       const li = document.createElement('li');
@@ -523,7 +525,7 @@
     const room = TGL.rooms.find((r) => r.id === roomId);
     infoRoom = room;
     infoBox.style.setProperty('--room', room.color);
-    $('#info-title').textContent = room.infoTitle || room.name;
+    $('#info-title').textContent = room.infoTitle || TGL.t(room.name);
     $('#info-text').textContent = TGL.t(room.info);
     const links = $('#info-links');
     links.innerHTML = '';
@@ -532,7 +534,7 @@
       a.href = url;
       a.target = '_blank';
       a.rel = 'noopener';
-      a.textContent = TGL.ui('visit') + ' ' + url.replace(/^https?:\/\//, '') + ' ↗';
+      a.textContent = url.includes('apps.apple.com') ? TGL.ui('appStoreBtn') : TGL.ui('visit') + ' ' + url.replace(/^https?:\/\//, '') + ' ↗';
       links.appendChild(a);
     }
     infoBox.hidden = false;
@@ -547,6 +549,7 @@
 
   function useObject(o) {
     if (o.interact.type === 'directory') toggleDirectory(true);
+    else if (o.interact.type === 'link') window.open(o.interact.url, '_blank', 'noopener');
     else if (o.interact.type === 'info') openInfo(o.interact.room);
   }
 
@@ -557,9 +560,10 @@
     if (dialogOpen()) text = null;
     else if (nearNpc) text = TGL.ui('talkTo') + ' ' + nearNpc.name;
     else if (nearObj && nearObj.interact.type === 'directory') text = TGL.ui('seeDirectory');
+    else if (nearObj && nearObj.interact.type === 'link') text = TGL.ui(nearObj.interact.hint);
     else if (nearObj) {
       const room = TGL.rooms.find((r) => r.id === nearObj.interact.room);
-      text = TGL.ui('moreInfo') + ' ' + (room.infoTitle || room.name);
+      text = TGL.ui('moreInfo') + ' ' + (room.infoTitle || TGL.t(room.name));
     }
     hint.hidden = !text;
     if (text) hint.querySelector('span').textContent = text;
@@ -574,7 +578,7 @@
   let toastTimer = null;
   function showToast(room) {
     const el = $('#toast');
-    el.querySelector('strong').textContent = room.name;
+    el.querySelector('strong').textContent = TGL.t(room.name);
     el.querySelector('span').textContent = TGL.t(room.blurb);
     el.style.setProperty('--room', room.color);
     el.hidden = false;
@@ -607,7 +611,7 @@
       sec.className = 'dir-room';
       sec.style.setProperty('--room', room.color);
       const h = document.createElement('h3');
-      h.textContent = room.name;
+      h.textContent = TGL.t(room.name);
       sec.appendChild(h);
       const p = document.createElement('p');
       p.textContent = TGL.t(room.blurb);
@@ -617,6 +621,14 @@
         a.target = '_blank';
         a.rel = 'noopener';
         a.textContent = ' ' + room.link.replace(/^https?:\/\//, '') + ' ↗';
+        p.appendChild(a);
+      }
+      if (room.appStore) {
+        const a = document.createElement('a');
+        a.href = room.appStore;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        a.textContent = ' · App Store ↗';
         p.appendChild(a);
       }
       sec.appendChild(p);
@@ -713,7 +725,8 @@
     const obj = objectAt(wx, wy);
     if (obj) {
       const near = Math.abs(player.px - (obj.x + obj.w / 2)) < obj.w / 2 + 20 && Math.abs(player.py - (obj.y + obj.h / 2)) < obj.h / 2 + 20;
-      if (near) return useObject(obj);
+      // Los links abren de inmediato: el navegador solo permite la pestaña nueva durante el clic.
+      if (near || obj.interact.type === 'link') return useObject(obj);
       return walkTo(Math.floor(obj.x / T), Math.floor(obj.y / T), () => useObject(obj));
     }
     walkTo(Math.floor(wx / T), Math.floor((wy - 4) / T));
@@ -764,6 +777,7 @@
     buildDirectory();
     if (dialogFor) openDialog(dialogFor);
     if (infoRoom) openInfo(infoRoom.id);
+    if (currentRoom) $('#hud-room').textContent = TGL.t(currentRoom.name);
     if (currentRoom) showToast(currentRoom);
     updateHint();
   });

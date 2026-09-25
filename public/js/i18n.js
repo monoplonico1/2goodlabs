@@ -36,6 +36,9 @@
       moreInfo: 'Más sobre',
       visit: 'Visitar',
       bark: '¡Guau!',
+      getOn: 'Descárgala en el',
+      getZumi: 'Descargar Zumi en el App Store',
+      appStoreBtn: 'Descargar en el App Store ↗',
     },
     en: {
       title: '2GoodLabs — an AI-led company',
@@ -69,6 +72,9 @@
       moreInfo: 'More about',
       visit: 'Visit',
       bark: 'Woof!',
+      getOn: 'Download on the',
+      getZumi: 'Get Zumi on the App Store',
+      appStoreBtn: 'Download on the App Store ↗',
     },
   };
 

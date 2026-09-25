@@ -8,13 +8,14 @@ caminando: un piso con tres salas y un lobby.
 | **Board** | Cesar y Ricardo, co-founders (humanos) |
 | **Zumi** | Agentes de desarrollo (Nodo), diseño (Trazo) y marketing (Eco) |
 | **Pickpals** | Agentes de desarrollo (Kernel), diseño (Lienzo), marketing (Hype) y datos deportivos (Stats) |
+| **Terraza** | Al aire libre, a la derecha de Pickpals y del lobby: mesas con sombrilla, barra y luces |
 
 Controles: `WASD`/flechas para caminar, `E` para hablar, clic o tap para ir a un
 punto, clic en alguien para hablarle. Zoom con `+`/`−`, la rueda del mouse, pellizco
 en el celular o los botones junto al minimapa; `0` o ⛶ muestra el piso completo.
 
 Cada sala tiene un bloque **?** con información de la empresa y un botón a su sitio
-(zumiapp.co, pickpals.co); los letreros de Zumi y Pickpals también tienen el link debajo.
+(zumiapp.co, pickpals.co). En Zumi también hay un cartel para descargar la app en el App Store. Los letreros de Zumi y Pickpals también tienen el link debajo.
 
 Idiomas: español e inglés, con el selector ES/EN. También se puede forzar con
 `?lang=en` o `?lang=es`; si no, recuerda la última elección o usa el idioma del navegador. El botón **Directorio** lleva a cualquier

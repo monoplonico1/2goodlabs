@@ -429,4 +429,131 @@
     r(ctx, Math.round(bx), Math.round(by + 6), 2, 1, 'rgba(0,0,0,.3)');
     r(ctx, Math.round(bx), Math.round(by), 2, 2, '#ffffff');
   };
+
+  // ————————————————————————————————— Zumi: cartel para descargar la app
+
+  art.appStoreSign = function () {
+    const W = 2 * T, top = 16, c = canvas(W, T + top), x = c.getContext('2d');
+    r(x, 14, 20, 4, 10, '#8a8f98');
+    r(x, 9, 29, 14, 2, '#6b717c');
+    r(x, 0, 0, W, 21, '#0b0b0d');
+    r(x, 1, 0, W - 2, 1, '#2a2b30');
+    r(x, 0, 1, 1, 19, '#2a2b30');
+    // teléfono con Zumi en pantalla
+    r(x, 2, 3, 8, 15, '#d4d5da');
+    r(x, 3, 4, 6, 12, '#2c4a35');
+    r(x, 3, 4, 6, 3, '#ffc367');
+    art.paw(x, 3, 9, '#f4e2d0');
+    return { canvas: c, top };
+  };
+  // Los textos se pintan cada frame para que se vean nítidos y cambien con el idioma.
+  art.appStoreText = function (ctx, wx, wy, t) {
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = '#c7c7cc';
+    ctx.font = '600 3px Inter, system-ui, sans-serif';
+    ctx.fillText(TGL.ui('getOn'), wx + 12, wy + 4);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '800 5px Inter, system-ui, sans-serif';
+    ctx.fillText('App Store', wx + 12, wy + 8);
+    const on = Math.floor(t * 2) % 2 === 0;
+    r(ctx, wx + 12, wy + 16, 12, 2, on ? '#34c759' : '#1f7a38');
+  };
+
+  // ————————————————————————————————— Terraza
+
+  // Mesa redonda con sombrilla. La sombrilla sobresale y tapa a quien pase detrás.
+  art.patioTable = function (color) {
+    const W = 2 * T, top = 26, c = canvas(W + 12, T + top), x = c.getContext('2d');
+    const ox = 6;
+    r(x, ox + 15, 8, 2, 30, '#8a8f98');
+    r(x, ox + 3, top + 1, W - 6, 9, '#f2efe9');
+    r(x, ox + 3, top + 1, W - 6, 1, '#ffffff');
+    r(x, ox + 3, top + 9, W - 6, 2, '#c9c3b6');
+    r(x, ox + 8, top + 11, 2, 5, '#6b717c');
+    r(x, ox + W - 10, top + 11, 2, 5, '#6b717c');
+    r(x, ox + 7, top + 3, 3, 3, '#e04a4a');
+    r(x, ox + W - 11, top + 4, 3, 3, '#ffd24d');
+    // sombrilla a rayas
+    for (let i = 0; i < 6; i++) {
+      const cx = i * 7;
+      r(x, cx, 6, 7, 6, i % 2 ? '#ffffff' : color);
+    }
+    r(x, 3, 3, W + 6, 4, color);
+    r(x, 8, 1, W - 4, 3, color);
+    r(x, 14, 0, 16, 2, '#ffffff');
+    r(x, 0, 11, W + 12, 1, 'rgba(0,0,0,.2)');
+    return { canvas: c, top, ox };
+  };
+
+  art.patioChair = function () {
+    const top = 4, c = canvas(T, T + top), x = c.getContext('2d');
+    r(x, 3, 0, 10, 7, '#c98a4a');
+    for (let i = 1; i < 7; i += 2) r(x, 3, i, 10, 1, '#a86f36');
+    r(x, 3, 7, 10, 5, '#d99a5a');
+    r(x, 3, 11, 10, 1, '#a86f36');
+    r(x, 4, 12, 1, 6, '#5c4330');
+    r(x, 11, 12, 1, 6, '#5c4330');
+    return { canvas: c, top };
+  };
+
+  art.tree = function (seed) {
+    const top = 34, c = canvas(2 * T, T + top), x = c.getContext('2d');
+    const rnd = TGL.rng(seed || 5);
+    r(x, 14, 18, 4, 20, '#6b4a2b');
+    const g = ['#2f7a3b', '#3f8f3f', '#4fa34c', '#62b85a'];
+    for (let i = 0; i < 26; i++) {
+      const bx = 2 + Math.floor(rnd() * 22), by = Math.floor(rnd() * 20);
+      r(x, bx, by, 6 + Math.floor(rnd() * 4), 5, g[Math.floor(rnd() * g.length)]);
+    }
+    r(x, 6, top + 3, 20, 13, '#8c8f96');
+    r(x, 6, top + 3, 20, 2, '#b3b7bf');
+    r(x, 8, top + 5, 16, 2, '#5b3d22');
+    return { canvas: c, top };
+  };
+
+  art.barCounter = function (w) {
+    const W = w * T, top = 12, c = canvas(W, T + top), x = c.getContext('2d');
+    r(x, 0, 10, W, 18, '#5c4330');
+    for (let i = 0; i < W; i += 4) r(x, i, 14, 2, 14, '#6b4f39');
+    r(x, 0, 8, W, 4, '#e9e2d4');
+    r(x, 0, 8, W, 1, '#ffffff');
+    // bebidas y una cafetera
+    r(x, 4, 0, 8, 9, '#2b2f3a');
+    r(x, 6, 3, 4, 3, '#4a4f58');
+    [['#ffd24d', 16], ['#e04a4a', 21], ['#9cff57', 26], ['#4dd6ff', 31], ['#f2a65a', 36]].forEach(([col, bx]) => {
+      if (bx + 3 > W - 2) return;
+      r(x, bx, 3, 3, 5, 'rgba(255,255,255,.55)');
+      r(x, bx, 5, 3, 3, col);
+    });
+    return { canvas: c, top };
+  };
+
+  art.planter = function (w, seed) {
+    const W = w * T, top = 8, c = canvas(W, T + top), x = c.getContext('2d');
+    const rnd = TGL.rng(seed || 7);
+    for (let i = 0; i < w * 5; i++) r(x, Math.floor(rnd() * (W - 5)), Math.floor(rnd() * 10), 5, 5, rnd() > 0.5 ? '#3f8f3f' : '#5fb35a');
+    for (let i = 0; i < w * 2; i++) r(x, 2 + Math.floor(rnd() * (W - 4)), 1 + Math.floor(rnd() * 8), 2, 2, ['#ff6fa8', '#ffd24d', '#ffffff'][i % 3]);
+    r(x, 0, 11, W, 13, '#9a6d44');
+    r(x, 0, 11, W, 2, '#b98552');
+    r(x, 0, 22, W, 2, '#6b4a2b');
+    return { canvas: c, top };
+  };
+
+  // Guirnalda de focos colgando sobre la terraza.
+  art.stringLights = function (ctx, x0, x1, y, t) {
+    const segs = 3, len = (x1 - x0) / segs;
+    for (let s = 0; s < segs; s++) {
+      const a = x0 + s * len;
+      for (let i = 0; i <= len; i += 1) {
+        const sag = Math.sin((i / len) * Math.PI) * 7;
+        r(ctx, Math.round(a + i), Math.round(y + sag), 1, 1, 'rgba(40,30,20,.7)');
+      }
+      for (let i = 6; i < len; i += 12) {
+        const sag = Math.sin((i / len) * Math.PI) * 7, k = Math.floor(a + i);
+        const on = (Math.floor(t * 2) + k) % 5 !== 0;
+        r(ctx, Math.round(a + i), Math.round(y + sag + 1), 2, 2, on ? ['#ffe08a', '#ffb86b', '#fff3c4'][k % 3] : '#8a7a5a');
+      }
+    }
+  };
 })();

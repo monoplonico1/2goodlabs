@@ -1,19 +1,21 @@
 // El piso de la oficina: plano de tiles, muebles, colisiones y la capa estática ya pintada.
 //
-//  x:  0          12              28                45
-//  y0  ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀  muro (techo)
-//  1-2 │  Board    │     Zumi       │    Pickpals    │  cara del muro
-//  3-14│           │                │                │  salas
-//  15  ▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀  puertas en x 5-6, 19-20, 36-37
-//  16-17  cara del muro del lobby
-//  18-26            Lobby
-//  27  ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+//  x:  0          12              28                45               61
+//  y0  ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀  cielo y ciudad
+//  1-2 │  Board    │     Zumi       │    Pickpals    │  ═══ baranda ═══
+//  3-14│           │                │                ⇆                 ║
+//  15  ▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀│    Terraza      ║
+//  16-17  cara del muro del lobby                    │  (al aire libre) ║
+//  18-26            Lobby                            ⇆                 ║
+//  27  ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀═══════════════════
+//  Puertas: x 5-6, 19-20, 36-37 hacia el lobby; filas 8-9 y 21-22 hacia la terraza.
 
 (function () {
   const T = TGL.T, r = TGL.rect, art = TGL.art;
-  const W = 46, H = 28;
-  const TOP = 1, FACE = 2;
-  const FLOOR = { lobby: 10, board: 11, zumi: 12, pickpals: 13 };
+  const W = 62, H = 28;
+  const TOP = 1, FACE = 2, SKY = 3, RAIL = 4;
+  const FLOOR = { lobby: 10, board: 11, zumi: 12, pickpals: 13, terrace: 14 };
+  const TERRACE_DOORS = [8, 9, 21, 22];
   const DOORS = [
     { x: 5, w: 2, room: 'board' },
     { x: 19, w: 2, room: 'zumi' },
@@ -24,6 +26,7 @@
   const at = (x, y) => (x < 0 || y < 0 || x >= W || y >= H ? TOP : grid[y * W + x]);
   const set = (x, y, v) => { grid[y * W + x] = v; };
   const isWall = (v) => v === TOP || v === FACE;
+  const isBlocked = (v) => v === TOP || v === FACE || v === SKY || v === RAIL;
 
   // Salas y caras de muro (dos tiles de alto: se ven desde el sur).
   for (const room of TGL.rooms) {
@@ -40,6 +43,15 @@
       set(x, 16, FLOOR.lobby);
       set(x, 17, FLOOR.lobby);
     }
+  // Terraza: sin muros. Arriba se ve el cielo y alrededor hay baranda de vidrio.
+  for (let x = 46; x < W; x++) {
+    set(x, 0, SKY);
+    set(x, 1, SKY);
+    set(x, 2, RAIL);
+    set(x, H - 1, RAIL);
+  }
+  for (let y = 2; y < H; y++) set(W - 1, y, RAIL);
+  for (const y of TERRACE_DOORS) set(45, y, FLOOR.terrace);
 
   // ————————————————————————————————— Muebles
   const objects = [];
@@ -47,7 +59,7 @@
     opts = opts || {};
     const o = {
       x: x * T, y: y * T, w: w * T, h: h * T,
-      canvas: sprite.canvas, top: sprite.top,
+      canvas: sprite.canvas, top: sprite.top, ox: sprite.ox || 0,
       solid: opts.solid !== false,
       anim: opts.anim || null,
       floor: !!opts.floor,
@@ -103,6 +115,10 @@
   put(art.plant(4), 13, 14, 1, 1);
   put(art.plant(5), 27, 14, 1, 1);
   info(21, 13, 'zumi');
+  put(art.appStoreSign(), 23, 14, 2, 1, {
+    anim: art.appStoreText,
+    interact: { type: 'link', url: TGL.rooms.find((r) => r.id === 'zumi').appStore, hint: 'getZumi' },
+  });
 
   // Pickpals: pantallas con deportes y ping-pong
   put(art.plant(6), 29, 3, 1, 1);
@@ -119,6 +135,29 @@
   put(art.plant(7), 29, 14, 1, 1);
   put(art.plant(8), 44, 14, 1, 1);
   info(38, 13, 'pickpals');
+
+  // Terraza: mesas con sombrilla, barra, árboles y jardineras
+  const patio = (x, y, color) => {
+    put(art.patioChair(), x - 1, y, 1, 1);
+    put(art.patioTable(color), x, y, 2, 1);
+    put(art.patioChair(), x + 2, y, 1, 1);
+  };
+  patio(48, 6, '#e04a4a');
+  patio(55, 6, '#2f6fec');
+  patio(51, 11, '#3f8f5a');
+  patio(48, 16, '#f2a65a');
+  patio(55, 16, '#e04a4a');
+  put(art.tree(3), 46, 3, 2, 1);
+  put(art.tree(8), 59, 11, 2, 1);
+  put(art.planter(3, 1), 51, 3, 3, 1);
+  put(art.planter(3, 2), 56, 3, 3, 1);
+  put(art.barCounter(3), 57, 22, 3, 1);
+  put(art.sofa(3, '#e9e2d4'), 50, 25, 3, 1);
+  put(art.table(2, 1), 50, 23, 2, 1);
+  put(art.plant(16), 46, 26, 1, 1);
+  put(art.plant(17), 60, 26, 1, 1);
+  put(art.plant(18), 60, 3, 1, 1);
+  put(art.planter(2, 3), 46, 12, 2, 1);
 
   // Lobby
   put(art.fridge(), 1, 18, 1, 1);
@@ -142,7 +181,7 @@
 
   // ————————————————————————————————— Colisiones
   const solid = new Uint8Array(W * H);
-  for (let i = 0; i < W * H; i++) solid[i] = isWall(grid[i]) ? 1 : 0;
+  for (let i = 0; i < W * H; i++) solid[i] = isBlocked(grid[i]) ? 1 : 0;
   for (const o of objects) {
     if (!o.solid) continue;
     for (let y = o.y / T; y < (o.y + o.h) / T; y++)
@@ -177,6 +216,13 @@
     } else if (v === FLOOR.zumi) {
       r(ctx, px, py, T, T, (x + y) % 2 ? '#78a37a' : '#729d74');
       for (let k = 0; k < 3; k++) r(ctx, px + Math.floor(rnd() * 16), py + Math.floor(rnd() * 16), 1, 1, '#86b087');
+    } else if (v === FLOOR.terrace) {
+      // deck de madera
+      r(ctx, px, py, T, T, '#b98552');
+      for (let k = 0; k < 4; k++) {
+        r(ctx, px, py + k * 4 + 3, T, 1, '#9c6d40');
+        r(ctx, px + ((x * 5 + y * 3 + k * 7) % 16), py + k * 4, 1, 3, '#a8784a');
+      }
     } else if (v === FLOOR.pickpals) {
       r(ctx, px, py, T, T, '#5b719a');
       r(ctx, px, py, T, 1, '#536890');
@@ -306,6 +352,44 @@
     ctx.fillText(TGL.t(TGL.company.tagline).toUpperCase(), x + w / 2, y + 52);
   }
 
+  function drawRail(ctx, x, y) {
+    const px = x * T, py = y * T;
+    if (x === W - 1 && y > 2) {
+      r(ctx, px + 4, py, 8, T, 'rgba(190,225,245,.55)');
+      r(ctx, px + 4, py, 2, T, '#9aa3ae');
+      r(ctx, px + 11, py, 1, T, '#c7ced7');
+    } else {
+      r(ctx, px, py + 3, T, 10, 'rgba(190,225,245,.55)');
+      r(ctx, px, py + 2, T, 2, '#9aa3ae');
+      r(ctx, px, py + 13, T, 1, '#7c848f');
+      if (x % 3 === 0) r(ctx, px, py + 4, 1, 9, '#9aa3ae');
+    }
+  }
+
+  // Lo que se ve desde la terraza: cielo, nubes y la ciudad.
+  function drawSky(ctx) {
+    const x0 = 46 * T, w = (W - 46) * T, h = 2 * T;
+    const g = ctx.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, '#6fb6ea');
+    g.addColorStop(1, '#cfe9f7');
+    ctx.fillStyle = g;
+    ctx.fillRect(x0, 0, w, h);
+    const rnd = TGL.rng(77);
+    for (const [cx, cy] of [[10, 4], [70, 7], [150, 3], [210, 8]]) {
+      r(ctx, x0 + cx, cy, 16, 3, '#ffffff');
+      r(ctx, x0 + cx + 4, cy - 2, 8, 3, '#ffffff');
+    }
+    let bx = x0;
+    while (bx < x0 + w) {
+      const bw = 8 + Math.floor(rnd() * 12), bh = 8 + Math.floor(rnd() * 16);
+      const col = rnd() > 0.5 ? '#7b8ea8' : '#8c9fb8';
+      r(ctx, bx, h - bh, bw, bh, col);
+      for (let wy = h - bh + 3; wy < h - 2; wy += 4)
+        for (let wx = bx + 2; wx < bx + bw - 2; wx += 3) if (rnd() > 0.4) r(ctx, wx, wy, 1, 2, '#dfe8f2');
+      bx += bw + 1;
+    }
+  }
+
   function renderStatic() {
     links.length = 0;
     const c = TGL.canvas(W * T, H * T), ctx = c.getContext('2d');
@@ -327,7 +411,10 @@
             r(ctx, px, py + T - 3, T, 3, '#7a5230');
             r(ctx, px, py + T - 3, T, 1, '#9a6d44');
           }
-        } else {
+        } else if (v === RAIL) {
+          drawFloor(ctx, x, y, FLOOR.terrace, rnd);
+          drawRail(ctx, x, y);
+        } else if (v !== SKY) {
           drawFloor(ctx, x, y, v, rnd);
         }
       }
@@ -347,6 +434,13 @@
       r(ctx, d.x * T + 2, 18 * T + 1, d.w * T - 4, 6, '#6b4f35');
     }
     for (const d of decor) drawDecor(ctx, d);
+    drawSky(ctx);
+    // Puertas corredizas hacia la terraza.
+    for (let i = 0; i < TERRACE_DOORS.length; i += 2) {
+      const y = TERRACE_DOORS[i];
+      r(ctx, 45 * T, y * T - 2, T, 2, '#9aa3ae');
+      r(ctx, 45 * T, (y + 2) * T, T, 2, '#9aa3ae');
+    }
     drawRug(ctx);
     return c;
   }
@@ -413,8 +507,14 @@
     ctx.restore();
   }
 
+  // Por encima de todo: la guirnalda de luces de la terraza.
+  function drawOverlay(ctx, t) {
+    art.stringLights(ctx, 46 * T, (W - 1) * T, 9 * T + 4, t);
+    art.stringLights(ctx, 46 * T, (W - 1) * T, 19 * T + 4, t + 1);
+  }
+
   TGL.world = {
-    W, H, grid, solid, objects, links, roomAt, drawWallAnims, renderStatic,
+    W, H, grid, solid, objects, links, roomAt, drawWallAnims, drawOverlay, renderStatic,
     isSolid(tx, ty) {
       return tx < 0 || ty < 0 || tx >= W || ty >= H || solid[ty * W + tx] === 1;
     },

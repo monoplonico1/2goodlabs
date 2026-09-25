@@ -67,12 +67,21 @@
         r(ctx, ox + 5, oy + 5, 1, 2, '#1b1410');
         r(ctx, ox + 8, oy + 5, 1, 2, '#1b1410');
         r(ctx, ox + 6, oy + 8, 2, 1, 'rgba(120,50,40,.55)');
+        if (look.beard) {
+          r(ctx, ox + 3, oy + 6, 1, 4, look.beard);
+          r(ctx, ox + 10, oy + 6, 1, 4, look.beard);
+          r(ctx, ox + 4, oy + 8, 6, 2, look.beard);
+          r(ctx, ox + 5, oy + 7, 4, 1, look.beard);
+          r(ctx, ox + 6, oy + 8, 2, 1, '#9a5a48');
+        }
       } else if (dir === 'left') {
         r(ctx, ox + 8, oy + 1, 4, 7, h);
         r(ctx, ox + 4, oy + 5, 1, 2, '#1b1410');
+        if (look.beard) r(ctx, ox + 3, oy + 7, 6, 3, look.beard);
       } else {
         r(ctx, ox + 2, oy + 1, 4, 7, h);
         r(ctx, ox + 9, oy + 5, 1, 2, '#1b1410');
+        if (look.beard) r(ctx, ox + 5, oy + 7, 6, 3, look.beard);
       }
     }
   }
