@@ -7,8 +7,8 @@ window.TGL = window.TGL || {};
 TGL.company = {
   name: '2GoodLabs',
   tagline: { es: 'Laboratorio de producto con IA', en: 'An AI-powered product lab' },
-  // Dominio principal; 2goodlabs.com redirige aquí (ver worker/index.js).
-  url: 'https://2goodlabs.io',
+  // Dominio del sitio (canonical, sitemap, datos estructurados).
+  url: 'https://2goodlabs.com',
   about: {
     es: 'Somos Cesar y Ricardo, dos diseñadores de producto y experiencia de usuario. La IA es nuestra herramienta principal: cada agente de esta oficina representa tareas que hacemos con ella. Aquí construimos nuestros productos, Zumi y Pickpals.',
     en: 'We are Cesar and Ricardo, two product and user experience designers. AI is our main tool: every agent in this office stands for work we do with it. This is where we build our products, Zumi and Pickpals.',

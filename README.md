@@ -38,7 +38,7 @@ formulario de contacto.
 ```
 src/index.html      plantilla de la página (editar aquí, no en public/*.html)
 build.js            genera public/index.html (es), public/en/index.html, sitemap y robots
-worker/index.js     redirecciones .com → .io y POST /api/contact
+worker/index.js     redirección www → 2goodlabs.com y POST /api/contact
 public/
   js/data.js        ← textos (es/en), salas y equipo. Lo único que hay que tocar para cambiar contenido
   js/i18n.js        textos de la interfaz y cambio de idioma
@@ -82,21 +82,22 @@ Con `wrangler dev` el formulario no envía correos de verdad: los guarda como `.
 npx wrangler deploy
 ```
 
-`wrangler.jsonc` conecta los cuatro dominios (`2goodlabs.io`, `2goodlabs.com` y sus
-`www`) como dominios propios del Worker. Los dos dominios tienen que estar en la misma
-cuenta de Cloudflare. El principal es **2goodlabs.io**; los otros redirigen con 301.
-Para cambiarlo: `PRIMARY` en `worker/index.js` y `TGL.company.url` en `data.js`.
+El sitio vive en **2goodlabs.com**, conectado como dominio propio del Worker en
+`wrangler.jsonc`. Si más adelante se agrega `www.2goodlabs.com` (en `routes`), el worker
+ya lo redirige al dominio principal. Para cambiar de dominio: `routes` en
+`wrangler.jsonc`, `PRIMARY` en `worker/index.js` y `TGL.company.url` en `data.js`, y
+luego `node build.js`.
 
 ## Contacto
 
 El formulario (en la vista simple y en el buzón rojo del lobby) envía un correo con
 [Email Routing](https://developers.cloudflare.com/email-routing/email-workers/send-email-workers/) de Cloudflare. Una sola vez:
 
-1. En Cloudflare, `2goodlabs.io` → **Email** → **Email Routing** → activarlo.
+1. En Cloudflare, `2goodlabs.com` → **Email** → **Email Routing** → activarlo.
 2. En **Destination addresses**, agregar el correo donde quieren recibir los mensajes y
    verificarlo (llega un correo de confirmación).
 3. En `wrangler.jsonc`, poner ese correo en `CONTACT_TO` (hoy dice `CAMBIAR@ejemplo.com`).
-   `CONTACT_FROM` puede quedar como `contacto@2goodlabs.io`.
+   `CONTACT_FROM` puede quedar como `contacto@2goodlabs.com`.
 4. `npx wrangler deploy`.
 
 Los mensajes llegan con *Reply-To* de quien escribió, así que basta con responder.
@@ -111,9 +112,9 @@ Hay un campo trampa oculto contra bots; si llega spam, el siguiente paso es
   Zumi y Pickpals como sus productos.
 - `og.png` para que el link se vea bien al compartirlo.
 
-Pendiente fuera del código: registrar `2goodlabs.io` en
+Pendiente fuera del código: registrar `2goodlabs.com` en
 [Google Search Console](https://search.google.com/search-console) y enviar el sitemap, y
-enlazar a 2goodlabs.io desde zumiapp.co y pickpals.co ("Un producto de 2GoodLabs").
+enlazar a 2goodlabs.com desde zumiapp.co y pickpals.co ("Un producto de 2GoodLabs").
 
 `og.png` es una captura de la oficina y `logo.png` un logo provisional; si cambia el
 diseño, conviene regenerarlos.

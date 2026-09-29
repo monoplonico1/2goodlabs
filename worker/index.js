@@ -1,12 +1,12 @@
 // Worker de Cloudflare: sirve public/ y además
-//   1. redirige 2goodlabs.com y los www al dominio principal (2goodlabs.io);
+//   1. redirige www.2goodlabs.com al dominio principal (2goodlabs.com), si se conecta;
 //   2. recibe el formulario de contacto (POST /api/contact) y lo envía por correo
 //      con Email Routing de Cloudflare (binding CONTACT_EMAIL, ver wrangler.jsonc).
 
 import { EmailMessage } from 'cloudflare:email';
 
-const PRIMARY = '2goodlabs.io';
-const REDIRECT_HOSTS = ['2goodlabs.com', 'www.2goodlabs.com', 'www.2goodlabs.io'];
+const PRIMARY = '2goodlabs.com';
+const REDIRECT_HOSTS = ['www.2goodlabs.com'];
 
 export default {
   async fetch(request, env) {
