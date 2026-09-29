@@ -186,11 +186,14 @@
       if (keys.has('ArrowRight') || keys.has('d')) ix += 1;
       if (keys.has('ArrowUp') || keys.has('w')) iy -= 1;
       if (keys.has('ArrowDown') || keys.has('s')) iy += 1;
+      // En pantallas táctiles, el joystick que aparece bajo el dedo (analógico: más lejos, más rápido).
+      if (joy && joy.on && (joy.x || joy.y)) { ix = joy.x; iy = joy.y; }
       let moving = false;
       if (ix || iy) {
         player.path = null;
         player.onArrive = null;
-        const len = Math.hypot(ix, iy), vx = (ix / len) * SPEED * dt, vy = (iy / len) * SPEED * dt;
+        const len = Math.hypot(ix, iy), m = Math.min(1, len);
+        const vx = (ix / len) * SPEED * m * dt, vy = (iy / len) * SPEED * m * dt;
         if (!blockedAt(player.px + vx, player.py)) player.px += vx;
         if (!blockedAt(player.px, player.py + vy)) player.py += vy;
         player.dir = Math.abs(ix) >= Math.abs(iy) && ix ? (ix > 0 ? 'right' : 'left') : iy > 0 ? 'down' : 'up';
@@ -413,7 +416,25 @@
     }
     if (hoverNpc && hoverNpc !== nearNpc) drawRing(hoverNpc);
     if (nearNpc) drawRing(nearNpc);
+    drawJoystick();
     drawMinimap();
+  }
+
+  function drawJoystick() {
+    if (!joy || !joy.on) return;
+    const b = canvas.getBoundingClientRect();
+    const cx = (joy.x0 - b.left) * dpr, cy = (joy.y0 - b.top) * dpr, R = JOY_R * dpr;
+    ctx.fillStyle = 'rgba(20,20,26,.35)';
+    ctx.strokeStyle = 'rgba(255,255,255,.55)';
+    ctx.lineWidth = 2 * dpr;
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255,195,103,.9)';
+    ctx.beginPath();
+    ctx.arc(cx + joy.x * R, cy + joy.y * R, R * 0.42, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   function font(px, weight, family) {
@@ -798,7 +819,7 @@
   });
   canvas.addEventListener('pointerleave', () => { hoverNpc = null; });
   canvas.addEventListener('click', (e) => {
-    if (performance.now() - pinchEnded < 400) return;
+    if (performance.now() - Math.max(pinchEnded, joyEnded) < 400) return;
     const [wx, wy] = worldFromEvent(e);
     const n = npcAt(wx, wy);
     if (n) {
@@ -831,18 +852,40 @@
     }
   }, { passive: false });
 
-  // Pellizco en pantallas táctiles.
+  // Pantallas táctiles: un dedo que se arrastra es un joystick (aparece donde tocas);
+  // un toque sin arrastrar sigue siendo "ir a ese punto"; dos dedos, pellizco para zoom.
   const touches = new Map();
-  let pinchBase = 0, pinchEnded = 0;
+  const JOY_R = 48, JOY_START = 12;
+  let pinchBase = 0, pinchEnded = 0, joy = null, joyEnded = 0;
   const pinchDist = () => { const [a, b] = [...touches.values()]; return Math.hypot(a.x - b.x, a.y - b.y); };
   canvas.addEventListener('pointerdown', (e) => {
     if (e.pointerType !== 'touch') return;
     touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (touches.size === 2) pinchBase = pinchDist();
+    hideTouchTip();
+    if (touches.size === 1) joy = { id: e.pointerId, x0: e.clientX, y0: e.clientY, x: 0, y: 0, on: false };
+    if (touches.size === 2) {
+      if (joy && joy.on) joyEnded = performance.now();
+      joy = null;
+      pinchBase = pinchDist();
+    }
   });
   canvas.addEventListener('pointermove', (e) => {
     if (!touches.has(e.pointerId)) return;
     touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (joy && joy.id === e.pointerId) {
+      const dx = e.clientX - joy.x0, dy = e.clientY - joy.y0, d = Math.hypot(dx, dy);
+      if (!joy.on && d > JOY_START) {
+        joy.on = true;
+        closeDialog();
+      }
+      if (joy.on) {
+        const k = Math.min(d, JOY_R) / (d || 1) / JOY_R;
+        joy.x = dx * k;
+        joy.y = dy * k;
+        if (Math.hypot(joy.x, joy.y) < 0.15) joy.x = joy.y = 0;
+      }
+      return;
+    }
     if (touches.size !== 2 || !pinchBase) return;
     const ratio = pinchDist() / pinchBase;
     if (ratio > 1.25 || ratio < 0.8) {
@@ -852,11 +895,27 @@
   });
   const endTouch = (e) => {
     if (!touches.delete(e.pointerId)) return;
+    if (joy && joy.id === e.pointerId) {
+      if (joy.on) joyEnded = performance.now();
+      joy = null;
+    }
     if (pinchBase) pinchEnded = performance.now();
     if (touches.size < 2) pinchBase = 0;
   };
   canvas.addEventListener('pointerup', endTouch);
   canvas.addEventListener('pointercancel', endTouch);
+
+  // Pista para pantallas táctiles, solo al principio.
+  const touchTip = $('#touch-tip');
+  let tipTimer = null;
+  function hideTouchTip() {
+    if (touchTip) touchTip.hidden = true;
+    clearTimeout(tipTimer);
+  }
+  if (touchTip && window.matchMedia('(pointer: coarse)').matches) {
+    touchTip.hidden = false;
+    tipTimer = setTimeout(hideTouchTip, 8000);
+  }
 
   // ————————————————————————————————— Idioma
   document.querySelectorAll('[data-lang]').forEach((b) => b.addEventListener('click', () => TGL.setLang(b.dataset.lang)));

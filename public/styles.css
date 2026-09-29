@@ -521,3 +521,20 @@ html:not(.js) .s-back { display: none; }
   /* En teléfonos el botón de vista simple va abajo a la izquierda para no amontonar. */
   #btn-simple { position: fixed; left: var(--gap); bottom: calc(var(--gap) + var(--safe-b)); }
 }
+
+/* Pista inicial en pantallas táctiles */
+.touch-tip {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--gap) + var(--safe-b) + 104px);
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100vw - 2 * var(--gap));
+  margin: 0;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  border-color: var(--gold);
+  pointer-events: none;
+}

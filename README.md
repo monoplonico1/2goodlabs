@@ -16,7 +16,9 @@ Stats a las :45 y Cesar y Ricardo a las :50. Se configura con `breakAt` en `data
 esperar: `?break=all` o `?break=<id>` (por ejemplo `?break=stats`).
 
 Controles: `WASD`/flechas para caminar, `E` para hablar, clic o tap para ir a un
-punto, clic en alguien para hablarle. Zoom con `+`/`−`, la rueda del mouse, pellizco
+punto, clic en alguien para hablarle. En pantallas táctiles, arrastrar el dedo
+muestra un joystick bajo el dedo (analógico: más lejos, más rápido); un toque sin
+arrastrar sigue siendo "ir a ese punto". Zoom con `+`/`−`, la rueda del mouse, pellizco
 en el celular o los botones junto al minimapa; `0` o ⛶ muestra el piso completo.
 
 Cada sala tiene un bloque **?** con información de la empresa y un botón a su sitio
