@@ -101,9 +101,12 @@ El formulario (en la vista simple y en el buzón rojo del lobby) envía un corre
 1. En Cloudflare, `2goodlabs.com` → **Email** → **Email Routing** → activarlo.
 2. En **Destination addresses**, agregar el correo donde quieren recibir los mensajes y
    verificarlo (llega un correo de confirmación).
-3. En `wrangler.jsonc`, poner ese correo en `CONTACT_TO` (hoy dice `CAMBIAR@ejemplo.com`).
+3. En **Workers & Pages** → **2goodlabs** → **Settings** → **Variables and Secrets** →
+   **Add**: tipo **Secret**, nombre `CONTACT_TO`, valor ese correo. Va como secreto y no en
+   `wrangler.jsonc` para que el correo no quede en el repositorio; los secretos se
+   conservan entre deploys.
    `CONTACT_FROM` puede quedar como `contacto@2goodlabs.com`.
-4. `npx wrangler deploy`.
+4. No hace falta redeploy: el secreto aplica de inmediato.
 
 Los mensajes llegan con *Reply-To* de quien escribió, así que basta con responder.
 Hay un campo trampa oculto contra bots; si llega spam, el siguiente paso es

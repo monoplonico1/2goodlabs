@@ -13,11 +13,11 @@
   "routes": [
     { "pattern": "2goodlabs.com", "custom_domain": true }
   ],
-  // Formulario de contacto (ver README → Contacto). CONTACT_TO debe ser una
-  // dirección verificada en Email Routing de Cloudflare.
+  // Formulario de contacto (ver README → Contacto). El destinatario, CONTACT_TO, es un
+  // secreto del Worker (no está en el repositorio) y debe ser una dirección verificada en
+  // Email Routing de Cloudflare.
   "send_email": [{ "name": "CONTACT_EMAIL" }],
   "vars": {
-    "CONTACT_FROM": "contacto@2goodlabs.com",
-    "CONTACT_TO": "CAMBIAR@ejemplo.com"
+    "CONTACT_FROM": "contacto@2goodlabs.com"
   }
 }
