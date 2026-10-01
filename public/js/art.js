@@ -133,7 +133,7 @@
 
   TGL.drawCharacter = function (ctx, c, t) {
     const x = Math.round(c.px), y = Math.round(c.py);
-    if (c.kind === 'agent') drawAgent(ctx, x, y, c.body, TGL.roles[c.role].color, c.dir, c.frame, t);
+    if (c.kind === 'agent') drawAgent(ctx, x, y, c.body, c.eye || TGL.roles[c.role].color, c.dir, c.frame, t);
     else drawHuman(ctx, x, y, c.look, c.dir, c.frame);
   };
 

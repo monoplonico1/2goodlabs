@@ -24,7 +24,7 @@
   };
 
   // En data.js las posiciones son relativas a la sala; aquí pasan a coordenadas del edificio.
-  const npcs = TGL.team.map((m) => {
+  function makeNpc(m) {
     const rm = TGL.rooms.find((q) => q.id === m.room);
     const x = rm.x + m.x, row = rm.y + m.row;
     return Object.assign({}, m, {
@@ -34,7 +34,8 @@
       home: { x: x * T, y: row * T + 12 },
       bubble: null, path: null, waitUntil: 0, patrolIdx: 0,
     });
-  });
+  }
+  const npcs = TGL.team.map(makeNpc);
   // El perro de Zumi: pasea por la sala y ladra si le haces clic.
   const zumiRoom = TGL.rooms.find((r) => r.id === 'zumi');
   const dog = { px: (zumiRoom.x + 8) * T + 8, py: (zumiRoom.y + 9) * T + 12, dir: 'right', face: 'right', frame: 0, walkT: 0, path: null, waitUntil: 2, bubble: null };
@@ -187,7 +188,7 @@
   let bubbleTimer = 1.5, currentRoom = null, nearNpc = null, nearObj = null;
 
   function update(dt, t) {
-    if (!dialogOpen()) {
+    if (!dialogOpen() && !frozen) {
       let ix = 0, iy = 0;
       if (keys.has('ArrowLeft') || keys.has('a')) ix -= 1;
       if (keys.has('ArrowRight') || keys.has('d')) ix += 1;
@@ -371,7 +372,30 @@
   $('#zoom-out').addEventListener('click', () => zoomBy(-1));
   $('#zoom-fit').addEventListener('click', toggleFit);
 
+  // Cámara fija sobre un área (la usa el editor); pad* = espacio tapado por paneles, en px CSS.
+  let focus = null, savedZoom = null;
+  function setFocus(f) {
+    if (f) {
+      if (!focus) savedZoom = { zoom, fit };
+      focus = { cx: (f.x + f.w / 2) * T, cy: (f.y + f.h / 2 - 1) * T, padR: f.padR || 0, padB: f.padB || 0, padT: f.padT || 0 };
+      const availW = canvas.width - focus.padR * dpr, availH = canvas.height - (focus.padB + focus.padT) * dpr;
+      fit = false;
+      zoom = Math.max(1, Math.floor(Math.min(availW / ((f.w + 2) * T), availH / ((f.h + 4) * T))));
+      applyZoom();
+    } else if (focus) {
+      focus = null;
+      zoom = savedZoom.zoom;
+      fit = savedZoom.fit;
+      applyZoom();
+    }
+  }
+
   function updateCamera() {
+    if (focus) {
+      camX = focus.cx - (canvas.width - focus.padR * dpr) / 2 / scale;
+      camY = focus.cy - (focus.padT * dpr + (canvas.height - (focus.padB + focus.padT) * dpr) / 2) / scale;
+      return;
+    }
     const vw = canvas.width / scale, vh = canvas.height / scale;
     const mw = world.W * T, mh = world.H * T;
     camX = mw <= vw ? (mw - vw) / 2 : Math.max(0, Math.min(mw - vw, player.px - vw / 2));
@@ -412,6 +436,7 @@
     }
 
     world.drawOverlay(ctx, t);
+    for (const fn of overlays) fn(ctx, t);
 
     // Capa de interfaz en pixeles de pantalla.
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -557,7 +582,7 @@
     const room = TGL.rooms.find((r) => r.id === n.room);
     const role = TGL.roles[n.role];
     $('#dlg-name').textContent = n.name;
-    $('#dlg-role').textContent = TGL.ui(n.kind === 'agent' ? 'agentIA' : 'human') + ' · ' + TGL.t(role.label);
+    $('#dlg-role').textContent = TGL.ui(n.kind === 'agent' ? 'agentIA' : 'human') + ' · ' + TGL.t(n.title || role.label);
     $('#dlg-role').style.setProperty('--role', role.color);
     $('#dlg-room').textContent = TGL.t(room.name);
     $('#dlg-tasks').innerHTML = '';
@@ -665,7 +690,7 @@
   const hint = $('#hint');
   function updateHint() {
     let text = null;
-    if (dialogOpen()) text = null;
+    if (dialogOpen() || frozen) text = null;
     else if (nearNpc) text = TGL.ui('talkTo') + ' ' + nearNpc.name;
     else if (nearObj && nearObj.interact.type === 'directory') text = TGL.ui('seeDirectory');
     else if (nearObj && nearObj.interact.type === 'link') text = TGL.ui(nearObj.interact.hint);
@@ -765,9 +790,10 @@
       sec.appendChild(ul);
       list.appendChild(sec);
     }
-    const humans = npcs.filter((n) => n.kind === 'human').length;
+    // Los contadores son del equipo de 2GoodLabs, sin las personas de oficinas de terceros.
+    const own = npcs.filter((n) => !n.resident), humans = own.filter((n) => n.kind === 'human').length;
     $('#hud-humans').textContent = humans;
-    $('#hud-agents').textContent = npcs.length - humans;
+    $('#hud-agents').textContent = own.length - humans;
   }
   function toggleDirectory(open) {
     const show = open === undefined ? panel.hidden : open;
@@ -788,8 +814,9 @@
       if (k === 'Escape') TGL.closeSimple();
       return;
     }
+    if (frozen) return;
     const tag = document.activeElement && document.activeElement.tagName;
-    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
     const inPanel = !panel.hidden && panel.contains(document.activeElement);
     if (k === 'Escape') { closeDialog(); toggleDirectory(false); return; }
     if (inPanel) return;
@@ -828,7 +855,7 @@
   });
   canvas.addEventListener('pointerleave', () => { hoverNpc = null; });
   canvas.addEventListener('click', (e) => {
-    if (performance.now() - Math.max(pinchEnded, joyEnded) < 400) return;
+    if (frozen || performance.now() - Math.max(pinchEnded, joyEnded) < 400) return;
     const [wx, wy] = worldFromEvent(e);
     const n = npcAt(wx, wy);
     if (n) {
@@ -871,7 +898,7 @@
     if (e.pointerType !== 'touch') return;
     touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
     hideTouchTip();
-    if (touches.size === 1) joy = { id: e.pointerId, x0: e.clientX, y0: e.clientY, x: 0, y: 0, on: false };
+    if (touches.size === 1 && !frozen) joy = { id: e.pointerId, x0: e.clientX, y0: e.clientY, x: 0, y: 0, on: false };
     if (touches.size === 2) {
       if (joy && joy.on) joyEnded = performance.now();
       joy = null;
@@ -949,6 +976,35 @@
     draw(t);
     requestAnimationFrame(frame);
   }
+
+  // ————————————————————————————————— API para módulos (el editor de oficinas)
+  let frozen = false;
+  const overlays = new Set();
+  // Personas que el dueño de una sala pone en ella (residentes); reemplaza las anteriores.
+  function setResidents(roomId, list) {
+    for (let i = npcs.length - 1; i >= 0; i--) if (npcs[i].resident === roomId) npcs.splice(i, 1);
+    for (const m of list) {
+      const n = makeNpc(Object.assign({ room: roomId, resident: roomId, role: 'tenant', dir: 'down' }, m));
+      npcs.push(n);
+      world.solid[seatIndex(n)] = 1;
+    }
+    if (dialogFor && !npcs.includes(dialogFor)) closeDialog();
+    buildDirectory();
+  }
+  TGL.game = {
+    worldFromEvent: (e) => worldFromEvent(e),
+    setFrozen(v) {
+      frozen = v;
+      player.path = null;
+      keys.clear();
+      if (v) closeDialog();
+    },
+    setFocus,
+    refreshStatic() { if (staticLayer) staticLayer = world.renderStatic(); },
+    setResidents,
+    overlays,
+    get dpr() { return dpr; },
+  };
 
   function start() {
     staticLayer = world.renderStatic();

@@ -94,6 +94,7 @@
       anim: opts.anim || null,
       floor: !!opts.floor,
       interact: opts.interact || null,
+      tag: opts.tag || null,
     };
     o.sortY = o.y + o.h;
     objects.push(o);
@@ -178,16 +179,19 @@
     info(9, 10);
   });
 
-  // Oficinas en arriendo: vacías, con un buzón para preguntar por ellas.
-  for (const q of TGL.rooms.filter((x) => x.rent))
-    inRoom(q.id, (put) => {
-      put(art.mailbox(), Math.floor(q.w / 2), q.h - 3, 1, 1, {
-        anim: art.mailboxAnim,
-        interact: { type: 'contact', office: q.office },
-      });
-      put(art.whitePlant(Number(q.office)), 0, 0, 1, 1);
-      put(art.whitePlant(Number(q.office) + 3), q.w - 1, 0, 1, 1);
+  // Oficinas en arriendo: vacías, con un buzón para preguntar por ellas. Sus objetos llevan
+  // la etiqueta de la sala para poder reemplazarlos (editor de oficinas).
+  function furnishRent(q) {
+    const tag = { tag: q.id };
+    put(art.mailbox(), q.x + Math.floor(q.w / 2), q.y + q.h - 3, 1, 1, {
+      tag: q.id,
+      anim: art.mailboxAnim,
+      interact: { type: 'contact', office: q.office },
     });
+    put(art.whitePlant(Number(q.office)), q.x, q.y, 1, 1, tag);
+    put(art.whitePlant(Number(q.office) + 3), q.x + q.w - 1, q.y, 1, 1, tag);
+  }
+  TGL.rooms.filter((x) => x.rent).forEach(furnishRent);
 
   // Terraza: mesas con sombrilla, barra, árboles y jardineras
   inRoom('terrace', (put) => {
@@ -249,11 +253,67 @@
   // ————————————————————————————————— Colisiones
   const solid = new Uint8Array(W * H);
   for (let i = 0; i < W * H; i++) solid[i] = isBlocked(grid[i]) ? 1 : 0;
-  for (const o of objects) {
-    if (!o.solid) continue;
+  const markSolid = (o) => {
+    if (!o.solid) return;
     for (let y = o.y / T; y < (o.y + o.h) / T; y++)
       for (let x = o.x / T; x < (o.x + o.w) / T; x++) solid[y * W + x] = 1;
+  };
+  objects.forEach(markSolid);
+
+  // Recalcula colisiones dentro de una sala (cuando el editor cambia sus objetos).
+  function refreshSolids(id) {
+    const q = room(id);
+    for (let y = q.y; y < q.y + q.h; y++)
+      for (let x = q.x; x < q.x + q.w; x++) solid[y * W + x] = isBlocked(grid[y * W + x]) ? 1 : 0;
+    objects.filter((o) => o.tag === id).forEach(markSolid);
   }
+
+  // ————————————————————————————————— Estilos de superficie para oficinas personalizadas
+  // Los ids coinciden con el catálogo del editor (editor/catalog.js).
+  const FLOOR_STYLES = {
+    white(ctx, px, py) {
+      r(ctx, px, py, T, T, '#f1f1f3');
+      r(ctx, px, py, T, 1, '#e4e4e8');
+      r(ctx, px, py, 1, T, '#e4e4e8');
+    },
+    concrete(ctx, px, py, x, y, rnd) {
+      r(ctx, px, py, T, T, '#d9d9de');
+      r(ctx, px, py, T, 1, '#cacad0');
+      r(ctx, px, py, 1, T, '#cacad0');
+      for (let k = 0; k < 4; k++) r(ctx, px + Math.floor(rnd() * 16), py + Math.floor(rnd() * 16), 1, 1, '#e6e6ea');
+    },
+    oak(ctx, px, py, x, y) {
+      r(ctx, px, py, T, T, '#cfa06a');
+      for (let k = 0; k < 4; k++) {
+        r(ctx, px, py + k * 4 + 3, T, 1, '#b8884f');
+        r(ctx, px + ((x * 7 + (y * 4 + k) * 5) % 16), py + k * 4, 1, 3, '#bf9058');
+      }
+    },
+    mint(ctx, px, py, x, y) {
+      r(ctx, px, py, T, T, (x + y) % 2 ? '#a9d3b3' : '#a2ccac');
+    },
+    navy(ctx, px, py, x, y, rnd) {
+      r(ctx, px, py, T, T, '#2f3e5e');
+      r(ctx, px, py, T, 1, '#29374f');
+      r(ctx, px, py, 1, T, '#29374f');
+      for (let k = 0; k < 2; k++) r(ctx, px + Math.floor(rnd() * 16), py + Math.floor(rnd() * 16), 1, 1, '#3c4d72');
+    },
+    neon(ctx, px, py, x, y, rnd, q) {
+      r(ctx, px, py, T, T, '#16131f');
+      ctx.globalAlpha = 0.35;
+      r(ctx, px, py, T, 1, q.custom.identity.accent);
+      r(ctx, px, py, 1, T, q.custom.identity.accent);
+      ctx.globalAlpha = 1;
+    },
+  };
+  const WALL_STYLES = {
+    white: () => '#f7f7f9',
+    cream: () => '#efe4d0',
+    mint: () => '#e2eedc',
+    sky: () => '#dde6f3',
+    graphite: () => '#3a3d45',
+    brand: (q) => q.custom.identity.primary,
+  };
 
   // ————————————————————————————————— Capa estática
   const WALL_TOP = '#2f2925', WALL_EDGE = '#51473f';
@@ -298,10 +358,10 @@
       r(ctx, px, py, 1, T, '#9a9488');
       r(ctx, px + 1, py + 1, T - 2, 1, '#b3ada1');
     } else if (v === FLOOR.rent) {
-      // oficina vacía: blanca, como recién pintada
-      r(ctx, px, py, T, T, '#f1f1f3');
-      r(ctx, px, py, T, 1, '#e4e4e8');
-      r(ctx, px, py, 1, T, '#e4e4e8');
+      // oficina vacía: blanca, como recién pintada; si alguien la personalizó, su piso
+      const q = roomAt(x, y);
+      const style = q && q.custom && FLOOR_STYLES[q.custom.surfaces.floor];
+      (style || FLOOR_STYLES.white)(ctx, px, py, x, y, rnd, q);
     } else if (v === FLOOR.pickpals) {
       r(ctx, px, py, T, T, '#5b719a');
       r(ctx, px, py, T, 1, '#536890');
@@ -317,11 +377,11 @@
   const RENT_TEXT = { es: 'SE ARRIENDA', en: 'FOR RENT' };
   const decor = [
     // Oficinas en arriendo
-    { k: 'glass', x: 1, y: 1, w: 3 }, { k: 'plate', x: 4, y: 1, w: 5, text: RENT_TEXT, bg: '#1d1f24', fg: '#ffc367' },
+    { k: 'glass', x: 1, y: 1, w: 3 }, { k: 'plate', room: 'rent1', x: 4, y: 1, w: 5, text: RENT_TEXT, bg: '#1d1f24', fg: '#ffc367' },
     { k: 'glass', x: 9, y: 1, w: 3 },
-    { k: 'glass', x: 16, y: 1, w: 4 }, { k: 'plate', x: 21, y: 1, w: 5, text: RENT_TEXT, bg: '#1d1f24', fg: '#ffc367' },
+    { k: 'glass', x: 16, y: 1, w: 4 }, { k: 'plate', room: 'rent2', x: 21, y: 1, w: 5, text: RENT_TEXT, bg: '#1d1f24', fg: '#ffc367' },
     { k: 'glass', x: 27, y: 1, w: 4 },
-    { k: 'glass', x: 35, y: 1, w: 4 }, { k: 'plate', x: 40, y: 1, w: 6, text: RENT_TEXT, bg: '#1d1f24', fg: '#ffc367' },
+    { k: 'glass', x: 35, y: 1, w: 4 }, { k: 'plate', room: 'rent3', x: 40, y: 1, w: 6, text: RENT_TEXT, bg: '#1d1f24', fg: '#ffc367' },
     { k: 'glass', x: 47, y: 1, w: 4 },
     // Pasillo: número de cada oficina junto a su puerta
     { k: 'sign', x: 7, y: 12, w: 3, text: '101', fg: '#ffc367' },
@@ -365,6 +425,9 @@
       r(ctx, px + pw / 2 + 3, py + 7, 1, 5, '#e8f6ff');
       r(ctx, px + 1, py + 23, pw - 2, 2, '#a8835c');
     } else if (d.k === 'plate' || d.k === 'sign') {
+      // Una oficina personalizada muestra su nombre y sus colores en lugar de "se arrienda".
+      const own = d.room && room(d.room).custom;
+      if (own) d = Object.assign({}, d, { text: own.identity.name || '—', bg: own.identity.primary, fg: own.identity.accent });
       const ph = d.k === 'sign' ? 11 : 13, top = d.k === 'sign' ? py + 5 : py + 4;
       r(ctx, px + 2, top + 1, pw - 4, ph, 'rgba(0,0,0,.18)');
       r(ctx, px + 1, top, pw - 2, ph, d.bg || '#23262d');
@@ -494,7 +557,7 @@
   function drawRentFloors(ctx) {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    for (const q of TGL.rooms.filter((x) => x.rent)) {
+    for (const q of TGL.rooms.filter((x) => x.rent && !x.custom)) {
       const cx = (q.x + q.w / 2) * T, cy = (q.y + 3) * T;
       ctx.fillStyle = '#d4d4da';
       ctx.font = '16px Silkscreen, monospace';
@@ -520,7 +583,8 @@
           if (at(x, y + 1) === FACE) r(ctx, px, py + T - 2, T, 2, WALL_EDGE);
         } else if (v === FACE) {
           const q = faceRoom(x, y);
-          r(ctx, px, py, T, T, FACE_COLOR[q.rent ? 'rent' : q.id] || FACE_COLOR.lobby);
+          const wall = q.custom && WALL_STYLES[q.custom.surfaces.walls];
+          r(ctx, px, py, T, T, wall ? wall(q) : FACE_COLOR[q.rent ? 'rent' : q.id] || FACE_COLOR.lobby);
           if (at(x, y - 1) === TOP) r(ctx, px, py, T, 3, 'rgba(0,0,0,.12)');
           if (!isWall(at(x, y + 1))) {
             r(ctx, px, py + T - 3, T, 3, '#7a5230');
@@ -627,10 +691,32 @@
   function drawOverlay(ctx, t) {
     art.stringLights(ctx, TERRACE.x * T, (W - 1) * T, (TERRACE.y + 6) * T + 4, t, 2);
     art.stringLights(ctx, TERRACE.x * T, (W - 1) * T, (TERRACE.y + 14) * T + 4, t + 1, 2);
+    // Modo noche de una oficina personalizada: penumbra y neón con su color de acento.
+    for (const q of TGL.rooms) {
+      if (!q.custom || q.custom.mode !== 'night') continue;
+      const x = q.x * T, y = (q.y - 2) * T, w = q.w * T, h = (q.h + 2) * T;
+      r(ctx, x, y, w, h, 'rgba(10,8,30,.42)');
+      ctx.globalAlpha = 0.55 + Math.sin(t * 2) * 0.2;
+      r(ctx, x, y + 2 * T, w, 2, q.custom.identity.accent);
+      r(ctx, x, y + h - 2, w, 2, q.custom.identity.accent);
+      ctx.globalAlpha = 1;
+    }
   }
 
   TGL.world = {
     W, H, grid, solid, objects, links, breakSpots, roomAt, drawWallAnims, drawOverlay, renderStatic,
+    T, room, refreshSolids, furnishRent,
+    // Para el editor: sacar y agregar objetos de una sala, y las casillas frente a sus puertas.
+    removeTagged(tag) {
+      for (let i = objects.length - 1; i >= 0; i--) if (objects[i].tag === tag) objects.splice(i, 1);
+    },
+    addObject: put,
+    doorEntries(id) {
+      const q = room(id), out = [];
+      for (const d of DOORS)
+        if (d.k === 'h' && d.from === id) for (let x = d.x; x < d.x + d.w; x++) out.push({ x: x - q.x, y: d.y - 1 - q.y });
+      return out;
+    },
     isSolid(tx, ty) {
       return tx < 0 || ty < 0 || tx >= W || ty >= H || solid[ty * W + tx] === 1;
     },

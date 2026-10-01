@@ -34,6 +34,32 @@ como raíz.
 el formulario de contacto. Sin JavaScript es lo que se ve. El botón **Directorio** lleva a cualquier
 persona y tiene el mismo contenido en texto (para lectores de pantalla y buscadores).
 
+## Editor de oficinas (beta)
+
+Un módulo aparte, en `public/editor/`, para personalizar una oficina. Por ahora edita solo
+la **103** (arriba a la derecha) y guarda en el navegador (`localStorage`). Se enciende y
+apaga en `public/js/features.js`:
+
+| `editor:` | Qué pasa |
+| --- | --- |
+| `false` | Apagado: sus archivos ni se cargan |
+| `'preview'` (actual) | Solo para quien entra con `?editor=1` (se recuerda hasta `?editor=0`) |
+| `true` | Encendido para todos |
+
+Qué incluye, pensado para que escale a un producto:
+
+- **El espacio es un documento JSON** con versión de esquema (`editor/space.js`): identidad,
+  superficies, ambiente, objetos, personas y contenido. Es lo que guardaría el servidor.
+- **Catálogo** (`editor/catalog.js`): objetos con tamaño, categoría, variantes de color y
+  nivel `free` / `pro`; pisos, paredes y ambientes con el mismo esquema; límites del plan
+  (30 objetos, 3 personas, 4 links). El editor muestra cuánto PRO usa cada espacio.
+- **Reglas**: dentro de la sala, sin choques, la entrada libre y todo alcanzable a pie.
+- **Herramientas**: plantillas, deshacer/rehacer, vista "Probar", guardar, y
+  exportar/importar JSON (útil para armar a mano los espacios de los primeros clientes).
+
+Las personas que se agregan aparecen en la oficina con sus burbujas y en el directorio, y el
+bloque "?" muestra la descripción y los links del espacio.
+
 ## Estructura
 
 Estático: HTML, CSS y JavaScript sin dependencias. Todo el pixel art se dibuja con
@@ -52,6 +78,8 @@ public/
   js/art-rooms.js   arte propio de cada sala
   js/world.js       plano del piso, colisiones y capa estática
   js/game.js        bucle, movimiento, cámara, minimapa e interacción
+  js/features.js    interruptores de módulos en desarrollo
+  editor/           editor de oficinas (beta): catálogo, documento del espacio e interfaz
   og.png, logo.png  imagen para compartir y logo para buscadores
 ```
 

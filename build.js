@@ -28,7 +28,8 @@ const TGL = sandbox.TGL;
 const SITE = TGL.company.url.replace(/\/$/, '');
 
 // Versión de los assets = huella de su contenido: cambia sola cuando cambian.
-const assets = ['public/styles.css', ...fs.readdirSync(path.join(PUB, 'js')).sort().map((f) => 'public/js/' + f)];
+const listDir = (dir) => fs.readdirSync(path.join(ROOT, dir)).sort().map((f) => dir + '/' + f);
+const assets = ['public/styles.css', ...listDir('public/js'), ...listDir('public/editor')];
 const version = crypto.createHash('sha1').update(assets.map(read).join('\n')).digest('hex').slice(0, 8);
 
 const LANGS = {

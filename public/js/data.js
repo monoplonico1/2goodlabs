@@ -23,6 +23,8 @@ TGL.roles = {
   marketing: { label: { es: 'Marketing', en: 'Marketing' }, color: '#ff6fa8' },
   design: { label: { es: 'Diseño', en: 'Design' }, color: '#ffd24d' },
   data: { label: { es: 'Datos deportivos', en: 'Sports data' }, color: '#9cff57' },
+  // Personas que un inquilino pone en su oficina (editor de oficinas).
+  tenant: { label: { es: 'Equipo', en: 'Team' }, color: '#ffc367' },
 };
 
 const RENT_BLURB = {
