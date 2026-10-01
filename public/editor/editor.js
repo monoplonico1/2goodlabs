@@ -13,6 +13,8 @@
       spaceIntro: 'Lo que se arrienda es espacio: 1 casilla = 1 m². Con más metros caben más personas y más objetos. Lo demás (colores, marca, links, plantillas) es igual en todos los tamaños.',
       perMonth: '/mes', soon: 'Próximamente', upTo: 'Hasta {p} personas · {i} objetos', notHere: 'No cabe en esta sala',
       priceNote: 'Precios de ejemplo: US$ {p} por m² al mes. Lo PRO son extras opcionales.',
+      reset: '↺ Empezar de cero', resetConfirm: '¿Borrar todo y empezar de cero? Se pierde lo guardado en este navegador y no se puede deshacer.',
+      resetDone: 'Listo: oficina en blanco. Empieza eligiendo el tamaño.',
       shrinkConfirm: '{n} cosas quedan fuera del nuevo tamaño y se quitarán. ¿Seguir?', sizeChanged: 'Ahora tu oficina mide {m} m²',
       undo: 'Deshacer', redo: 'Rehacer', try: 'Probar', save: 'Guardar', saved: 'Guardado', unsaved: 'Cambios sin guardar',
       more: 'Más opciones', export: 'Exportar JSON', import: 'Importar JSON', clearRoom: 'Vaciar oficina',
@@ -50,6 +52,8 @@
       spaceIntro: 'What you rent is space: 1 tile = 1 m². More meters fit more people and more objects. Everything else (colors, brand, links, templates) is the same at every size.',
       perMonth: '/mo', soon: 'Coming soon', upTo: 'Up to {p} people · {i} objects', notHere: 'Does not fit in this room',
       priceNote: 'Example prices: US$ {p} per m² per month. PRO items are optional extras.',
+      reset: '↺ Start over', resetConfirm: 'Delete everything and start over? What is saved in this browser is lost and cannot be undone.',
+      resetDone: 'Done: blank office. Start by choosing the size.',
       shrinkConfirm: '{n} things fall outside the new size and will be removed. Continue?', sizeChanged: 'Your office is now {m} m²',
       undo: 'Undo', redo: 'Redo', try: 'Try it', save: 'Save', saved: 'Saved', unsaved: 'Unsaved changes',
       more: 'More options', export: 'Export JSON', import: 'Import JSON', clearRoom: 'Empty the office',
@@ -521,7 +525,10 @@
       ${bar(tr('capItems'), doc.items.length, lim.maxItems)}
       ${bar(tr('capPeople'), doc.residents.length, lim.maxResidents)}
       ${pro ? `<p class="ed-note"><span class="ed-pro">${tr('pro')}</span> ${esc(tr('proNote').replace('{n}', pro))}</p>` : ''}
-      <p class="ed-status ${message && message.bad ? 'bad' : ''}">${esc(message ? message.text : dirty ? tr('unsaved') : tr('localNote'))}</p>`;
+      <div class="ed-foot-row">
+        <p class="ed-status ${message && message.bad ? 'bad' : ''}">${esc(message ? message.text : dirty ? tr('unsaved') : tr('localNote'))}</p>
+        <button type="button" class="ed-btn ed-danger ed-reset" data-act="reset">${esc(tr('reset'))}</button>
+      </div>`;
     // El botón dice si lo que se ve ya está guardado.
     const sb = panel.querySelector('[data-act=save]');
     if (sb) {
@@ -552,6 +559,9 @@
         doc = Object.assign(space.empty(ROOM), { size: doc.size }); // vaciar no cambia el tamaño
         selected = tool = null;
         return commit();
+      case 'reset':
+        if (!confirm(tr('resetConfirm'))) return;
+        return resetAll();
       case 'restore':
         if (!confirm(tr('restoreConfirm'))) return;
         space.clear(ROOM);
@@ -625,6 +635,22 @@
     openPeople.clear();
     commit();
     flash(fill('sizeChanged', { m: cat.sizeOf(id).m2 }));
+  }
+
+  // Borra todo (también lo guardado) y deja el editor abierto con una oficina en blanco.
+  function resetAll() {
+    space.clear(ROOM);
+    saved = null;
+    doc = space.empty(ROOM);
+    history = [JSON.stringify(doc)];
+    hIndex = 0;
+    dirty = false;
+    selected = tool = drag = null;
+    openPeople.clear();
+    tab = 'space';
+    space.apply(ROOM, doc);
+    render();
+    flash(tr('resetDone'));
   }
 
   // Abrir y cerrar tarjetas de personas (el evento "toggle" no burbujea).
