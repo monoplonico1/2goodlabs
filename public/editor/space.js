@@ -125,18 +125,19 @@
   }
 
   // ————————————————————————————————— Tamaño arrendado
-  // La parte de la sala que se arrienda: centrada en la puerta, con el fondo completo.
-  function area(doc, roomId) {
-    const room = world.room(roomId), z = cat.sizeOf(doc.size);
-    const w = Math.min(z.w, room.w);
-    return { x0: Math.floor((room.w - w) / 2), w, h: room.h, size: z };
+  // La oficina mide lo que se arrienda: el edificio construye sus muros a esa medida
+  // (world.setOffice). Coordenadas relativas a su esquina; la puerta va centrada abajo.
+  function area(doc) {
+    const z = cat.sizeOf(doc.size);
+    return { x0: 0, w: z.w, h: z.h, size: z };
   }
+  const entriesOf = (a) => [{ x: Math.floor(a.w / 2) - 1, y: a.h - 1 }, { x: Math.floor(a.w / 2), y: a.h - 1 }];
   const limits = (doc) => {
     const z = cat.sizeOf(doc.size);
     return { maxItems: z.items, maxResidents: z.residents, maxLinks: cat.plan.maxLinks };
   };
   // Tamaños que caben en esta sala (los demás se muestran como "próximamente").
-  const sizesFor = (roomId) => cat.sizes.filter((z) => !z.soon && z.w <= world.room(roomId).w);
+  const sizesFor = () => cat.sizes.filter((z) => !z.soon);
 
   // Dimensiones y si bloquea el paso, para cualquier cosa que ocupe casillas.
   function footprint(thing) {
@@ -148,8 +149,6 @@
   // Casillas ocupadas por cosas sólidas (excepto la que se está moviendo).
   function occupancy(doc, room, skip) {
     const occ = new Uint8Array(room.w * room.h);
-    const a = area(doc, room.id);
-    for (let y = 0; y < room.h; y++) for (let x = 0; x < room.w; x++) if (x < a.x0 || x >= a.x0 + a.w) occ[y * room.w + x] = 1;
     const mark = (thing) => {
       if (thing === skip) return;
       const f = footprint(thing);
@@ -164,12 +163,11 @@
 
   // ¿Se puede poner "thing" en (x, y)? Devuelve null si sí, o el motivo si no.
   function canPlace(doc, roomId, thing, x, y, skip) {
-    const room = world.room(roomId);
+    const room = area(doc);
     const f = footprint(thing);
-    const a = area(doc, roomId);
-    if (x < a.x0 || y < 0 || x + f.w > a.x0 + a.w || y + f.h > room.h) return 'bounds';
+    if (x < 0 || y < 0 || x + f.w > room.w || y + f.h > room.h) return 'bounds';
     const occ = occupancy(doc, room, skip);
-    const entries = world.doorEntries(roomId);
+    const entries = entriesOf(room);
     for (let yy = y; yy < y + f.h; yy++)
       for (let xx = x; xx < x + f.w; xx++) {
         if (f.solid && occ[yy * room.w + xx]) return 'overlap';
@@ -267,7 +265,7 @@
 
     if (!doc) {
       delete room.custom;
-      delete room.plan;
+      world.setOffice(roomId, 0);
       Object.assign(room, room._orig);
       world.furnishRent(room);
       world.refreshSolids(roomId);
@@ -277,8 +275,7 @@
     }
 
     room.custom = doc;
-    const a = area(doc, roomId);
-    room.plan = { x0: a.x0, w: a.w };
+    world.setOffice(roomId, area(doc).w);
     const name = doc.identity.name || TGL.t(room._orig.name);
     room.name = { es: name, en: name };
     room.blurb = doc.identity.tagline ? { es: doc.identity.tagline, en: doc.identity.tagline } : room._orig.blurb;
@@ -348,7 +345,7 @@
     return n;
   }
 
-  TGL.space = { SCHEMA, empty, templates, sanitize, canPlace, footprint, apply, load, save, clear, proUsage, area, limits, sizesFor };
+  TGL.space = { SCHEMA, empty, templates, sanitize, canPlace, footprint, apply, load, save, clear, proUsage, area, limits, sizesFor, entriesOf };
 
   // Al cargar la página, la oficina que alguien guardó en este navegador aparece en el edificio.
   for (const room of TGL.rooms.filter((q) => q.rent)) {

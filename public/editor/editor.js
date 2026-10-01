@@ -8,7 +8,7 @@
 
   const L = {
     es: {
-      open: 'Editar oficina', title: 'Editor de oficina', beta: 'BETA',
+      open: 'Editar oficina', create: 'Crear mi oficina', title: 'Editor de oficina', beta: 'BETA',
       tSpace: 'Espacio', tItems: 'Objetos', tStyle: 'Estilo', tBrand: 'Marca', tPeople: 'Personas',
       spaceIntro: 'Lo que se arrienda es espacio: 1 casilla = 1 m². Con más metros caben más personas y más objetos. Lo demás (colores, marca, links, plantillas) es igual en todos los tamaños.',
       perMonth: '/mes', soon: 'Próximamente', upTo: 'Hasta {p} personas · {i} objetos', notHere: 'No cabe en esta sala',
@@ -47,7 +47,7 @@
       saveError: 'No se pudo guardar: este navegador no permite guardar datos (¿modo privado?).',
     },
     en: {
-      open: 'Edit office', title: 'Office editor', beta: 'BETA',
+      open: 'Edit office', create: 'Create my office', title: 'Office editor', beta: 'BETA',
       tSpace: 'Space', tItems: 'Objects', tStyle: 'Style', tBrand: 'Brand', tPeople: 'People',
       spaceIntro: 'What you rent is space: 1 tile = 1 m². More meters fit more people and more objects. Everything else (colors, brand, links, templates) is the same at every size.',
       perMonth: '/mo', soon: 'Coming soon', upTo: 'Up to {p} people · {i} objects', notHere: 'Does not fit in this room',
@@ -131,17 +131,23 @@
   document.body.appendChild(fileInput);
 
   function labelButtons() {
-    btn.innerHTML = '✎ ' + esc(tr('open')) + ' <span class="ed-badge">' + tr('beta') + '</span>';
+    btn.innerHTML = '✎ ' + esc(tr(saved ? 'open' : 'create')) + ' <span class="ed-badge">' + tr('beta') + '</span>';
     backPill.textContent = tr('back');
   }
   labelButtons();
 
   // ————————————————————————————————— Abrir y cerrar
+  // Si el tamaño de la oficina cambia, sus muros se mueven y la cámara se reacomoda.
+  let lastW = -1;
+  const refocus = () => { if (isOpen && !previewing && room.w !== lastW) requestAnimationFrame(focusRoom); };
   const isMobile = () => window.matchMedia('(max-width: 700px)').matches;
   function focusRoom() {
     const mobile = isMobile();
+    // La oficina y un poco de la planta libre de al lado, para ver cuánto espacio ocupa.
+    const w = Math.max(room.w + 4, 20);
+    lastW = room.w;
     game.setFocus({
-      x: room.x, y: room.y - 2, w: room.w, h: room.h + 2,
+      x: room.x + room.w + 1 - w, y: room.y - 2, w, h: room.h + 2,
       padR: mobile ? 0 : panel.offsetWidth + 24,
       padB: mobile ? panel.offsetHeight : 0,
       padT: mobile ? 56 : 0,
@@ -175,6 +181,7 @@
     panel.hidden = true;
     backPill.hidden = true;
     btn.hidden = false;
+    labelButtons();
     game.overlays.delete(drawOverlay);
     game.setFocus(null);
     game.setFrozen(false);
@@ -213,6 +220,7 @@
     dirty = true;
     space.apply(ROOM, doc);
     render();
+    refocus();
   }
   function undo() {
     if (hIndex <= 0) return;
@@ -222,6 +230,7 @@
     dirty = true;
     space.apply(ROOM, doc);
     render();
+    refocus();
   }
   function redo() {
     if (hIndex >= history.length - 1) return;
@@ -231,6 +240,7 @@
     dirty = true;
     space.apply(ROOM, doc);
     render();
+    refocus();
   }
   // Antes de guardar, lo que está a medio escribir (frases vacías, links incompletos) se limpia.
   function save() {
@@ -650,6 +660,7 @@
     tab = 'space';
     space.apply(ROOM, doc);
     render();
+    refocus();
     flash(tr('resetDone'));
   }
 

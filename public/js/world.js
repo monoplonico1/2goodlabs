@@ -22,23 +22,41 @@
   const T = TGL.T, r = TGL.rect, art = TGL.art;
   const W = 61, H = 44;
   const TOP = 1, FACE = 2, SKY = 3, RAIL = 4;
-  const FLOOR = { lobby: 10, board: 11, zumi: 12, pickpals: 13, terrace: 14, hall: 15, rent: 16 };
+  const FLOOR = { lobby: 10, board: 11, zumi: 12, pickpals: 13, terrace: 14, hall: 15, rent: 16, open: 17 };
   const room = (id) => TGL.rooms.find((q) => q.id === id);
   const rectsOf = (q) => q.rects || [[q.x, q.y, q.w, q.h]];
-  const floorOf = (q) => (q.rent ? FLOOR.rent : FLOOR[q.id]);
+  const floorOf = (q) => (q.rent ? FLOOR.rent : q.open ? FLOOR.open : FLOOR[q.id]);
   const TERRACE = room('terrace');
+
+  // Con el editor de oficinas encendido (js/features.js), el piso de arriba deja de tener
+  // oficinas vacías: es una planta libre en arriendo, y cada oficina que alguien arma se
+  // construye ahí con sus muros, del tamaño exacto que arrienda (ver setOffice).
+  const OPEN = !!(TGL.featureOn && TGL.featureOn('editor'));
+  const STRIP = { x: 1, y: 3, w: 50, h: 8 };
+  if (OPEN) {
+    for (const id of ['rent1', 'rent2']) TGL.rooms.splice(TGL.rooms.indexOf(room(id)), 1);
+    room('hall').rects = [[1, 14, 50, 2], [13, 14, 2, 20], [32, 14, 2, 20]];
+    Object.assign(room('rent3'), { x: STRIP.x + STRIP.w, w: 0 }); // sin construir
+    TGL.rooms.push({
+      id: 'open', open: true,
+      name: { es: 'Planta libre · Se arrienda', en: 'Open floor · For rent' },
+      blurb: { es: 'Espacio libre del piso. Aquí se construyen las oficinas, del tamaño que cada uno arriende.', en: 'Free floor space. Offices are built here, as big as each tenant rents.' },
+      x: STRIP.x, y: STRIP.y, w: STRIP.w, h: STRIP.h,
+      color: '#c9c9ce',
+    });
+  }
 
   // Puertas. 'h' atraviesa un muro horizontal (se pasa de arriba a abajo);
   // 'v' atraviesa un muro vertical (se pasa de lado). from/to: sala de cada lado.
-  const DOORS = [
+  let DOORS = [
     // Salas → lobby
     { k: 'h', x: 5, y: 31, w: 2, from: 'board', to: 'lobby' },
     { k: 'h', x: 22, y: 31, w: 2, from: 'zumi', to: 'lobby' },
     { k: 'h', x: 42, y: 31, w: 2, from: 'pickpals', to: 'lobby' },
     // Oficinas en arriendo → pasillo
-    { k: 'h', x: 5, y: 11, w: 2, from: 'rent1', to: 'hall' },
-    { k: 'h', x: 22, y: 11, w: 2, from: 'rent2', to: 'hall' },
-    { k: 'h', x: 42, y: 11, w: 2, from: 'rent3', to: 'hall' },
+    { k: 'h', x: 5, y: 11, w: 2, from: 'rent1', to: 'hall', strip: true },
+    { k: 'h', x: 22, y: 11, w: 2, from: 'rent2', to: 'hall', strip: true },
+    { k: 'h', x: 42, y: 11, w: 2, from: 'rent3', to: 'hall', strip: true },
     // Pasillos verticales → salas
     { k: 'v', x: 12, y: 24, h: 2, to: 'hall' },
     { k: 'v', x: 15, y: 26, h: 2, to: 'hall' },
@@ -64,7 +82,8 @@
     for (const [rx, ry, rw] of rectsOf(q))
       for (let x = rx; x < rx + rw; x++)
         for (const y of [ry - 1, ry - 2]) if (at(x, y) === TOP) set(x, y, FACE);
-  for (const d of DOORS) {
+  if (OPEN) DOORS = DOORS.filter((d) => !d.strip);
+  function openDoor(d) {
     if (d.k === 'h')
       for (let x = d.x; x < d.x + d.w; x++) {
         set(x, d.y, floorOf(room(d.from)));
@@ -73,6 +92,7 @@
       }
     else for (let y = d.y; y < d.y + d.h; y++) set(d.x, y, floorOf(room(d.to)));
   }
+  DOORS.forEach(openDoor);
 
   // Terraza: sin muros. Arriba se ve el cielo y alrededor hay baranda de vidrio.
   const SKY_H = TERRACE.y - 1;
@@ -182,6 +202,7 @@
   // Oficinas en arriendo: vacías, con un buzón para preguntar por ellas. Sus objetos llevan
   // la etiqueta de la sala para poder reemplazarlos (editor de oficinas).
   function furnishRent(q) {
+    if (OPEN) return; // en la planta libre las oficinas se arman con el editor
     const tag = { tag: q.id };
     put(art.mailbox(), q.x + Math.floor(q.w / 2), q.y + q.h - 3, 1, 1, {
       tag: q.id,
@@ -247,8 +268,10 @@
   // Pasillos: plantas en los cruces y al final de los pasillos verticales.
   put(art.plant(19), 1, 14, 1, 1);
   put(art.plant(20), 50, 14, 1, 1);
-  put(art.waterCooler(), 13, 3, 1, 1);
-  put(art.plant(21), 33, 3, 1, 1);
+  if (!OPEN) {
+    put(art.waterCooler(), 13, 3, 1, 1);
+    put(art.plant(21), 33, 3, 1, 1);
+  }
 
   // ————————————————————————————————— Colisiones
   const solid = new Uint8Array(W * H);
@@ -266,14 +289,6 @@
     for (let y = q.y; y < q.y + q.h; y++)
       for (let x = q.x; x < q.x + q.w; x++) solid[y * W + x] = isBlocked(grid[y * W + x]) ? 1 : 0;
     objects.filter((o) => o.tag === id).forEach(markSolid);
-    // Lo que la oficina personalizada no arrienda queda detrás de un vidrio.
-    if (q.custom && q.plan)
-      for (let y = q.y; y < q.y + q.h; y++)
-        for (let x = q.x; x < q.x + q.w; x++) if (!ownCol(q, x)) solid[y * W + x] = 1;
-  }
-  // ¿La columna x es parte del espacio arrendado de una oficina personalizada?
-  function ownCol(q, x) {
-    return !!q.custom && (!q.plan || (x >= q.x + q.plan.x0 && x < q.x + q.plan.x0 + q.plan.w));
   }
 
   // ————————————————————————————————— Estilos de superficie para oficinas personalizadas
@@ -360,7 +375,7 @@
 
   // ————————————————————————————————— Capa estática
   const WALL_TOP = '#2f2925', WALL_EDGE = '#51473f';
-  const FACE_COLOR = { board: '#f7f7f9', zumi: '#e2eedc', pickpals: '#dde6f3', lobby: '#ece6da', hall: '#e6e1d7', rent: '#f7f7f9' };
+  const FACE_COLOR = { open: '#ece9e2', board: '#f7f7f9', zumi: '#e2eedc', pickpals: '#dde6f3', lobby: '#ece6da', hall: '#e6e1d7', rent: '#f7f7f9' };
 
   function roomAt(tx, ty) {
     for (const q of TGL.rooms)
@@ -403,8 +418,13 @@
     } else if (v === FLOOR.rent) {
       // oficina vacía: blanca, como recién pintada; si alguien la personalizó, su piso
       const q = roomAt(x, y);
-      if (q && ownCol(q, x)) (FLOOR_STYLES[surfaces(q).floor] || FLOOR_STYLES.plain)(ctx, px, py, x, y, rnd, q, surfaces(q).floorColor);
+      if (q && q.custom) (FLOOR_STYLES[surfaces(q).floor] || FLOOR_STYLES.plain)(ctx, px, py, x, y, rnd, q, surfaces(q).floorColor);
       else FLOOR_STYLES.plain(ctx, px, py, x, y, rnd, q, '#f1f1f3');
+    } else if (v === FLOOR.open) {
+      // planta libre: concreto sin terminar, con la marca de cada módulo de 4 m
+      r(ctx, px, py, T, T, '#cdc9c0');
+      for (let k = 0; k < 3; k++) r(ctx, px + Math.floor(rnd() * 16), py + Math.floor(rnd() * 16), 1, 1, '#c2beb4');
+      if ((STRIP.x + STRIP.w - x) % 4 === 0) for (let k = 0; k < T; k += 4) r(ctx, px, py + k, 1, 2, '#b3aea3');
     } else if (v === FLOOR.pickpals) {
       r(ctx, px, py, T, T, '#5b719a');
       r(ctx, px, py, T, 1, '#536890');
@@ -418,7 +438,7 @@
   }
 
   const RENT_TEXT = { es: 'SE ARRIENDA', en: 'FOR RENT' };
-  const decor = [
+  const STRIP_DECOR = [
     // Oficinas en arriendo
     { k: 'glass', x: 1, y: 1, w: 3 }, { k: 'plate', room: 'rent1', x: 4, y: 1, w: 5, text: RENT_TEXT, bg: '#1d1f24', fg: '#ffc367' },
     { k: 'glass', x: 9, y: 1, w: 3 },
@@ -433,6 +453,9 @@
     { k: 'painting', x: 36, y: 12, w: 2 },
     { k: 'sign', x: 44, y: 12, w: 3, text: '103', fg: '#ffc367' },
     { k: 'clock', x: 48, y: 12, w: 1 },
+  ].map((d) => Object.assign(d, { strip: true }));
+  const decor = [
+    ...(OPEN ? [] : STRIP_DECOR),
     // Board
     { k: 'glass', x: 1, y: 17, w: 3 }, { k: 'wallDisplay', x: 4, y: 17, w: 4 }, { k: 'glass', x: 8, y: 17, w: 3 },
     // Zumi
@@ -600,50 +623,17 @@
   function drawRentFloors(ctx) {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    for (const q of TGL.rooms.filter((x) => x.rent && !x.custom)) {
+    for (const q of TGL.rooms.filter((x) => (x.rent || x.open) && !x.custom && x.w > 0)) {
       const cx = (q.x + q.w / 2) * T, cy = (q.y + 3) * T;
-      ctx.fillStyle = '#d4d4da';
+      ctx.fillStyle = q.open ? '#bdb8ad' : '#d4d4da';
       ctx.font = '16px Silkscreen, monospace';
       ctx.fillText(TGL.t(RENT_TEXT), cx, cy);
       ctx.font = '8px Silkscreen, monospace';
-      ctx.fillStyle = '#b3b3bb';
-      ctx.fillText(q.w * q.h + ' m²  ·  ' + q.office, cx, cy + 16);
+      ctx.fillStyle = q.open ? '#a39e93' : '#b3b3bb';
+      ctx.fillText(q.w * q.h + ' m²  ·  ' + (q.open ? TGL.t(OPEN_TEXT) : q.office), cx, cy + 16);
     }
   }
-
-  // La parte de una sala que no entra en el tamaño arrendado: rayada, tras un vidrio, disponible.
-  const FREE_TEXT = { es: 'DISPONIBLE', en: 'AVAILABLE' };
-  function drawUnrented(ctx) {
-    for (const q of TGL.rooms.filter((x) => x.custom && x.plan && x.plan.w < x.w)) {
-      const parts = [[0, q.plan.x0], [q.plan.x0 + q.plan.w, q.w - q.plan.x0 - q.plan.w]];
-      for (const [rx, rw] of parts) {
-        if (rw <= 0) continue;
-        const x = (q.x + rx) * T, y = q.y * T, w = rw * T, h = q.h * T;
-        r(ctx, x, y, w, h, '#ecebef');
-        ctx.save();
-        ctx.beginPath();
-        ctx.rect(x, y, w, h);
-        ctx.clip();
-        for (let k = -h; k < w; k += 8) {
-          ctx.fillStyle = '#e0dfe5';
-          for (let j = 0; j < h; j++) ctx.fillRect(x + k + j, y + j, 3, 1);
-        }
-        ctx.restore();
-        // vidrio en el borde que da a la oficina
-        const gx = rx === 0 ? x + w - 3 : x;
-        r(ctx, gx, y - 2, 3, h + 2, '#9aa3ae');
-        r(ctx, gx + 1, y - 2, 1, h + 2, '#d7eef9');
-        if (rw >= 4) {
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillStyle = '#b3b3bb';
-          ctx.font = '8px Silkscreen, monospace';
-          ctx.fillText(TGL.t(FREE_TEXT), x + w / 2, y + h / 2 - 6);
-          ctx.fillText('+' + rw * q.h + ' m²', x + w / 2, y + h / 2 + 6);
-        }
-      }
-    }
-  }
+  const OPEN_TEXT = { es: 'planta libre · módulos de 4 × 8 m', en: 'open floor · 4 × 8 m modules' };
 
   function renderStatic() {
     links.length = 0;
@@ -660,7 +650,7 @@
           if (at(x, y + 1) === FACE) r(ctx, px, py + T - 2, T, 2, WALL_EDGE);
         } else if (v === FACE) {
           const q = faceRoom(x, y);
-          if (q.rent && ownCol(q, x)) (WALL_STYLES[surfaces(q).walls] || WALL_STYLES.plain)(ctx, px, py, x, !isWall(at(x, y + 1)), surfaces(q).wallColor);
+          if (q.rent && q.custom) (WALL_STYLES[surfaces(q).walls] || WALL_STYLES.plain)(ctx, px, py, x, !isWall(at(x, y + 1)), surfaces(q).wallColor);
           else r(ctx, px, py, T, T, FACE_COLOR[q.rent ? 'rent' : q.id] || FACE_COLOR.lobby);
           if (at(x, y - 1) === TOP) r(ctx, px, py, T, 3, 'rgba(0,0,0,.12)');
           if (!isWall(at(x, y + 1))) {
@@ -698,7 +688,6 @@
     for (const d of decor) drawDecor(ctx, d);
     drawSky(ctx);
     drawRentFloors(ctx);
-    drawUnrented(ctx);
     drawRug(ctx);
     return c;
   }
@@ -772,8 +761,7 @@
     // Modo noche de una oficina personalizada: penumbra y neón con su color de acento.
     for (const q of TGL.rooms) {
       if (!q.custom || q.custom.mode !== 'night') continue;
-      const p = q.plan || { x0: 0, w: q.w };
-      const x = (q.x + p.x0) * T, y = (q.y - 2) * T, w = p.w * T, h = (q.h + 2) * T;
+      const x = q.x * T, y = (q.y - 2) * T, w = q.w * T, h = (q.h + 2) * T;
       r(ctx, x, y, w, h, 'rgba(10,8,30,.42)');
       ctx.globalAlpha = 0.55 + Math.sin(t * 2) * 0.2;
       r(ctx, x, y + 2 * T, w, 2, q.custom.identity.accent);
@@ -782,9 +770,58 @@
     }
   }
 
+  // ————————————————————————————————— Planta libre: construir la oficina del tamaño arrendado
+  // La oficina va pegada al extremo derecho del piso, con su puerta centrada hacia el pasillo;
+  // lo demás queda como planta libre, con sus propias puertas. w = 0: no hay oficina.
+  const OPEN_DOORS = [5, 22, 42];
+  function setOffice(id, w) {
+    if (!OPEN) return;
+    const off = room(id), open = room('open');
+    off.w = w;
+    off.x = STRIP.x + STRIP.w - w;
+    open.w = w ? off.x - 1 - STRIP.x : STRIP.w;
+    for (let x = STRIP.x; x < STRIP.x + STRIP.w; x++) {
+      set(x, 0, TOP); set(x, 1, FACE); set(x, 2, FACE);
+      for (let y = STRIP.y; y < STRIP.y + STRIP.h; y++) set(x, y, x >= off.x ? FLOOR.rent : FLOOR.open);
+      set(x, 11, TOP); set(x, 12, FACE); set(x, 13, FACE);
+    }
+    if (w) for (let y = 0; y < STRIP.y + STRIP.h; y++) set(off.x - 1, y, TOP); // muro divisorio
+
+    DOORS = DOORS.filter((d) => !d.strip);
+    const strip = [];
+    if (w) strip.push({ k: 'h', x: off.x + Math.floor(w / 2) - 1, y: 11, w: 2, from: id, to: 'hall', strip: true });
+    for (const dx of OPEN_DOORS) if (dx + 2 <= STRIP.x + open.w) strip.push({ k: 'h', x: dx, y: 11, w: 2, from: 'open', to: 'hall', strip: true });
+    strip.forEach(openDoor);
+    DOORS.push(...strip);
+
+    // Ventanas, letreros y cuadros de este piso.
+    for (let i = decor.length - 1; i >= 0; i--) if (decor[i].strip) decor.splice(i, 1);
+    const add = (d) => decor.push(Object.assign(d, { strip: true }));
+    const openEnd = STRIP.x + open.w;
+    const plateX = STRIP.x + Math.floor(open.w / 2) - 3;
+    for (let gx = STRIP.x; gx + 4 <= openEnd; gx += 6) if (gx + 4 <= plateX || gx >= plateX + 6) add({ k: 'glass', x: gx, y: 1, w: 4 });
+    if (open.w >= 8) add({ k: 'plate', x: plateX, y: 1, w: 6, text: RENT_TEXT, bg: '#1d1f24', fg: '#ffc367' });
+    add({ k: 'painting', x: 9, y: 12, w: 2 });
+    add({ k: 'painting', x: 27, y: 12, w: 2 });
+    if (w) {
+      const side = Math.floor((w - 6) / 2);
+      add({ k: 'plate', room: id, x: off.x + side, y: 1, w: 6, text: RENT_TEXT, bg: '#1d1f24', fg: '#ffc367' });
+      if (side >= 2) {
+        add({ k: 'glass', x: off.x, y: 1, w: Math.min(4, side) });
+        add({ k: 'glass', x: off.x + w - Math.min(4, side), y: 1, w: Math.min(4, side) });
+      }
+      const door = strip[0];
+      add({ k: 'sign', x: Math.min(door.x + 2, STRIP.x + STRIP.w - 3), y: 12, w: 3, text: off.office, fg: '#ffc367' });
+    }
+
+    for (let i = 0; i < W * H; i++) solid[i] = isBlocked(grid[i]) ? 1 : 0;
+    objects.forEach(markSolid);
+  }
+  if (OPEN) setOffice('rent3', 0);
+
   TGL.world = {
     W, H, grid, solid, objects, links, breakSpots, roomAt, drawWallAnims, drawOverlay, renderStatic,
-    T, room, refreshSolids, furnishRent, FLOOR_STYLES, WALL_STYLES,
+    T, room, refreshSolids, furnishRent, FLOOR_STYLES, WALL_STYLES, setOffice, OPEN,
     // Para el editor: sacar y agregar objetos de una sala, y las casillas frente a sus puertas.
     removeTagged(tag) {
       for (let i = objects.length - 1; i >= 0; i--) if (objects[i].tag === tag) objects.splice(i, 1);
