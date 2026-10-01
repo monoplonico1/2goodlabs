@@ -50,9 +50,14 @@ Qué incluye, pensado para que escale a un producto:
 
 - **El espacio es un documento JSON** con versión de esquema (`editor/space.js`): identidad,
   superficies, ambiente, objetos, personas y contenido. Es lo que guardaría el servidor.
-- **Catálogo** (`editor/catalog.js`): objetos con tamaño, categoría, variantes de color y
-  nivel `free` / `pro`; pisos, paredes y ambientes con el mismo esquema; límites del plan
+- **Catálogo** (`editor/catalog.js`): objetos con tamaño, categoría, versiones y
+  nivel `free` / `pro`; patrones de piso y pared; ambientes; límites del plan
   (30 objetos, 3 personas, 4 links). El editor muestra cuánto PRO usa cada espacio.
+- **Color libre** en pisos, paredes, muebles, marca y personas (selector, código hex,
+  colores de la marca y paleta). Los patrones se dibujan con el color elegido
+  (`js/world.js`) y los muebles se recolorean conservando sus luces y sombras
+  (`TGL.color.recolor` en `js/art.js`, con la lista `tint` de cada objeto). Los espacios
+  guardados con el esquema 1 se migran solos.
 - **Reglas**: dentro de la sala, sin choques, la entrada libre y todo alcanzable a pie.
 - **Herramientas**: plantillas, deshacer/rehacer, vista "Probar", guardar, y
   exportar/importar JSON (útil para armar a mano los espacios de los primeros clientes).

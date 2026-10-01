@@ -32,6 +32,13 @@
       leaveConfirm: '¿Salir sin guardar? Se pierden los cambios.', clearConfirm: '¿Vaciar la oficina?',
       restoreConfirm: '¿Volver a dejarla en arriendo? Se borra lo guardado en este navegador.',
       importError: 'Ese archivo no es una oficina válida.', localNote: 'Por ahora se guarda solo en este navegador.',
+      color: 'Color', original: 'Original', custom: 'Cualquier color', pattern: 'Diseño',
+      floorColor: 'Color del piso', wallColor: 'Color de las paredes',
+      infoTitle: 'Bloque ?', infoMissing: 'Todavía no está en la oficina: sin él nadie puede leer la descripción ni los links.',
+      infoPlaced: 'Está en la oficina. Quien se acerque y lo toque verá esta descripción y los links.',
+      addInfo: '+ Poner bloque ?', infoAdded: 'Bloque ? puesto. Puedes arrastrarlo a otro lugar.', noRoom: 'No hay espacio libre para ponerlo',
+      savedLocal: 'Guardado en este navegador. Otros dispositivos todavía no lo ven.',
+      saveError: 'No se pudo guardar: este navegador no permite guardar datos (¿modo privado?).',
     },
     en: {
       open: 'Edit office', title: 'Office editor', beta: 'BETA',
@@ -58,6 +65,13 @@
       leaveConfirm: 'Leave without saving? Your changes will be lost.', clearConfirm: 'Empty the office?',
       restoreConfirm: 'Put it back up for rent? What is saved in this browser will be deleted.',
       importError: 'That file is not a valid office.', localNote: 'For now it is saved only in this browser.',
+      color: 'Color', original: 'Original', custom: 'Any color', pattern: 'Pattern',
+      floorColor: 'Floor color', wallColor: 'Wall color',
+      infoTitle: '? block', infoMissing: 'It is not in the office yet: without it nobody can read the description or the links.',
+      infoPlaced: 'It is in the office. Whoever walks up to it and taps it sees this description and the links.',
+      addInfo: '+ Place ? block', infoAdded: '? block placed. You can drag it somewhere else.', noRoom: 'There is no free spot for it',
+      savedLocal: 'Saved in this browser. Other devices cannot see it yet.',
+      saveError: 'Could not save: this browser does not allow storing data (private mode?).',
     },
   };
   const tr = (k) => L[TGL.lang][k];
@@ -71,11 +85,13 @@
   let doc = null, saved = space.load(ROOM);
   let history = [], hIndex = -1;
   let tab = 'items', category = 'all';
-  let tool = null;       // { kind: 'item', type, variant } | { kind: 'resident', data, index? } | { kind: 'move', ref }
+  let tool = null;       // { kind: 'item', type, variant, color } | { kind: 'resident', data, index? } | { kind: 'move', ref }
   let selected = null;   // { kind: 'item' | 'resident', index }
   let hover = null;      // casilla relativa a la sala bajo el puntero
   let drag = null;       // { ref, startX, startY, dx, dy, moved }
   let message = null, messageTimer = null;
+  let lastTab = null, reveal = null; // para conservar el scroll del panel entre renders
+  const openPeople = new Set();      // tarjetas de personas abiertas (índices)
 
   // ————————————————————————————————— DOM
   const btn = document.createElement('button');
@@ -207,27 +223,28 @@
   // Antes de guardar, lo que está a medio escribir (frases vacías, links incompletos) se limpia.
   function save() {
     doc = cleanDoc();
-    if (!space.save(ROOM, doc)) return;
+    if (!space.save(ROOM, doc)) { render(); return flash(tr('saveError'), true); }
     saved = clone(doc);
     dirty = false;
     space.apply(ROOM, doc);
     render();
-    flash(tr('saved'));
+    flash(tr('savedLocal'));
   }
 
   function flash(text, bad) {
     message = { text, bad };
     clearTimeout(messageTimer);
-    messageTimer = setTimeout(() => { message = null; renderFoot(); }, 2500);
+    messageTimer = setTimeout(() => { message = null; renderFoot(); }, bad ? 5000 : 3500);
     renderFoot();
   }
 
   // ————————————————————————————————— Panel
   const thumbs = {};
-  function thumb(def, variant) {
-    const key = def.type + (variant || '');
+  const sprite = (def, item) => (def.preview ? def.preview() : cat.build(def, item));
+  function thumb(def, item) {
+    const key = def.type + '|' + ((item && item.variant) || '') + '|' + ((item && item.color) || '');
     if (!thumbs[key]) {
-      const sp = def.make(variant || (def.variants && def.variants[0]));
+      const sp = sprite(def, item);
       const c = document.createElement('canvas');
       c.width = c.height = 48;
       const x = c.getContext('2d');
@@ -242,12 +259,58 @@
   }
 
   const swatch = (color, active, data) =>
-    `<button type="button" class="ed-swatch${active ? ' on' : ''}" style="--c:${color}" ${data} aria-label="${color}"></button>`;
+    `<button type="button" class="ed-swatch${active ? ' on' : ''}" style="--c:${color}" ${data} aria-label="${color}" title="${color}"></button>`;
+
+  // Selector de color: cualquier color (selector nativo o código hex), los de la marca y una paleta.
+  function colorControl(path, value, palette, opts) {
+    opts = opts || {};
+    value = (value || '#000000').toLowerCase();
+    const brand = opts.brand === false ? [] : [doc.identity.primary, doc.identity.accent];
+    const list = [...new Set(brand.concat(palette).map((c) => c.toLowerCase()))];
+    const on = (c) => !opts.isOriginal && c === value;
+    return `<div class="ed-colors">
+      <div class="ed-row">
+        <input type="color" value="${value}" data-color="${path}" aria-label="${esc(tr('custom'))}" title="${esc(tr('custom'))}">
+        <input class="ed-hex" value="${value}" maxlength="7" spellcheck="false" data-hex="${path}" aria-label="HEX">
+        ${opts.reset ? `<button type="button" class="ed-chip-text${opts.isOriginal ? ' on' : ''}" data-act="setcolor" data-path="${path}" data-v="">${esc(tr('original'))}</button>` : ''}
+      </div>
+      <div class="ed-row ed-swatches">${list.map((c, k) => swatch(c, on(c), `data-act="setcolor" data-path="${path}" data-v="${c}"${k < brand.length ? ' data-brand' : ''}`)).join('')}</div>
+    </div>`;
+  }
+
+  // Cambia un color del documento a partir de su "ruta" en el panel.
+  function setColor(path, v) {
+    const p = path.split('.');
+    if (p[0] === 'item') {
+      const it = doc.items[selected.index];
+      if (v) it.color = v; else delete it.color;
+    } else if (p[0] === 'person') doc.residents[Number(p[1])][p[2]] = v;
+    else doc[p[0]][p[1]] = v;
+  }
+
+  // Miniatura de un patrón de piso o pared, con el color actual.
+  const pthumbs = new Map();
+  function patternThumb(kind, id, color) {
+    const key = kind + id + color + doc.identity.accent;
+    if (!pthumbs.has(key)) {
+      const c = TGL.canvas(32, 32), x = c.getContext('2d'), rnd = TGL.rng(7), q = { custom: doc };
+      for (let ty = 0; ty < 2; ty++)
+        for (let tx = 0; tx < 2; tx++) {
+          if (kind === 'floor') world.FLOOR_STYLES[id](x, tx * T, ty * T, tx, ty, rnd, q, color);
+          else world.WALL_STYLES[id](x, tx * T, ty * T, tx, ty === 1, color);
+        }
+      if (pthumbs.size > 200) pthumbs.clear();
+      pthumbs.set(key, c.toDataURL());
+    }
+    return pthumbs.get(key);
+  }
   const proBadge = (tier) => (tier === 'pro' ? `<span class="ed-pro">${tr('pro')}</span>` : '');
   const field = (label, html) => `<label class="ed-field"><span>${esc(label)}</span>${html}</label>`;
 
   function render() {
     labelButtons();
+    const oldBody = panel.querySelector('.ed-body');
+    const scroll = oldBody && lastTab === tab ? oldBody.scrollTop : 0;
     const tabs = [['items', 'tItems'], ['style', 'tStyle'], ['brand', 'tBrand'], ['people', 'tPeople']];
     panel.innerHTML = `
       <header class="ed-head">
@@ -271,6 +334,14 @@
       <nav class="ed-tabs">${tabs.map(([id, k]) => `<button type="button" data-tab="${id}" class="${tab === id ? 'on' : ''}">${esc(tr(k))}</button>`).join('')}</nav>
       <div class="ed-body">${renderTab()}</div>
       <footer class="ed-foot"></footer>`;
+    lastTab = tab;
+    const body = panel.querySelector('.ed-body');
+    body.scrollTop = scroll;
+    if (reveal) {
+      const el = body.querySelector(reveal);
+      if (el) el.scrollIntoView({ block: 'nearest' });
+      reveal = null;
+    }
     renderFoot();
   }
 
@@ -286,14 +357,16 @@
     const it = doc.items[selected.index], def = cat.byType[it.type];
     const variants = def.variants
       ? `<div class="ed-field"><span>${esc(tr('variant'))}</span><div class="ed-row">${def.variants.map((v) =>
-          v[0] === '#'
-            ? swatch(v, v === it.variant, `data-act="variant" data-v="${v}"`)
-            : `<button type="button" class="ed-chip${v === it.variant ? ' on' : ''}" data-act="variant" data-v="${v}"><img src="${thumb(def, v)}" alt=""></button>`
+          `<button type="button" class="ed-chip${v === it.variant ? ' on' : ''}" data-act="variant" data-v="${v}"><img src="${thumb(def, { variant: v, color: it.color })}" alt=""></button>`
         ).join('')}</div></div>`
       : '';
+    const color = cat.colorable(def)
+      ? `<div class="ed-field"><span>${esc(tr('color'))}</span>${colorControl('item', it.color || cat.baseColor(def), cat.palettes.item, { reset: true, isOriginal: !it.color })}</div>`
+      : '';
     return `<div class="ed-inspector">
-      <div class="ed-insp-head"><img src="${thumb(def, it.variant)}" alt=""><strong>${esc(nm(def))}</strong>${proBadge(def.tier)}</div>
+      <div class="ed-insp-head"><img src="${thumb(def, it)}" alt=""><strong>${esc(nm(def))}</strong>${proBadge(def.tier)}</div>
       ${variants}
+      ${color}
       <div class="ed-row">
         <button type="button" class="ed-btn" data-act="move">${esc(tr('move'))}</button>
         <button type="button" class="ed-btn" data-act="duplicate">${esc(tr('duplicate'))}</button>
@@ -317,25 +390,32 @@
   }
 
   function renderStyle() {
-    const opt = (list, key, current) => list.map((o) => {
-      const color = o.swatch || doc.identity.primary;
-      return `<button type="button" class="ed-opt${current === o.id ? ' on' : ''}" data-act="${key}" data-v="${o.id}">
-        <i style="--c:${color}"></i><span>${esc(nm(o))}</span>${proBadge(o.tier)}</button>`;
-    }).join('');
+    const s = doc.surfaces;
+    const opt = (list, kind, current, color) => list.map((o) => `
+      <button type="button" class="ed-opt${current === o.id ? ' on' : ''}" data-act="${kind === 'floor' ? 'floor' : 'walls'}" data-v="${o.id}">
+        <img src="${patternThumb(kind, o.id, color)}" alt=""><span>${esc(nm(o))}</span>${proBadge(o.tier)}</button>`).join('');
     return `
       <h3 class="ed-h">${esc(tr('templates'))}</h3>
       <div class="ed-row">${space.templates.map((t) => `<button type="button" class="ed-btn" data-act="template" data-v="${t.id}">${esc(nm(t))}</button>`).join('')}</div>
-      <h3 class="ed-h">${esc(tr('floor'))}</h3><div class="ed-opts">${opt(cat.floors, 'floor', doc.surfaces.floor)}</div>
-      <h3 class="ed-h">${esc(tr('walls'))}</h3><div class="ed-opts">${opt(cat.walls, 'walls', doc.surfaces.walls)}</div>
+      <h3 class="ed-h">${esc(tr('floor'))}</h3>
+      <div class="ed-field"><span>${esc(tr('floorColor'))}</span>${colorControl('surfaces.floorColor', s.floorColor, cat.palettes.floor)}</div>
+      <div class="ed-opts">${opt(cat.floors, 'floor', s.floor, s.floorColor)}</div>
+      <h3 class="ed-h">${esc(tr('walls'))}</h3>
+      <div class="ed-field"><span>${esc(tr('wallColor'))}</span>${colorControl('surfaces.wallColor', s.wallColor, cat.palettes.wall)}</div>
+      <div class="ed-opts">${opt(cat.walls, 'wall', s.walls, s.wallColor)}</div>
       <h3 class="ed-h">${esc(tr('mode'))}</h3><div class="ed-opts">${cat.modes.map((m) => `
         <button type="button" class="ed-opt${doc.mode === m.id ? ' on' : ''}" data-act="mode" data-v="${m.id}"><span>${esc(nm(m))}</span>${proBadge(m.tier)}</button>`).join('')}</div>`;
   }
 
   function renderBrand() {
     const id = doc.identity;
-    const colorRow = (key) => `<div class="ed-row">
-      <input type="color" value="${id[key]}" data-field="identity.${key}" aria-label="${esc(tr(key))}">
-      ${['#1d1f24', '#1b2a4a', '#2c4a35', '#6a4c93', '#8a3b3b', '#ffc367', '#4dd6ff', '#9cff57', '#ff6fa8', '#ffffff'].map((c) => swatch(c, id[key] === c, `data-act="color" data-key="${key}" data-v="${c}"`)).join('')}
+    const colorRow = (key) => colorControl('identity.' + key, id[key],
+      ['#1d1f24', '#1b2a4a', '#2c4a35', '#6a4c93', '#8a3b3b', '#b5654a', '#ffc367', '#4dd6ff', '#9cff57', '#ff6fa8', '#f2a65a', '#ffffff'], { brand: false });
+    const info = cat.byType.info, hasInfo = doc.items.some((it) => cat.byType[it.type].info);
+    const infoBox = `<div class="ed-infobox${hasInfo ? '' : ' missing'}">
+      <img src="${thumb(info)}" alt="">
+      <div><strong>${esc(tr('infoTitle'))}</strong><small>${esc(tr(hasInfo ? 'infoPlaced' : 'infoMissing'))}</small></div>
+      ${hasInfo ? '' : `<button type="button" class="ed-btn ed-primary" data-act="addinfo">${esc(tr('addInfo'))}</button>`}
     </div>`;
     const links = doc.content.links.map((l, i) => `
       <div class="ed-link">
@@ -348,6 +428,7 @@
       ${field(tr('tagline'), `<input value="${esc(id.tagline)}" maxlength="60" data-field="identity.tagline">`)}
       <div class="ed-field"><span>${esc(tr('primary'))}</span>${colorRow('primary')}</div>
       <div class="ed-field"><span>${esc(tr('accent'))}</span>${colorRow('accent')}</div>
+      ${infoBox}
       ${field(tr('about'), `<textarea rows="3" maxlength="280" data-field="content.about">${esc(doc.content.about)}</textarea>`)}
       <div class="ed-field"><span>${esc(tr('links'))}</span>${links}
         ${doc.content.links.length < cat.plan.maxLinks ? `<button type="button" class="ed-btn" data-act="link">${esc(tr('addLink'))}</button>` : ''}
@@ -358,8 +439,11 @@
     const full = doc.residents.length >= cat.plan.maxResidents;
     const placing = tool && tool.kind === 'resident';
     const cards = doc.residents.map((p, i) => {
-      const colors = (key, list) => `<div class="ed-field"><span>${esc(tr(key))}</span><div class="ed-row">${list.map((c) => swatch(c, p[key] === c, `data-act="pcolor" data-i="${i}" data-key="${key}" data-v="${c}"`)).join('')}</div></div>`;
-      return `<div class="ed-person${selected && selected.kind === 'resident' && selected.index === i ? ' on' : ''}">
+      const colors = (key, list) => `<div class="ed-field"><span>${esc(tr(key))}</span>${colorControl(`person.${i}.${key}`, p[key], list, { brand: key === 'body' || key === 'eye' })}</div>`;
+      const on = selected && selected.kind === 'resident' && selected.index === i;
+      return `<details class="ed-person${on ? ' on' : ''}" data-pi="${i}"${openPeople.has(i) ? ' open' : ''}>
+        <summary><i class="ed-dot" style="--c:${p.body}"></i><strong>${esc(p.name)}</strong><small>${esc(tr(p.kind))}${p.title ? ' · ' + esc(p.title) : ''}</small></summary>
+        <div class="ed-person-body">
         <div class="ed-row">
           <button type="button" class="ed-chip-text${p.kind === 'agent' ? ' on' : ''}" data-act="pkind" data-i="${i}" data-v="agent">${esc(tr('agent'))}</button>
           <button type="button" class="ed-chip-text${p.kind === 'human' ? ' on' : ''}" data-act="pkind" data-i="${i}" data-v="human">${esc(tr('human'))}</button>
@@ -376,7 +460,8 @@
           <button type="button" class="ed-btn" data-act="prelocate" data-i="${i}">${esc(tr('relocate'))}</button>
           <button type="button" class="ed-btn ed-danger" data-act="premove" data-i="${i}">${esc(tr('remove'))}</button>
         </div>
-      </div>`;
+        </div>
+      </details>`;
     }).join('');
     return `
       ${placing ? `<p class="ed-hint">${esc(tr('placePerson'))}</p>` : ''}
@@ -397,6 +482,13 @@
       ${bar(tr('capPeople'), doc.residents.length, cat.plan.maxResidents)}
       ${pro ? `<p class="ed-note"><span class="ed-pro">${tr('pro')}</span> ${esc(tr('proNote').replace('{n}', pro))}</p>` : ''}
       <p class="ed-status ${message && message.bad ? 'bad' : ''}">${esc(message ? message.text : dirty ? tr('unsaved') : tr('localNote'))}</p>`;
+    // El botón dice si lo que se ve ya está guardado.
+    const sb = panel.querySelector('[data-act=save]');
+    if (sb) {
+      const done = !dirty && !!saved;
+      sb.textContent = done ? '✓ ' + tr('saved') : tr('save');
+      sb.classList.toggle('ed-done', done);
+    }
   }
 
   // ————————————————————————————————— Acciones del panel
@@ -434,10 +526,12 @@
         return render();
       }
       case 'variant': sel.variant = v; return commit();
+      case 'setcolor': setColor(el.dataset.path, v); return commit();
+      case 'addinfo': return addInfo();
       case 'move': tool = { kind: 'move', ref: sel }; return render();
       case 'duplicate':
         if (doc.items.length >= cat.plan.maxItems) return flash(tr('full'), true);
-        tool = { kind: 'item', type: sel.type, variant: sel.variant };
+        tool = { kind: 'item', type: sel.type, variant: sel.variant, color: sel.color };
         selected = null;
         return render();
       case 'remove': doc.items.splice(selected.index, 1); selected = null; return commit();
@@ -450,7 +544,6 @@
       case 'floor': doc.surfaces.floor = v; return commit();
       case 'walls': doc.surfaces.walls = v; return commit();
       case 'mode': doc.mode = v; return commit();
-      case 'color': doc.identity[el.dataset.key] = v; return commit();
       case 'link': doc.content.links.push({ label: '', url: '' }); return render();
       case 'unlink': doc.content.links.splice(i, 1); return commit();
       case 'padd': {
@@ -466,17 +559,56 @@
         return render();
       }
       case 'pkind': doc.residents[i].kind = v; return commit();
-      case 'pcolor': doc.residents[i][el.dataset.key] = v; return commit();
       case 'prelocate': tool = { kind: 'move', ref: doc.residents[i] }; selected = { kind: 'resident', index: i }; return render();
-      case 'premove': doc.residents.splice(i, 1); selected = null; return commit();
+      case 'premove': {
+        doc.residents.splice(i, 1);
+        const was = [...openPeople];
+        openPeople.clear();
+        was.forEach((k) => { if (k !== i) openPeople.add(k > i ? k - 1 : k); });
+        selected = null;
+        return commit();
+      }
     }
   });
+
+  // Abrir y cerrar tarjetas de personas (el evento "toggle" no burbujea).
+  panel.addEventListener('toggle', (e) => {
+    const d = e.target;
+    if (!d.dataset || d.dataset.pi == null) return;
+    if (d.open) openPeople.add(Number(d.dataset.pi)); else openPeople.delete(Number(d.dataset.pi));
+  }, true);
+
+  // Pone el bloque "?" en el primer lugar libre cerca de la entrada.
+  function addInfo() {
+    if (doc.items.length >= cat.plan.maxItems) return flash(tr('full'), true);
+    const door = world.doorEntries(ROOM)[0] || { x: 0, y: room.h - 1 };
+    const spots = [];
+    for (let y = 0; y < room.h; y++) for (let x = 0; x < room.w; x++) spots.push({ x, y, d: Math.abs(x - door.x) + Math.abs(y - door.y) });
+    spots.sort((a, b) => (a.d < 2) - (b.d < 2) || a.d - b.d);
+    const item = { type: 'info' };
+    const spot = spots.find((p) => !space.canPlace(doc, ROOM, item, p.x, p.y));
+    if (!spot) return flash(tr('noRoom'), true);
+    doc.items.push({ type: 'info', x: spot.x, y: spot.y });
+    selected = { kind: 'item', index: doc.items.length - 1 };
+    commit();
+    flash(tr('infoAdded'));
+  }
 
   // Textos: el mundo se actualiza mientras se escribe; el historial guarda al terminar.
   let typingTimer = null;
   function onTextInput(e) {
     const el = e.target;
-    if (el.dataset.field) {
+    if (el.dataset.color) {
+      // Mientras se arrastra en el selector de color, el mundo se actualiza sin redibujar el panel.
+      setColor(el.dataset.color, el.value);
+      const hex = el.parentNode.querySelector('[data-hex]');
+      if (hex) hex.value = el.value;
+    } else if (el.dataset.hex) {
+      if (!TGL.color.isHex(el.value)) return;
+      setColor(el.dataset.hex, el.value.toLowerCase());
+      const pick = el.parentNode.querySelector('[data-color]');
+      if (pick) pick.value = el.value.toLowerCase();
+    } else if (el.dataset.field) {
       const [a, b] = el.dataset.field.split('.');
       doc[a][b] = el.value;
     } else if (el.dataset.person != null) {
@@ -484,6 +616,10 @@
       if (el.dataset.part === 'line') {
         p.lines[Number(el.dataset.k)] = el.value;
       } else p[el.dataset.part] = el.value;
+      if (el.dataset.part === 'name') {
+        const s = panel.querySelector(`[data-pi="${el.dataset.person}"] summary strong`);
+        if (s) s.textContent = el.value;
+      }
     } else if (el.dataset.link != null) {
       doc.content.links[Number(el.dataset.link)][el.dataset.part] = el.value;
       el.classList.toggle('bad', el.dataset.part === 'url' && !!el.value && !isUrl(el.value));
@@ -491,11 +627,17 @@
     dirty = true;
     renderFoot();
     clearTimeout(typingTimer);
-    typingTimer = setTimeout(() => space.apply(ROOM, cleanDoc()), 200);
+    typingTimer = setTimeout(() => space.apply(ROOM, cleanDoc()), el.dataset.color ? 60 : 200);
   }
   panel.addEventListener('input', onTextInput);
   panel.addEventListener('change', (e) => {
     if (!e.target.matches('input, textarea')) return;
+    // Al soltar un color: queda en el historial y el panel se redibuja (swatches, miniaturas).
+    if (e.target.dataset.color || e.target.dataset.hex) {
+      if (e.target.dataset.hex && !TGL.color.isHex(e.target.value)) return render();
+      clearTimeout(typingTimer);
+      return commit();
+    }
     history = history.slice(0, hIndex + 1);
     history.push(JSON.stringify(doc));
     hIndex = history.length - 1;
@@ -560,6 +702,7 @@
     if (tool.kind === 'item') {
       const item = { type: tool.type, x: t.x, y: t.y };
       if (tool.variant) item.variant = tool.variant;
+      if (tool.color) item.color = tool.color;
       const why = space.canPlace(doc, ROOM, item, t.x, t.y);
       if (why) return flash(tr(why), true);
       doc.items.push(item);
@@ -572,6 +715,8 @@
       if (why) return flash(tr(why), true);
       doc.residents.push(p);
       selected = { kind: 'resident', index: doc.residents.length - 1 };
+      openPeople.add(selected.index);
+      reveal = `[data-pi="${selected.index}"]`;
       tool = null;
       tab = 'people';
       return commit();
@@ -632,8 +777,14 @@
         if (!moveTo(d.ref, d.x, d.y)) render();
       } else {
         selected = d.hit;
-        if (d.hit.kind === 'resident') tab = 'people';
-        else tab = 'items';
+        if (d.hit.kind === 'resident') {
+          tab = 'people';
+          openPeople.add(d.hit.index);
+          reveal = `[data-pi="${d.hit.index}"]`;
+        } else {
+          tab = 'items';
+          reveal = '.ed-inspector';
+        }
         render();
       }
       return;
@@ -660,6 +811,11 @@
       selected = null;
       commit();
     }
+  });
+
+  // Cerrar la pestaña con cambios sin guardar pide confirmación.
+  window.addEventListener('beforeunload', (e) => {
+    if (isOpen && dirty) { e.preventDefault(); e.returnValue = ''; }
   });
 
   window.addEventListener('langchange', () => {
@@ -692,7 +848,7 @@
           px: ox + (x + 0.5) * T, py: oy + y * T + 12,
         }, t);
       } else {
-        const sp = cat.byType[thing.type].make(thing.variant);
+        const sp = sprite(cat.byType[thing.type], thing);
         ctx.drawImage(sp.canvas, ox + x * T - (sp.ox || 0), oy + y * T - sp.top);
       }
       ctx.globalAlpha = 1;

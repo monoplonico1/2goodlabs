@@ -2,16 +2,17 @@
 // lo que hoy se guarda en este navegador es exactamente lo que mañana guardaría el servidor.
 //
 // {
-//   schema: 1, room: 'rent3',
+//   schema: 2, room: 'rent3',
 //   identity: { name, tagline, primary, accent },        // letrero y colores de marca
-//   surfaces: { floor, walls }, mode: 'day' | 'night',   // ids del catálogo
-//   items: [{ type, x, y, variant? }],                    // x, y relativos a la sala
+//   surfaces: { floor, floorColor, walls, wallColor },   // patrón del catálogo + color libre
+//   mode: 'day' | 'night',
+//   items: [{ type, x, y, variant?, color? }],            // x, y relativos a la sala
 //   residents: [{ kind: 'agent'|'human', name, title, bio, lines: [], x, y, body, eye, skin, hair }],
 //   content: { about, links: [{ label, url }] },
 // }
 
 (function () {
-  const SCHEMA = 1;
+  const SCHEMA = 2;
   const cat = TGL.catalog;
   const world = TGL.world;
   const KEY = (id) => 'tgl-space:' + id;
@@ -20,7 +21,7 @@
     schema: SCHEMA,
     room: roomId,
     identity: { name: '', tagline: '', primary: '#1d1f24', accent: '#ffc367' },
-    surfaces: { floor: 'white', walls: 'white' },
+    surfaces: { floor: 'plain', floorColor: '#f1f1f3', walls: 'plain', wallColor: '#f7f7f9' },
     mode: 'day',
     items: [],
     residents: [],
@@ -34,13 +35,13 @@
       name: { es: 'Startup de IA', en: 'AI startup' },
       doc: {
         identity: { name: 'Nova AI', tagline: 'Agentes que atienden a tus clientes', primary: '#1b2a4a', accent: '#4dd6ff' },
-        surfaces: { floor: 'concrete', walls: 'white' },
+        surfaces: { floor: 'speckle', floorColor: '#d9d9de', walls: 'stripes', wallColor: '#e4ebf5' },
         mode: 'day',
         items: [
           { type: 'plant', x: 0, y: 0 }, { type: 'desk', x: 1, y: 2 }, { type: 'desk', x: 5, y: 2 },
-          { type: 'desk-imac', x: 9, y: 2 }, { type: 'whiteboard', x: 11, y: 0, variant: 'kanban' },
-          { type: 'server', x: 14, y: 0 }, { type: 'plant-white', x: 15, y: 0 },
-          { type: 'table-meeting', x: 2, y: 5 }, { type: 'sofa', x: 10, y: 6, variant: '#3d5a8a' },
+          { type: 'desk-imac', x: 9, y: 2, color: '#1b2a4a' }, { type: 'whiteboard', x: 11, y: 0, variant: 'kanban' },
+          { type: 'server', x: 14, y: 0, color: '#2f5fc4' }, { type: 'plant-white', x: 15, y: 0 },
+          { type: 'table-meeting', x: 2, y: 5 }, { type: 'sofa', x: 10, y: 6, color: '#4dd6ff' },
           { type: 'info', x: 6, y: 6 }, { type: 'water', x: 15, y: 6 },
         ],
         residents: [
@@ -56,13 +57,13 @@
       name: { es: 'Estudio creativo', en: 'Creative studio' },
       doc: {
         identity: { name: 'Pixel & Co.', tagline: 'Diseño de producto con IA', primary: '#6a4c93', accent: '#ffd24d' },
-        surfaces: { floor: 'oak', walls: 'cream' },
+        surfaces: { floor: 'herringbone', floorColor: '#c9925a', walls: 'wainscot', wallColor: '#f6dcdc' },
         mode: 'day',
         items: [
           { type: 'whiteboard', x: 1, y: 0, variant: 'moodboard' }, { type: 'whiteboard', x: 4, y: 0, variant: 'chart' },
-          { type: 'bookshelf', x: 13, y: 0 }, { type: 'plant', x: 15, y: 0 },
-          { type: 'table-oak', x: 5, y: 3 }, { type: 'chair-white', x: 4, y: 4 }, { type: 'chair-white', x: 9, y: 4 },
-          { type: 'sofa', x: 11, y: 6, variant: '#6a4c93' }, { type: 'birdcage', x: 0, y: 4 },
+          { type: 'bookshelf', x: 13, y: 0, color: '#6a4c93' }, { type: 'plant', x: 15, y: 0 },
+          { type: 'table-oak', x: 5, y: 3, color: '#f3e3b5' }, { type: 'chair-white', x: 4, y: 4, color: '#ffd24d' }, { type: 'chair-white', x: 9, y: 4, color: '#ffd24d' },
+          { type: 'sofa', x: 11, y: 6, color: '#ff6fa8' }, { type: 'birdcage', x: 0, y: 4 },
           { type: 'plant-white', x: 0, y: 7 }, { type: 'info', x: 14, y: 6 },
         ],
         residents: [
@@ -77,12 +78,12 @@
       name: { es: 'Lounge de comunidad', en: 'Community lounge' },
       doc: {
         identity: { name: 'The Lounge', tagline: 'Comunidad de builders con IA', primary: '#2c4a35', accent: '#ffc367' },
-        surfaces: { floor: 'mint', walls: 'mint' },
+        surfaces: { floor: 'checker', floorColor: '#2c4a35', walls: 'brick', wallColor: '#8a4a3a' },
         mode: 'night',
         items: [
           { type: 'fridge', x: 0, y: 0 }, { type: 'coffee', x: 1, y: 0 }, { type: 'tv-sports', x: 12, y: 0 },
-          { type: 'pingpong', x: 6, y: 2 }, { type: 'sofa', x: 2, y: 4, variant: '#f2a65a' },
-          { type: 'sofa', x: 10, y: 4, variant: '#f2a65a' }, { type: 'table', x: 3, y: 6 }, { type: 'table', x: 11, y: 6 },
+          { type: 'pingpong', x: 6, y: 2, color: '#2f5fc4' }, { type: 'sofa', x: 2, y: 4, color: '#f2a65a' },
+          { type: 'sofa', x: 10, y: 4, color: '#f2a65a' }, { type: 'table', x: 3, y: 6 }, { type: 'table', x: 11, y: 6 },
           { type: 'info', x: 8, y: 6 }, { type: 'plant', x: 15, y: 7 },
         ],
         residents: [
@@ -98,6 +99,25 @@
   const isColor = (v) => /^#[0-9a-f]{6}$/i.test(v || '');
   const isUrl = (v) => /^https?:\/\/[^\s]+\.[^\s]+$/i.test(v || '');
   const pick = (list, id, fallback) => (list.some((o) => o.id === id) ? id : fallback);
+
+  // Superficies de la versión 1 (un id = patrón y color fijos) a patrón + color.
+  const OLD_FLOORS = { white: ['plain', '#f1f1f3'], concrete: ['speckle', '#d9d9de'], oak: ['planks', '#cfa06a'], mint: ['checker', '#a9d3b3'], navy: ['speckle', '#2f3e5e'] };
+  const OLD_WALLS = { white: '#f7f7f9', cream: '#efe4d0', mint: '#e2eedc', sky: '#dde6f3', graphite: '#3a3d45' };
+  function surfacesOf(s, identity) {
+    let floor = s.floor, floorColor = s.floorColor, walls = s.walls, wallColor = s.wallColor;
+    if (OLD_FLOORS[floor]) [floor, floorColor] = isColor(floorColor) ? [OLD_FLOORS[floor][0], floorColor] : OLD_FLOORS[floor];
+    if (OLD_WALLS[walls] || walls === 'brand') {
+      if (!isColor(wallColor)) wallColor = walls === 'brand' ? identity.primary : OLD_WALLS[walls];
+      walls = 'plain';
+    }
+    floor = pick(cat.floors, floor, 'plain');
+    walls = pick(cat.walls, walls, 'plain');
+    return {
+      floor, walls,
+      floorColor: isColor(floorColor) ? floorColor.toLowerCase() : cat.floors.find((f) => f.id === floor).color,
+      wallColor: isColor(wallColor) ? wallColor.toLowerCase() : cat.walls.find((f) => f.id === walls).color,
+    };
+  }
 
   // Dimensiones y si bloquea el paso, para cualquier cosa que ocupe casillas.
   function footprint(thing) {
@@ -174,8 +194,7 @@
       primary: isColor(id.primary) ? id.primary : doc.identity.primary,
       accent: isColor(id.accent) ? id.accent : doc.identity.accent,
     };
-    const s = raw.surfaces || {};
-    doc.surfaces = { floor: pick(cat.floors, s.floor, 'white'), walls: pick(cat.walls, s.walls, 'white') };
+    doc.surfaces = surfacesOf(raw.surfaces || {}, doc.identity);
     doc.mode = pick(cat.modes, raw.mode, 'day');
     const c = raw.content || {};
     doc.content = {
@@ -191,6 +210,9 @@
       if (!def || doc.items.length >= cat.plan.maxItems) continue;
       const item = { type: it.type, x: it.x | 0, y: it.y | 0 };
       if (def.variants) item.variant = def.variants.includes(it.variant) ? it.variant : def.variants[0];
+      // Color libre; en la versión 1 el color de sillas y sofás venía en "variant".
+      const color = isColor(it.color) ? it.color : def.paint && isColor(it.variant) ? it.variant : null;
+      if (color && cat.colorable(def)) item.color = color.toLowerCase();
       if (!canPlace(doc, roomId, item, item.x, item.y)) doc.items.push(item);
     }
     for (const p of Array.isArray(raw.residents) ? raw.residents : []) {
@@ -239,7 +261,7 @@
 
     for (const it of doc.items) {
       const def = cat.byType[it.type];
-      world.addObject(def.make(it.variant), room.x + it.x, room.y + it.y, def.w, def.h, {
+      world.addObject(cat.build(def, it), room.x + it.x, room.y + it.y, def.w, def.h, {
         tag: roomId,
         solid: def.solid !== false,
         floor: !!def.floor,
@@ -276,8 +298,15 @@
       return null;
     }
   }
+  // Devuelve true solo si quedó escrito (se relee para comprobarlo).
   function save(roomId, doc) {
-    try { localStorage.setItem(KEY(roomId), JSON.stringify(doc)); return true; } catch (e) { return false; }
+    try {
+      const txt = JSON.stringify(doc);
+      localStorage.setItem(KEY(roomId), txt);
+      return localStorage.getItem(KEY(roomId)) === txt;
+    } catch (e) {
+      return false;
+    }
   }
   function clear(roomId) {
     try { localStorage.removeItem(KEY(roomId)); } catch (e) { /* nada que borrar */ }

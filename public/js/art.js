@@ -31,6 +31,62 @@
   }
   TGL.canvas = canvas;
 
+  // ————————————————————————————————— Color
+  // Utilidades para colores libres: sombras de un color base y recolorear sprites
+  // conservando sus luces y sombras.
+  const hexToRgb = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+  const rgbToHex = (r, g, b) => '#' + [r, g, b].map((v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('');
+  function rgbToHsl(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b), l = (max + min) / 2;
+    if (max === min) return [0, 0, l];
+    const d = max - min, s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    const h = max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    return [h / 6, s, l];
+  }
+  function hslToRgb(h, s, l) {
+    if (!s) return [l * 255, l * 255, l * 255];
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s, p = 2 * l - q;
+    const f = (t) => {
+      t = (t + 1) % 1;
+      if (t < 1 / 6) return p + (q - p) * 6 * t;
+      if (t < 1 / 2) return q;
+      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+      return p;
+    };
+    return [f(h + 1 / 3) * 255, f(h) * 255, f(h - 1 / 3) * 255];
+  }
+  const clamp01 = (v) => Math.max(0, Math.min(1, v));
+  // Más claro (amt > 0) u oscuro (amt < 0) en luminosidad, de -1 a 1.
+  function shade(hex, amt) {
+    const [h, s, l] = rgbToHsl(...hexToRgb(hex));
+    return rgbToHex(...hslToRgb(h, s, clamp01(l + amt)));
+  }
+  const lightness = (hex) => rgbToHsl(...hexToRgb(hex))[2];
+
+  // Cambia en un sprite los colores "sources" (el primero es el tono base del material) por
+  // el color "target", manteniendo la diferencia de luz de cada uno respecto del base.
+  function recolor(src, sources, target) {
+    const c = canvas(src.width, src.height), x = c.getContext('2d');
+    x.drawImage(src, 0, 0);
+    const img = x.getImageData(0, 0, c.width, c.height), d = img.data;
+    const [th, ts, tl] = rgbToHsl(...hexToRgb(target));
+    const baseL = lightness(sources[0]);
+    const map = new Map();
+    for (const sc of sources) {
+      const [r, g, b] = hexToRgb(sc);
+      map.set((r << 16) | (g << 8) | b, hslToRgb(th, ts, clamp01(tl + lightness(sc) - baseL)));
+    }
+    for (let i = 0; i < d.length; i += 4) {
+      if (!d[i + 3]) continue;
+      const to = map.get((d[i] << 16) | (d[i + 1] << 8) | d[i + 2]);
+      if (to) { d[i] = to[0]; d[i + 1] = to[1]; d[i + 2] = to[2]; }
+    }
+    x.putImageData(img, 0, 0);
+    return c;
+  }
+  TGL.color = { shade, lightness, recolor, isHex: (v) => /^#[0-9a-f]{6}$/i.test(v || '') };
+
   // ————————————————————————————————— Personajes
   // (x, y) = centro de los pies. Sprite de 14×22.
 

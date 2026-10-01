@@ -269,51 +269,86 @@
   }
 
   // ————————————————————————————————— Estilos de superficie para oficinas personalizadas
-  // Los ids coinciden con el catálogo del editor (editor/catalog.js).
+  // Patrones del editor (editor/catalog.js): cada uno se dibuja con el color que se elija,
+  // sacando sus luces y sombras de ese mismo color.
+  const shade = (c, a) => TGL.color.shade(c, a);
   const FLOOR_STYLES = {
-    white(ctx, px, py) {
-      r(ctx, px, py, T, T, '#f1f1f3');
-      r(ctx, px, py, T, 1, '#e4e4e8');
-      r(ctx, px, py, 1, T, '#e4e4e8');
+    plain(ctx, px, py, x, y, rnd, q, c) {
+      r(ctx, px, py, T, T, c);
+      r(ctx, px, py, T, 1, shade(c, -0.04));
+      r(ctx, px, py, 1, T, shade(c, -0.04));
     },
-    concrete(ctx, px, py, x, y, rnd) {
-      r(ctx, px, py, T, T, '#d9d9de');
-      r(ctx, px, py, T, 1, '#cacad0');
-      r(ctx, px, py, 1, T, '#cacad0');
-      for (let k = 0; k < 4; k++) r(ctx, px + Math.floor(rnd() * 16), py + Math.floor(rnd() * 16), 1, 1, '#e6e6ea');
+    speckle(ctx, px, py, x, y, rnd, q, c) {
+      r(ctx, px, py, T, T, c);
+      r(ctx, px, py, T, 1, shade(c, -0.05));
+      r(ctx, px, py, 1, T, shade(c, -0.05));
+      for (let k = 0; k < 4; k++) r(ctx, px + Math.floor(rnd() * 16), py + Math.floor(rnd() * 16), 1, 1, shade(c, 0.05));
     },
-    oak(ctx, px, py, x, y) {
-      r(ctx, px, py, T, T, '#cfa06a');
+    planks(ctx, px, py, x, y, rnd, q, c) {
+      r(ctx, px, py, T, T, c);
       for (let k = 0; k < 4; k++) {
-        r(ctx, px, py + k * 4 + 3, T, 1, '#b8884f');
-        r(ctx, px + ((x * 7 + (y * 4 + k) * 5) % 16), py + k * 4, 1, 3, '#bf9058');
+        r(ctx, px, py + k * 4 + 3, T, 1, shade(c, -0.09));
+        r(ctx, px + ((x * 7 + (y * 4 + k) * 5) % 16), py + k * 4, 1, 3, shade(c, -0.06));
       }
     },
-    mint(ctx, px, py, x, y) {
-      r(ctx, px, py, T, T, (x + y) % 2 ? '#a9d3b3' : '#a2ccac');
+    checker(ctx, px, py, x, y, rnd, q, c) {
+      r(ctx, px, py, T, T, (x + y) % 2 ? c : shade(c, -0.06));
     },
-    navy(ctx, px, py, x, y, rnd) {
-      r(ctx, px, py, T, T, '#2f3e5e');
-      r(ctx, px, py, T, 1, '#29374f');
-      r(ctx, px, py, 1, T, '#29374f');
-      for (let k = 0; k < 2; k++) r(ctx, px + Math.floor(rnd() * 16), py + Math.floor(rnd() * 16), 1, 1, '#3c4d72');
+    tiles(ctx, px, py, x, y, rnd, q, c) {
+      // baldosas grandes de 2×2 casillas
+      r(ctx, px, py, T, T, c);
+      if (x % 2 === 0) r(ctx, px, py, 1, T, shade(c, -0.1));
+      if (y % 2 === 0) r(ctx, px, py, T, 1, shade(c, -0.1));
+      r(ctx, px + (x % 2 ? 0 : 1), py + (y % 2 ? 0 : 1), T - 1, 1, shade(c, 0.04));
     },
-    neon(ctx, px, py, x, y, rnd, q) {
-      r(ctx, px, py, T, T, '#16131f');
+    herringbone(ctx, px, py, x, y, rnd, q, c) {
+      r(ctx, px, py, T, T, c);
+      const line = shade(c, -0.1), hi = shade(c, 0.05);
+      for (let j = 0; j < 4; j++)
+        for (let i = 0; i < 4; i++) {
+          const cx = px + i * 4, cy = py + j * 4;
+          if ((i + j + x + y) % 2) { r(ctx, cx, cy + 3, 4, 1, line); r(ctx, cx, cy, 4, 1, hi); }
+          else { r(ctx, cx + 3, cy, 1, 4, line); r(ctx, cx, cy, 1, 4, hi); }
+        }
+    },
+    neon(ctx, px, py, x, y, rnd, q, c) {
+      r(ctx, px, py, T, T, c);
       ctx.globalAlpha = 0.35;
       r(ctx, px, py, T, 1, q.custom.identity.accent);
       r(ctx, px, py, 1, T, q.custom.identity.accent);
       ctx.globalAlpha = 1;
     },
   };
+  // Muros: "low" = la fila de abajo de la cara del muro (la que toca el piso).
   const WALL_STYLES = {
-    white: () => '#f7f7f9',
-    cream: () => '#efe4d0',
-    mint: () => '#e2eedc',
-    sky: () => '#dde6f3',
-    graphite: () => '#3a3d45',
-    brand: (q) => q.custom.identity.primary,
+    plain(ctx, px, py, x, low, c) {
+      r(ctx, px, py, T, T, c);
+    },
+    stripes(ctx, px, py, x, low, c) {
+      r(ctx, px, py, T, T, c);
+      for (let k = 0; k < T; k += 4) r(ctx, px + k, py, 2, T, shade(c, -0.05));
+    },
+    wainscot(ctx, px, py, x, low, c) {
+      r(ctx, px, py, T, T, c);
+      if (!low) return;
+      r(ctx, px, py + 3, T, T - 3, '#9a6d44');
+      r(ctx, px, py + 3, T, 1, '#b8885a');
+      r(ctx, px, py + 4, T, 1, '#7a5230');
+      if (x % 2 === 0) r(ctx, px, py + 6, 1, T - 8, '#7a5230');
+    },
+    brick(ctx, px, py, x, low, c) {
+      r(ctx, px, py, T, T, c);
+      const mortar = shade(c, 0.14), dark = shade(c, -0.06);
+      for (let row = 0; row < 4; row++) {
+        const yy = py + row * 4;
+        r(ctx, px, yy + 3, T, 1, mortar);
+        const off = ((row + (low ? 0 : 2)) % 2) * 4;
+        for (let k = off; k < T; k += 8) r(ctx, px + k, yy, 1, 3, mortar);
+        r(ctx, px + ((x * 5 + row * 3) % 12) + 1, yy + 1, 2, 1, dark);
+      }
+    },
   };
+  const surfaces = (q) => q.custom.surfaces;
 
   // ————————————————————————————————— Capa estática
   const WALL_TOP = '#2f2925', WALL_EDGE = '#51473f';
@@ -360,8 +395,8 @@
     } else if (v === FLOOR.rent) {
       // oficina vacía: blanca, como recién pintada; si alguien la personalizó, su piso
       const q = roomAt(x, y);
-      const style = q && q.custom && FLOOR_STYLES[q.custom.surfaces.floor];
-      (style || FLOOR_STYLES.white)(ctx, px, py, x, y, rnd, q);
+      if (q && q.custom) (FLOOR_STYLES[surfaces(q).floor] || FLOOR_STYLES.plain)(ctx, px, py, x, y, rnd, q, surfaces(q).floorColor);
+      else FLOOR_STYLES.plain(ctx, px, py, x, y, rnd, q, '#f1f1f3');
     } else if (v === FLOOR.pickpals) {
       r(ctx, px, py, T, T, '#5b719a');
       r(ctx, px, py, T, 1, '#536890');
@@ -583,8 +618,8 @@
           if (at(x, y + 1) === FACE) r(ctx, px, py + T - 2, T, 2, WALL_EDGE);
         } else if (v === FACE) {
           const q = faceRoom(x, y);
-          const wall = q.custom && WALL_STYLES[q.custom.surfaces.walls];
-          r(ctx, px, py, T, T, wall ? wall(q) : FACE_COLOR[q.rent ? 'rent' : q.id] || FACE_COLOR.lobby);
+          if (q.custom) (WALL_STYLES[surfaces(q).walls] || WALL_STYLES.plain)(ctx, px, py, x, !isWall(at(x, y + 1)), surfaces(q).wallColor);
+          else r(ctx, px, py, T, T, FACE_COLOR[q.rent ? 'rent' : q.id] || FACE_COLOR.lobby);
           if (at(x, y - 1) === TOP) r(ctx, px, py, T, 3, 'rgba(0,0,0,.12)');
           if (!isWall(at(x, y + 1))) {
             r(ctx, px, py + T - 3, T, 3, '#7a5230');
@@ -705,7 +740,7 @@
 
   TGL.world = {
     W, H, grid, solid, objects, links, breakSpots, roomAt, drawWallAnims, drawOverlay, renderStatic,
-    T, room, refreshSolids, furnishRent,
+    T, room, refreshSolids, furnishRent, FLOOR_STYLES, WALL_STYLES,
     // Para el editor: sacar y agregar objetos de una sala, y las casillas frente a sus puertas.
     removeTagged(tag) {
       for (let i = objects.length - 1; i >= 0; i--) if (objects[i].tag === tag) objects.splice(i, 1);
