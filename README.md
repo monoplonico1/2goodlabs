@@ -55,8 +55,15 @@ public/
   og.png, logo.png  imagen para compartir y logo para buscadores
 ```
 
-Para agregar un agente: una entrada nueva en `TGL.team` (`data.js`) y, si necesita
-escritorio, una línea `desk(...)` en `world.js`. Las posiciones están en tiles de 16 px.
+El edificio tiene dos plantas de oficinas separadas por pasillos con puertas: arriba,
+tres oficinas en arriendo (101, 102 y 103), con un buzón que abre el contacto con el mensaje
+ya escrito; abajo, Board, Zumi y Pickpals; y el lobby en la planta baja. Las salas y los
+pasillos se definen en `TGL.rooms` (`data.js`) y los muebles de cada sala se ubican relativos
+a su esquina (`inRoom` en `world.js`), así una sala se puede mover sin reubicar cada mueble.
+
+Para agregar un agente: una entrada nueva en `TGL.team` (`data.js`), con su posición
+relativa a la sala, y si necesita escritorio, una línea `desk(...)` dentro del `inRoom` de
+esa sala en `world.js`. Todo se mide en tiles de 16 px.
 
 ## Build
 

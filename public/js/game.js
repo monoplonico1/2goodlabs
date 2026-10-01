@@ -23,14 +23,21 @@
     path: null, walkT: 0, onArrive: null,
   };
 
-  const npcs = TGL.team.map((m) => Object.assign({}, m, {
-    px: m.x * T, py: m.row * T + 12, frame: 0, walkT: 0,
-    home: { x: m.x * T, y: m.row * T + 12 },
-    bubble: null, path: null, waitUntil: 0, patrolIdx: 0,
-  }));
+  // En data.js las posiciones son relativas a la sala; aquí pasan a coordenadas del edificio.
+  const npcs = TGL.team.map((m) => {
+    const rm = TGL.rooms.find((q) => q.id === m.room);
+    const x = rm.x + m.x, row = rm.y + m.row;
+    return Object.assign({}, m, {
+      x, row,
+      patrol: m.patrol && m.patrol.map((p) => Object.assign({}, p, { x: rm.x + p.x, row: rm.y + p.row })),
+      px: x * T, py: row * T + 12, frame: 0, walkT: 0,
+      home: { x: x * T, y: row * T + 12 },
+      bubble: null, path: null, waitUntil: 0, patrolIdx: 0,
+    });
+  });
   // El perro de Zumi: pasea por la sala y ladra si le haces clic.
   const zumiRoom = TGL.rooms.find((r) => r.id === 'zumi');
-  const dog = { px: 21 * T + 8, py: 12 * T + 12, dir: 'right', face: 'right', frame: 0, walkT: 0, path: null, waitUntil: 2, bubble: null };
+  const dog = { px: (zumiRoom.x + 8) * T + 8, py: (zumiRoom.y + 9) * T + 12, dir: 'right', face: 'right', frame: 0, walkT: 0, path: null, waitUntil: 2, bubble: null };
 
   // Los que no se mueven también estorban el paso.
   const seatIndex = (n) => n.row * world.W + Math.floor(n.x);
@@ -244,7 +251,7 @@
     const room = world.roomAt(pt.x, pt.y);
     if (room && room !== currentRoom) {
       currentRoom = room;
-      showToast(room);
+      if (!room.quiet) showToast(room);
       $('#hud-room').textContent = TGL.t(room.name);
     }
   }
@@ -299,7 +306,7 @@
       if (n.path.length === 0) {
         n.path = null;
         const p = n.patrol[n.patrolIdx];
-        n.dir = p.row < 6 ? 'up' : p.x > 43 ? 'right' : 'down';
+        n.dir = p.dir || 'down';
         n.waitUntil = t + 5 + Math.random() * 3;
         n.bubble = { text: p.say, until: t + 3.5 };
       }
@@ -649,7 +656,8 @@
   function useObject(o) {
     if (o.interact.type === 'directory') toggleDirectory(true);
     else if (o.interact.type === 'link') window.open(o.interact.url, '_blank', 'noopener');
-    else if (o.interact.type === 'contact') TGL.openSimple('contacto');
+    else if (o.interact.type === 'contact')
+      TGL.openSimple('contacto', o.interact.office ? TGL.ui('rentMessage').replace('{n}', o.interact.office) : '');
     else if (o.interact.type === 'info') openInfo(o.interact.room);
   }
 
@@ -661,7 +669,8 @@
     else if (nearNpc) text = TGL.ui('talkTo') + ' ' + nearNpc.name;
     else if (nearObj && nearObj.interact.type === 'directory') text = TGL.ui('seeDirectory');
     else if (nearObj && nearObj.interact.type === 'link') text = TGL.ui(nearObj.interact.hint);
-    else if (nearObj && nearObj.interact.type === 'contact') text = TGL.ui('writeUs');
+    else if (nearObj && nearObj.interact.type === 'contact')
+      text = nearObj.interact.office ? TGL.ui('rentAsk') + ' ' + nearObj.interact.office : TGL.ui('writeUs');
     else if (nearObj) {
       const room = TGL.rooms.find((r) => r.id === nearObj.interact.room);
       text = TGL.ui('moreInfo') + ' ' + (room.infoTitle || TGL.t(room.name));

@@ -142,12 +142,18 @@
   }
 
   TGL.simpleOpen = () => document.body.classList.contains('simple-open');
-  TGL.openSimple = function (anchor) {
+  // prefill: texto para el mensaje (por ejemplo, la oficina por la que preguntan).
+  TGL.openSimple = function (anchor, prefill) {
     document.body.classList.add('simple-open');
     view.scrollTop = 0;
     drawFaces();
     const target = anchor && view.querySelector('#' + anchor);
     if (target) target.scrollIntoView();
+    const msg = view.querySelector('.s-form textarea');
+    if (prefill && msg && (!msg.value || msg.dataset.prefilled === '1')) {
+      msg.value = prefill;
+      msg.dataset.prefilled = '1';
+    }
     const focus = target ? target.querySelector('input') : view.querySelector('[data-simple-close]');
     if (focus) focus.focus({ preventScroll: !!target });
     $('#btn-simple').setAttribute('aria-expanded', 'true');
@@ -161,6 +167,8 @@
 
   $('#btn-simple').addEventListener('click', () => (TGL.simpleOpen() ? TGL.closeSimple() : TGL.openSimple()));
   view.addEventListener('click', (e) => { if (e.target.closest('[data-simple-close]')) TGL.closeSimple(); });
+  // Si la persona edita el mensaje sugerido, ya es suyo: no se vuelve a reemplazar.
+  view.addEventListener('input', (e) => { if (e.target.matches('textarea')) delete e.target.dataset.prefilled; });
 
   view.addEventListener('submit', async (e) => {
     const form = e.target.closest('.s-form');

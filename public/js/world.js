@@ -1,25 +1,52 @@
-// El piso de la oficina: plano de tiles, muebles, colisiones y la capa estática ya pintada.
+// El edificio: plano de tiles, muebles, colisiones y la capa estática ya pintada.
 //
-//  x:  0          12              28                45       54
-//  y0  ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀  cielo y ciudad
-//  1-2 │  Board    │     Zumi       │    Pickpals    │ ═ baranda ═
-//  3-14│           │                │                ⇆           ║
-//  15  ▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀│  Terraza  ║
-//  16-17  cara del muro del lobby                    │ (abierta) ║
-//  18-26            Lobby                            ⇆           ║
-//  27  ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀═════════════
-//  Puertas: x 5-6, 19-20, 36-37 hacia el lobby; filas 8-9 y 21-22 hacia la terraza.
+//  x:  0          12  15             31  34              51       60
+//  0   ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+//  1-2 │ cara      │░░│  cara        │░░│  cara          │   cielo
+//  3-10│ Of. 101   │░░│  Of. 102     │░░│  Of. 103       │   y ciudad
+//  11  ▀▀▀▀▀  ▀▀▀▀▀│░░│▀▀▀▀▀▀  ▀▀▀▀▀▀│░░│▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀│
+//  12-13 cara del pasillo
+//  14-15 ░░░░░░░░░░░░░░░ pasillo horizontal ░░░░░░░░░░░░░░░│ ═baranda═
+//  16  ▀▀▀▀▀▀▀▀▀▀▀▀│░░│▀▀▀▀▀▀▀▀▀▀▀▀▀▀│░░│▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀│
+//  17-18 caras     │░░│              │░░│                │
+//  19-30 Board     ⇆░░⇆  Zumi        ⇆░░⇆  Pickpals       ⇆ Terraza
+//  31  ▀▀▀▀▀  ▀▀▀▀▀│░░│▀▀▀▀▀▀  ▀▀▀▀▀▀│░░│▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀│
+//  32-33 cara del lobby (los pasillos verticales desembocan aquí)
+//  34-42                 Lobby                            ⇆
+//  43  ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀═════════
+//
+//  Las salas y los pasillos se definen en data.js (TGL.rooms). Los muebles de cada sala
+//  se ubican relativos a la esquina de la sala, así una sala se puede mover sin tocarlos.
 
 (function () {
   const T = TGL.T, r = TGL.rect, art = TGL.art;
-  const W = 55, H = 28;
+  const W = 61, H = 44;
   const TOP = 1, FACE = 2, SKY = 3, RAIL = 4;
-  const FLOOR = { lobby: 10, board: 11, zumi: 12, pickpals: 13, terrace: 14 };
-  const TERRACE_DOORS = [8, 9, 21, 22];
+  const FLOOR = { lobby: 10, board: 11, zumi: 12, pickpals: 13, terrace: 14, hall: 15, rent: 16 };
+  const room = (id) => TGL.rooms.find((q) => q.id === id);
+  const rectsOf = (q) => q.rects || [[q.x, q.y, q.w, q.h]];
+  const floorOf = (q) => (q.rent ? FLOOR.rent : FLOOR[q.id]);
+  const TERRACE = room('terrace');
+
+  // Puertas. 'h' atraviesa un muro horizontal (se pasa de arriba a abajo);
+  // 'v' atraviesa un muro vertical (se pasa de lado). from/to: sala de cada lado.
   const DOORS = [
-    { x: 5, w: 2, room: 'board' },
-    { x: 19, w: 2, room: 'zumi' },
-    { x: 36, w: 2, room: 'pickpals' },
+    // Salas → lobby
+    { k: 'h', x: 5, y: 31, w: 2, from: 'board', to: 'lobby' },
+    { k: 'h', x: 22, y: 31, w: 2, from: 'zumi', to: 'lobby' },
+    { k: 'h', x: 42, y: 31, w: 2, from: 'pickpals', to: 'lobby' },
+    // Oficinas en arriendo → pasillo
+    { k: 'h', x: 5, y: 11, w: 2, from: 'rent1', to: 'hall' },
+    { k: 'h', x: 22, y: 11, w: 2, from: 'rent2', to: 'hall' },
+    { k: 'h', x: 42, y: 11, w: 2, from: 'rent3', to: 'hall' },
+    // Pasillos verticales → salas
+    { k: 'v', x: 12, y: 24, h: 2, to: 'hall' },
+    { k: 'v', x: 15, y: 26, h: 2, to: 'hall' },
+    { k: 'v', x: 31, y: 25, h: 2, to: 'hall' },
+    { k: 'v', x: 34, y: 23, h: 2, to: 'hall' },
+    // Pickpals y lobby → terraza (corredizas)
+    { k: 'v', x: 51, y: 24, h: 2, to: 'terrace', glass: true },
+    { k: 'v', x: 51, y: 37, h: 2, to: 'terrace', glass: true },
   ];
 
   const grid = new Array(W * H).fill(TOP);
@@ -28,30 +55,33 @@
   const isWall = (v) => v === TOP || v === FACE;
   const isBlocked = (v) => v === TOP || v === FACE || v === SKY || v === RAIL;
 
-  // Salas y caras de muro (dos tiles de alto: se ven desde el sur).
-  for (const room of TGL.rooms) {
-    for (let y = room.y; y < room.y + room.h; y++)
-      for (let x = room.x; x < room.x + room.w; x++) set(x, y, FLOOR[room.id]);
-    for (let x = room.x; x < room.x + room.w; x++) {
-      set(x, room.y - 1, FACE);
-      set(x, room.y - 2, FACE);
-    }
+  // 1. Pisos de salas y pasillos. 2. Caras de muro (dos tiles, se ven desde el sur),
+  // solo donde todavía hay muro. 3. Puertas.
+  for (const q of TGL.rooms)
+    for (const [rx, ry, rw, rh] of rectsOf(q))
+      for (let y = ry; y < ry + rh; y++) for (let x = rx; x < rx + rw; x++) set(x, y, floorOf(q));
+  for (const q of TGL.rooms)
+    for (const [rx, ry, rw] of rectsOf(q))
+      for (let x = rx; x < rx + rw; x++)
+        for (const y of [ry - 1, ry - 2]) if (at(x, y) === TOP) set(x, y, FACE);
+  for (const d of DOORS) {
+    if (d.k === 'h')
+      for (let x = d.x; x < d.x + d.w; x++) {
+        set(x, d.y, floorOf(room(d.from)));
+        set(x, d.y + 1, floorOf(room(d.to)));
+        set(x, d.y + 2, floorOf(room(d.to)));
+      }
+    else for (let y = d.y; y < d.y + d.h; y++) set(d.x, y, floorOf(room(d.to)));
   }
-  for (const d of DOORS)
-    for (let x = d.x; x < d.x + d.w; x++) {
-      set(x, 15, FLOOR[d.room]);
-      set(x, 16, FLOOR.lobby);
-      set(x, 17, FLOOR.lobby);
-    }
+
   // Terraza: sin muros. Arriba se ve el cielo y alrededor hay baranda de vidrio.
-  for (let x = 46; x < W; x++) {
-    set(x, 0, SKY);
-    set(x, 1, SKY);
-    set(x, 2, RAIL);
+  const SKY_H = TERRACE.y - 1;
+  for (let x = TERRACE.x; x < W; x++) {
+    for (let y = 0; y < SKY_H; y++) set(x, y, SKY);
+    set(x, SKY_H, RAIL);
     set(x, H - 1, RAIL);
   }
-  for (let y = 2; y < H; y++) set(W - 1, y, RAIL);
-  for (const y of TERRACE_DOORS) set(45, y, FLOOR.terrace);
+  for (let y = SKY_H; y < H; y++) set(W - 1, y, RAIL);
 
   // ————————————————————————————————— Muebles
   const objects = [];
@@ -69,121 +99,152 @@
     objects.push(o);
     return o;
   }
-  const desk = (x, y, role, variant) =>
-    put(art.desk(variant === 'dual' ? 3 : 2, variant), x, y, variant === 'dual' ? 3 : 2, 1, { anim: art.deskScreens(variant, role) });
 
-  // Bloque "?" de información de una sala.
-  const info = (x, y, room) => put(art.qblock(), x, y, 1, 1, { anim: art.qblockAnim, interact: { type: 'info', room } });
+  // Herramientas para amoblar una sala con coordenadas relativas a su esquina.
+  function inRoom(id, fn) {
+    const q = room(id);
+    const p = (sprite, x, y, w, h, opts) => put(sprite, q.x + x, q.y + y, w, h, opts);
+    const desk = (x, y, role, variant) =>
+      p(art.desk(variant === 'dual' ? 3 : 2, variant), x, y, variant === 'dual' ? 3 : 2, 1, { anim: art.deskScreens(variant, role) });
+    // Bloque "?" de información de la sala.
+    const info = (x, y) => p(art.qblock(), x, y, 1, 1, { anim: art.qblockAnim, interact: { type: 'info', room: id } });
+    fn(p, desk, info, q);
+  }
 
   // Board: blanco, aluminio y madera clara
-  put(art.whitePlant(1), 1, 3, 1, 1);
-  put(art.imacDesk(), 2, 5, 2, 1, { anim: art.imacScreen });
-  put(art.imacDesk(), 8, 5, 2, 1, { anim: art.imacScreen });
-  put(art.whitePlant(2), 11, 3, 1, 1);
-  put(art.displayStand(), 1, 8, 2, 1, { anim: art.displayChart });
-  put(art.oakTable(4, 3), 4, 8, 4, 3, { anim: art.oakTableScreens(4, 3) });
-  put(art.whiteChair('down'), 5, 7, 1, 1);
-  put(art.whiteChair('down'), 6, 7, 1, 1);
-  put(art.whiteChair('down'), 3, 9, 1, 1);
-  put(art.whiteChair('down'), 8, 9, 1, 1);
-  put(art.whiteChair('up'), 5, 11, 1, 1);
-  put(art.whiteChair('up'), 6, 11, 1, 1);
-  put(art.sofa(3, '#c9c9ce'), 1, 13, 3, 1);
-  put(art.whiteShelf(2), 9, 13, 2, 1);
-  put(art.whitePlant(3), 11, 14, 1, 1);
-  info(7, 13, 'board');
+  inRoom('board', (put, desk, info) => {
+    put(art.whitePlant(1), 0, 0, 1, 1);
+    put(art.imacDesk(), 1, 2, 2, 1, { anim: art.imacScreen });
+    put(art.imacDesk(), 7, 2, 2, 1, { anim: art.imacScreen });
+    put(art.whitePlant(2), 10, 0, 1, 1);
+    put(art.displayStand(), 0, 5, 2, 1, { anim: art.displayChart });
+    put(art.oakTable(4, 3), 3, 5, 4, 3, { anim: art.oakTableScreens(4, 3) });
+    put(art.whiteChair('down'), 4, 4, 1, 1);
+    put(art.whiteChair('down'), 5, 4, 1, 1);
+    put(art.whiteChair('down'), 2, 6, 1, 1);
+    put(art.whiteChair('down'), 7, 6, 1, 1);
+    put(art.whiteChair('up'), 4, 8, 1, 1);
+    put(art.whiteChair('up'), 5, 8, 1, 1);
+    put(art.sofa(3, '#c9c9ce'), 0, 10, 3, 1);
+    put(art.whiteShelf(2), 8, 10, 2, 1);
+    put(art.whitePlant(3), 10, 11, 1, 1);
+    info(6, 10);
+  });
 
   // Zumi: el equipo comparte la sala con mascotas
-  put(art.serverRack(), 13, 3, 1, 1, { anim: art.serverLeds });
-  desk(15, 5, 'dev');
-  desk(19, 5, 'design');
-  desk(23, 5, 'marketing');
-  put(art.whiteboard(2, 'chart'), 25, 3, 2, 1);
-  put(art.plant(3), 27, 3, 1, 1);
-  put(art.birdcage(), 13, 8, 1, 1, { anim: art.parrot });
-  put(art.aquarium(), 26, 8, 2, 1, { anim: art.fish });
-  put(art.terrarium(), 26, 11, 2, 1, { anim: art.turtle });
-  put(art.pawRug(3, 2), 22, 9, 3, 2, { solid: false, floor: true });
-  put(art.table(3, 2), 18, 9, 3, 2);
-  put(art.chair('#3f8f5a', 'down'), 19, 8, 1, 1);
-  put(art.chair('#3f8f5a', 'up'), 18, 11, 1, 1);
-  put(art.chair('#3f8f5a', 'up'), 20, 11, 1, 1);
-  put(art.table(3, 1), 14, 11, 3, 1);
-  put(art.sofa(3, '#2c4a35'), 14, 13, 3, 1);
-  put(art.petBed(), 23, 12, 2, 1, { anim: art.cat });
-  put(art.bowls(), 25, 12, 1, 1, { solid: false, floor: true });
-  put(art.plant(4), 13, 14, 1, 1);
-  put(art.plant(5), 27, 14, 1, 1);
-  info(21, 13, 'zumi');
-  put(art.appStoreSign(), 23, 14, 2, 1, {
-    anim: art.appStoreText,
-    interact: { type: 'link', url: TGL.rooms.find((r) => r.id === 'zumi').appStore, hint: 'getZumi' },
+  inRoom('zumi', (put, desk, info, q) => {
+    put(art.serverRack(), 0, 0, 1, 1, { anim: art.serverLeds });
+    desk(2, 2, 'dev');
+    desk(6, 2, 'design');
+    desk(10, 2, 'marketing');
+    put(art.whiteboard(2, 'chart'), 12, 0, 2, 1);
+    put(art.plant(3), 14, 0, 1, 1);
+    put(art.birdcage(), 0, 5, 1, 1, { anim: art.parrot });
+    put(art.aquarium(), 13, 5, 2, 1, { anim: art.fish });
+    put(art.terrarium(), 13, 8, 2, 1, { anim: art.turtle });
+    put(art.pawRug(3, 2), 9, 6, 3, 2, { solid: false, floor: true });
+    put(art.table(3, 2), 5, 6, 3, 2);
+    put(art.chair('#3f8f5a', 'down'), 6, 5, 1, 1);
+    put(art.chair('#3f8f5a', 'up'), 5, 8, 1, 1);
+    put(art.chair('#3f8f5a', 'up'), 7, 8, 1, 1);
+    put(art.table(3, 1), 1, 8, 3, 1);
+    put(art.sofa(3, '#2c4a35'), 1, 10, 3, 1);
+    put(art.petBed(), 10, 9, 2, 1, { anim: art.cat });
+    put(art.bowls(), 12, 9, 1, 1, { solid: false, floor: true });
+    put(art.plant(4), 0, 11, 1, 1);
+    put(art.plant(5), 14, 11, 1, 1);
+    info(8, 10);
+    put(art.appStoreSign(), 10, 11, 2, 1, {
+      anim: art.appStoreText,
+      interact: { type: 'link', url: q.appStore, hint: 'getZumi' },
+    });
   });
 
   // Pickpals: pantallas con deportes y ping-pong
-  put(art.plant(6), 29, 3, 1, 1);
-  desk(30, 5, 'dev');
-  desk(34, 5, 'marketing');
-  desk(30, 10, 'design');
-  desk(39, 10, 'data', 'dual');
-  put(art.fileCabinet(), 44, 6, 1, 2);
-  put(art.pingPong(), 34, 8, 4, 2, { anim: art.pingPongPlay });
-  put(art.ballGoal(), 30, 13, 2, 1);
-  put(art.tvConsole(4), 32, 13, 4, 1, { anim: art.tvConsoleScreens(4, ['soccer', 'baseball']) });
-  put(art.sofa(3, '#2f5fc4'), 39, 13, 3, 1);
-  put(art.trophyShelf(), 42, 13, 2, 1);
-  put(art.plant(7), 29, 14, 1, 1);
-  put(art.plant(8), 44, 14, 1, 1);
-  info(38, 13, 'pickpals');
+  inRoom('pickpals', (put, desk, info) => {
+    put(art.plant(6), 0, 0, 1, 1);
+    desk(1, 2, 'dev');
+    desk(5, 2, 'marketing');
+    desk(1, 7, 'design');
+    desk(10, 7, 'data', 'dual');
+    put(art.fileCabinet(), 15, 3, 1, 2);
+    put(art.pingPong(), 5, 5, 4, 2, { anim: art.pingPongPlay });
+    put(art.ballGoal(), 1, 10, 2, 1);
+    put(art.tvConsole(4), 3, 10, 4, 1, { anim: art.tvConsoleScreens(4, ['soccer', 'baseball']) });
+    put(art.sofa(3, '#2f5fc4'), 10, 10, 3, 1);
+    put(art.trophyShelf(), 13, 10, 2, 1);
+    put(art.plant(7), 0, 11, 1, 1);
+    put(art.plant(8), 15, 11, 1, 1);
+    info(9, 10);
+  });
+
+  // Oficinas en arriendo: vacías, con un buzón para preguntar por ellas.
+  for (const q of TGL.rooms.filter((x) => x.rent))
+    inRoom(q.id, (put) => {
+      put(art.mailbox(), Math.floor(q.w / 2), q.h - 3, 1, 1, {
+        anim: art.mailboxAnim,
+        interact: { type: 'contact', office: q.office },
+      });
+      put(art.whitePlant(Number(q.office)), 0, 0, 1, 1);
+      put(art.whitePlant(Number(q.office) + 3), q.w - 1, 0, 1, 1);
+    });
 
   // Terraza: mesas con sombrilla, barra, árboles y jardineras
-  const patio = (x, y, color) => {
-    put(art.patioChair(), x - 1, y, 1, 1);
-    put(art.patioTable(color), x, y, 2, 1);
-    put(art.patioChair(), x + 2, y, 1, 1);
-  };
-  patio(48, 6, '#e04a4a');
-  patio(51, 10, '#2f6fec');
-  patio(48, 14, '#3f8f5a');
-  patio(51, 18, '#f2a65a');
-  put(art.tree(3), 46, 3, 2, 1);
-  put(art.planter(3, 1), 50, 3, 3, 1);
-  put(art.plant(18), 53, 3, 1, 1);
-  put(art.planter(2, 3), 46, 11, 2, 1);
-  put(art.barCounter(3), 51, 23, 3, 1);
-  put(art.table(2, 1), 47, 23, 2, 1);
-  put(art.sofa(3, '#e9e2d4'), 47, 25, 3, 1);
-  put(art.plant(16), 46, 26, 1, 1);
-  put(art.plant(17), 53, 26, 1, 1);
+  inRoom('terrace', (put) => {
+    const patio = (x, y, color) => {
+      put(art.patioChair(), x - 1, y, 1, 1);
+      put(art.patioTable(color), x, y, 2, 1);
+      put(art.patioChair(), x + 2, y, 1, 1);
+    };
+    patio(2, 3, '#e04a4a');
+    patio(5, 7, '#2f6fec');
+    patio(2, 11, '#3f8f5a');
+    patio(5, 15, '#f2a65a');
+    put(art.tree(3), 0, 0, 2, 1);
+    put(art.planter(3, 1), 4, 0, 3, 1);
+    put(art.plant(18), 7, 0, 1, 1);
+    put(art.planter(2, 3), 0, 8, 2, 1);
+    put(art.barCounter(3), 5, 20, 3, 1);
+    put(art.table(2, 1), 1, 20, 2, 1);
+    put(art.sofa(3, '#e9e2d4'), 1, 22, 3, 1);
+    put(art.plant(16), 0, 23, 1, 1);
+    put(art.plant(17), 7, 23, 1, 1);
+  });
 
-  // Dónde se paran los agentes en su descanso (tile y hacia dónde miran).
+  // Dónde se paran en el descanso (relativo a la terraza) y hacia dónde miran.
   const breakSpots = [
-    { x: 47, y: 7, dir: 'right' }, { x: 50, y: 7, dir: 'left' },
-    { x: 50, y: 11, dir: 'right' }, { x: 53, y: 11, dir: 'left' },
-    { x: 47, y: 15, dir: 'right' }, { x: 50, y: 15, dir: 'left' },
-    { x: 51, y: 24, dir: 'up' }, { x: 53, y: 24, dir: 'up' },
-  ];
+    { x: 1, y: 4, dir: 'right' }, { x: 4, y: 4, dir: 'left' },
+    { x: 4, y: 8, dir: 'right' }, { x: 7, y: 8, dir: 'left' },
+    { x: 1, y: 12, dir: 'right' }, { x: 4, y: 12, dir: 'left' },
+    { x: 5, y: 21, dir: 'up' }, { x: 7, y: 21, dir: 'up' },
+  ].map((s) => ({ x: TERRACE.x + s.x, y: TERRACE.y + s.y, dir: s.dir }));
 
-  // Lobby
-  put(art.fridge(), 1, 18, 1, 1);
-  put(art.coffeeCounter(3), 2, 18, 3, 1);
-  put(art.waterCooler(), 8, 18, 1, 1);
-  put(art.printer(), 11, 18, 1, 1);
-  put(art.waterCooler(), 17, 18, 1, 1);
-  put(art.plant(9), 24, 18, 1, 1);
-  put(art.plant(10), 34, 18, 1, 1);
-  put(art.waterCooler(), 41, 18, 1, 1);
-  put(art.plant(11), 44, 18, 1, 1);
-  put(art.kiosk(), 22, 25, 2, 1, { interact: { type: 'directory' } });
-  put(art.mailbox(), 25, 25, 1, 1, { anim: art.mailboxAnim, interact: { type: 'contact' } });
-  put(art.sofa(3, '#6a4c93'), 2, 25, 3, 1);
-  put(art.sofa(3, '#6a4c93'), 7, 25, 3, 1);
-  put(art.sofa(3, '#6a4c93'), 33, 25, 3, 1);
-  put(art.sofa(3, '#6a4c93'), 38, 25, 3, 1);
-  put(art.plant(12), 1, 26, 1, 1);
-  put(art.plant(13), 44, 26, 1, 1);
-  put(art.plant(14), 12, 26, 1, 1);
-  put(art.plant(15), 30, 26, 1, 1);
+  // Lobby (coordenadas absolutas: es la planta baja completa)
+  put(art.fridge(), 1, 34, 1, 1);
+  put(art.coffeeCounter(3), 2, 34, 3, 1);
+  put(art.waterCooler(), 8, 34, 1, 1);
+  put(art.printer(), 11, 34, 1, 1);
+  put(art.waterCooler(), 20, 34, 1, 1);
+  put(art.plant(9), 27, 34, 1, 1);
+  put(art.plant(10), 40, 34, 1, 1);
+  put(art.waterCooler(), 47, 34, 1, 1);
+  put(art.plant(11), 50, 34, 1, 1);
+  put(art.kiosk(), 25, 41, 2, 1, { interact: { type: 'directory' } });
+  put(art.mailbox(), 28, 41, 1, 1, { anim: art.mailboxAnim, interact: { type: 'contact' } });
+  put(art.sofa(3, '#6a4c93'), 2, 41, 3, 1);
+  put(art.sofa(3, '#6a4c93'), 7, 41, 3, 1);
+  put(art.sofa(3, '#6a4c93'), 39, 41, 3, 1);
+  put(art.sofa(3, '#6a4c93'), 44, 41, 3, 1);
+  put(art.plant(12), 1, 42, 1, 1);
+  put(art.plant(13), 50, 42, 1, 1);
+  put(art.plant(14), 12, 42, 1, 1);
+  put(art.plant(15), 36, 42, 1, 1);
+
+  // Pasillos: plantas en los cruces y al final de los pasillos verticales.
+  put(art.plant(19), 1, 14, 1, 1);
+  put(art.plant(20), 50, 14, 1, 1);
+  put(art.waterCooler(), 13, 3, 1, 1);
+  put(art.plant(21), 33, 3, 1, 1);
 
   // ————————————————————————————————— Colisiones
   const solid = new Uint8Array(W * H);
@@ -196,11 +257,12 @@
 
   // ————————————————————————————————— Capa estática
   const WALL_TOP = '#2f2925', WALL_EDGE = '#51473f';
-  const FACE_COLOR = { board: '#f7f7f9', zumi: '#e2eedc', pickpals: '#dde6f3', lobby: '#ece6da' };
+  const FACE_COLOR = { board: '#f7f7f9', zumi: '#e2eedc', pickpals: '#dde6f3', lobby: '#ece6da', hall: '#e6e1d7', rent: '#f7f7f9' };
 
   function roomAt(tx, ty) {
-    for (const room of TGL.rooms)
-      if (tx >= room.x && tx < room.x + room.w && ty >= room.y && ty < room.y + room.h) return room;
+    for (const q of TGL.rooms)
+      for (const [rx, ry, rw, rh] of rectsOf(q))
+        if (tx >= rx && tx < rx + rw && ty >= ry && ty < ry + rh) return q;
     return null;
   }
   // La sala a la que pertenece una cara de muro: la que está justo debajo.
@@ -229,6 +291,17 @@
         r(ctx, px, py + k * 4 + 3, T, 1, '#9c6d40');
         r(ctx, px + ((x * 5 + y * 3 + k * 7) % 16), py + k * 4, 1, 3, '#a8784a');
       }
+    } else if (v === FLOOR.hall) {
+      // baldosa de pasillo
+      r(ctx, px, py, T, T, '#a8a295');
+      r(ctx, px, py, T, 1, '#9a9488');
+      r(ctx, px, py, 1, T, '#9a9488');
+      r(ctx, px + 1, py + 1, T - 2, 1, '#b3ada1');
+    } else if (v === FLOOR.rent) {
+      // oficina vacía: blanca, como recién pintada
+      r(ctx, px, py, T, T, '#f1f1f3');
+      r(ctx, px, py, T, 1, '#e4e4e8');
+      r(ctx, px, py, 1, T, '#e4e4e8');
     } else if (v === FLOOR.pickpals) {
       r(ctx, px, py, T, T, '#5b719a');
       r(ctx, px, py, T, 1, '#536890');
@@ -241,26 +314,41 @@
     }
   }
 
+  const RENT_TEXT = { es: 'SE ARRIENDA', en: 'FOR RENT' };
   const decor = [
+    // Oficinas en arriendo
+    { k: 'glass', x: 1, y: 1, w: 3 }, { k: 'plate', x: 4, y: 1, w: 5, text: RENT_TEXT, bg: '#1d1f24', fg: '#ffc367' },
+    { k: 'glass', x: 9, y: 1, w: 3 },
+    { k: 'glass', x: 16, y: 1, w: 4 }, { k: 'plate', x: 21, y: 1, w: 5, text: RENT_TEXT, bg: '#1d1f24', fg: '#ffc367' },
+    { k: 'glass', x: 27, y: 1, w: 4 },
+    { k: 'glass', x: 35, y: 1, w: 4 }, { k: 'plate', x: 40, y: 1, w: 6, text: RENT_TEXT, bg: '#1d1f24', fg: '#ffc367' },
+    { k: 'glass', x: 47, y: 1, w: 4 },
+    // Pasillo: número de cada oficina junto a su puerta
+    { k: 'sign', x: 7, y: 12, w: 3, text: '101', fg: '#ffc367' },
+    { k: 'sign', x: 24, y: 12, w: 3, text: '102', fg: '#ffc367' },
+    { k: 'painting', x: 27, y: 12, w: 2 },
+    { k: 'painting', x: 36, y: 12, w: 2 },
+    { k: 'sign', x: 44, y: 12, w: 3, text: '103', fg: '#ffc367' },
+    { k: 'clock', x: 48, y: 12, w: 1 },
     // Board
-    { k: 'glass', x: 1, y: 1, w: 3 }, { k: 'wallDisplay', x: 4, y: 1, w: 4 }, { k: 'glass', x: 8, y: 1, w: 3 },
+    { k: 'glass', x: 1, y: 17, w: 3 }, { k: 'wallDisplay', x: 4, y: 17, w: 4 }, { k: 'glass', x: 8, y: 17, w: 3 },
     // Zumi
-    { k: 'window', x: 14, y: 1, w: 2 },
-    { k: 'plate', x: 18, y: 1, w: 3, text: 'zumi', bg: '#2c4a35', fg: '#ffc367', url: 'https://zumiapp.co', link: '#2c6b3f' },
-    { k: 'pawPoster', x: 22, y: 1, w: 1 }, { k: 'petPhoto', x: 23, y: 1, w: 2 },
+    { k: 'window', x: 17, y: 17, w: 2 },
+    { k: 'plate', x: 21, y: 17, w: 3, text: 'zumi', bg: '#2c4a35', fg: '#ffc367', url: 'https://zumiapp.co', link: '#2c6b3f' },
+    { k: 'pawPoster', x: 25, y: 17, w: 1 }, { k: 'petPhoto', x: 26, y: 17, w: 2 },
     // Pickpals
-    { k: 'tv', x: 30, y: 1, w: 2, sport: 'tennis' },
-    { k: 'plate', x: 33, y: 1, w: 3, text: 'pickpals', bg: '#1b2a4a', fg: '#9cff57', url: 'https://pickpals.co', link: '#2f5fc4' },
-    { k: 'tv', x: 37, y: 1, w: 2, sport: 'basket' },
-    { k: 'scoreboard', x: 39, y: 1, w: 5 },
+    { k: 'tv', x: 36, y: 17, w: 2, sport: 'tennis' },
+    { k: 'plate', x: 39, y: 17, w: 3, text: 'pickpals', bg: '#1b2a4a', fg: '#9cff57', url: 'https://pickpals.co', link: '#2f5fc4' },
+    { k: 'tv', x: 43, y: 17, w: 2, sport: 'basket' },
+    { k: 'scoreboard', x: 45, y: 17, w: 5 },
     // Lobby
-    { k: 'sign', x: 7, y: 16, w: 3, text: 'BOARD', fg: '#ffc367' },
-    { k: 'painting', x: 13, y: 16, w: 2 },
-    { k: 'sign', x: 21, y: 16, w: 3, text: 'ZUMI', fg: '#86d19a', url: 'https://zumiapp.co', link: '#2c6b3f' },
-    { k: 'clock', x: 27, y: 16, w: 1 },
-    { k: 'painting', x: 30, y: 16, w: 2 },
-    { k: 'sign', x: 38, y: 16, w: 3, text: 'PICKPALS', fg: '#9cc0ff', url: 'https://pickpals.co', link: '#2f5fc4' },
-    { k: 'elevator', x: 42, y: 16, w: 2 },
+    { k: 'sign', x: 7, y: 32, w: 3, text: 'BOARD', fg: '#ffc367' },
+    { k: 'painting', x: 16, y: 32, w: 2 },
+    { k: 'sign', x: 24, y: 32, w: 3, text: 'ZUMI', fg: '#86d19a', url: 'https://zumiapp.co', link: '#2c6b3f' },
+    { k: 'clock', x: 30, y: 32, w: 1 },
+    { k: 'painting', x: 36, y: 32, w: 2 },
+    { k: 'sign', x: 44, y: 32, w: 3, text: 'PICKPALS', fg: '#9cc0ff', url: 'https://pickpals.co', link: '#2f5fc4' },
+    { k: 'elevator', x: 48, y: 32, w: 2 },
   ];
 
   // Zonas clicables del mundo (los links bajo los letreros). Se llenan al pintar.
@@ -284,7 +372,7 @@
       ctx.font = '8px Silkscreen, monospace';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(d.text, px + pw / 2, top + ph / 2 + 1);
+      ctx.fillText(TGL.t(d.text), px + pw / 2, top + ph / 2 + 1);
       if (d.url) {
         // El link se pinta cada frame (drawWallAnims) para que el texto quede nítido con cualquier zoom.
         const label = d.url.replace(/^https?:\/\//, ''), ly = top + ph + 5;
@@ -342,7 +430,7 @@
   }
 
   function drawRug(ctx) {
-    const x = 15 * T, y = 20 * T, w = 16 * T, h = 4 * T;
+    const x = 18 * T, y = 36 * T, w = 19 * T, h = 4 * T;
     r(ctx, x + 2, y + 2, w, h, 'rgba(0,0,0,.2)');
     r(ctx, x, y, w, h, '#ffc367');
     r(ctx, x + 2, y + 2, w - 4, h - 4, '#1d1f24');
@@ -360,7 +448,7 @@
 
   function drawRail(ctx, x, y) {
     const px = x * T, py = y * T;
-    if (x === W - 1 && y > 2) {
+    if (x === W - 1 && y > SKY_H) {
       r(ctx, px + 4, py, 8, T, 'rgba(190,225,245,.55)');
       r(ctx, px + 4, py, 2, T, '#9aa3ae');
       r(ctx, px + 11, py, 1, T, '#c7ced7');
@@ -374,25 +462,46 @@
 
   // Lo que se ve desde la terraza: cielo, nubes y la ciudad.
   function drawSky(ctx) {
-    const x0 = 46 * T, w = (W - 46) * T, h = 2 * T;
+    const x0 = TERRACE.x * T, w = (W - TERRACE.x) * T, h = SKY_H * T;
     const g = ctx.createLinearGradient(0, 0, 0, h);
-    g.addColorStop(0, '#6fb6ea');
-    g.addColorStop(1, '#cfe9f7');
+    g.addColorStop(0, '#5aa8e6');
+    g.addColorStop(0.7, '#a9d8f3');
+    g.addColorStop(1, '#d9eef9');
     ctx.fillStyle = g;
     ctx.fillRect(x0, 0, w, h);
     const rnd = TGL.rng(77);
-    for (const [cx, cy] of [[8, 4], [60, 8], [100, 3]]) {
-      r(ctx, x0 + cx, cy, 16, 3, '#ffffff');
-      r(ctx, x0 + cx + 4, cy - 2, 8, 3, '#ffffff');
+    for (let i = 0; i < 7; i++) {
+      const cx = x0 + Math.floor(rnd() * (w - 30)), cy = 10 + Math.floor(rnd() * (h * 0.45));
+      r(ctx, cx, cy, 22, 4, '#ffffff');
+      r(ctx, cx + 5, cy - 3, 12, 4, '#ffffff');
+      r(ctx, cx + 2, cy + 4, 18, 1, 'rgba(160,190,215,.6)');
     }
-    let bx = x0;
-    while (bx < x0 + w) {
-      const bw = 8 + Math.floor(rnd() * 12), bh = 8 + Math.floor(rnd() * 16);
-      const col = rnd() > 0.5 ? '#7b8ea8' : '#8c9fb8';
-      r(ctx, bx, h - bh, bw, bh, col);
-      for (let wy = h - bh + 3; wy < h - 2; wy += 4)
-        for (let wx = bx + 2; wx < bx + bw - 2; wx += 3) if (rnd() > 0.4) r(ctx, wx, wy, 1, 2, '#dfe8f2');
-      bx += bw + 1;
+    // Dos planos de edificios: los lejanos más claros y altos.
+    for (const [seed, minH, maxH, cols, win] of [[78, 60, 150, ['#9fb3cc', '#a9bcd3'], '#e3ecf5'], [79, 24, 90, ['#7b8ea8', '#8c9fb8'], '#dfe8f2']]) {
+      const rb = TGL.rng(seed);
+      let bx = x0 - 4;
+      while (bx < x0 + w) {
+        const bw = 10 + Math.floor(rb() * 16), bh = minH + Math.floor(rb() * (maxH - minH));
+        r(ctx, bx, h - bh, bw, bh, cols[Math.floor(rb() * 2)]);
+        for (let wy = h - bh + 4; wy < h - 3; wy += 5)
+          for (let wx = bx + 2; wx < bx + bw - 2; wx += 3) if (rb() > 0.45) r(ctx, wx, wy, 1, 2, win);
+        bx += bw + 1;
+      }
+    }
+  }
+
+  // Letrero en el piso de cada oficina disponible: "se arrienda" y los m².
+  function drawRentFloors(ctx) {
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (const q of TGL.rooms.filter((x) => x.rent)) {
+      const cx = (q.x + q.w / 2) * T, cy = (q.y + 3) * T;
+      ctx.fillStyle = '#d4d4da';
+      ctx.font = '16px Silkscreen, monospace';
+      ctx.fillText(TGL.t(RENT_TEXT), cx, cy);
+      ctx.font = '8px Silkscreen, monospace';
+      ctx.fillStyle = '#b3b3bb';
+      ctx.fillText(q.w * q.h + ' m²  ·  ' + q.office, cx, cy + 16);
     }
   }
 
@@ -410,8 +519,8 @@
           if (!isWall(at(x, y - 1))) r(ctx, px, py, T, 2, WALL_EDGE);
           if (at(x, y + 1) === FACE) r(ctx, px, py + T - 2, T, 2, WALL_EDGE);
         } else if (v === FACE) {
-          const room = faceRoom(x, y);
-          r(ctx, px, py, T, T, FACE_COLOR[room.id]);
+          const q = faceRoom(x, y);
+          r(ctx, px, py, T, T, FACE_COLOR[q.rent ? 'rent' : q.id] || FACE_COLOR.lobby);
           if (at(x, y - 1) === TOP) r(ctx, px, py, T, 3, 'rgba(0,0,0,.12)');
           if (!isWall(at(x, y + 1))) {
             r(ctx, px, py + T - 3, T, 3, '#7a5230');
@@ -433,20 +542,21 @@
       }
     // Marcos de puerta.
     for (const d of DOORS) {
-      for (let y = 15; y <= 17; y++) {
-        r(ctx, d.x * T - 2, y * T, 2, T, '#5c3d22');
-        r(ctx, (d.x + d.w) * T, y * T, 2, T, '#5c3d22');
+      const col = d.glass ? '#9aa3ae' : '#5c3d22';
+      if (d.k === 'h') {
+        for (let y = d.y; y <= d.y + 2; y++) {
+          r(ctx, d.x * T - 2, y * T, 2, T, col);
+          r(ctx, (d.x + d.w) * T, y * T, 2, T, col);
+        }
+        r(ctx, d.x * T + 2, (d.y + 3) * T + 1, d.w * T - 4, 6, '#6b4f35');
+      } else {
+        r(ctx, d.x * T, d.y * T - 2, T, 2, col);
+        r(ctx, d.x * T, (d.y + d.h) * T, T, 2, col);
       }
-      r(ctx, d.x * T + 2, 18 * T + 1, d.w * T - 4, 6, '#6b4f35');
     }
     for (const d of decor) drawDecor(ctx, d);
     drawSky(ctx);
-    // Puertas corredizas hacia la terraza.
-    for (let i = 0; i < TERRACE_DOORS.length; i += 2) {
-      const y = TERRACE_DOORS[i];
-      r(ctx, 45 * T, y * T - 2, T, 2, '#9aa3ae');
-      r(ctx, 45 * T, (y + 2) * T, T, 2, '#9aa3ae');
-    }
+    drawRentFloors(ctx);
     drawRug(ctx);
     return c;
   }
@@ -515,8 +625,8 @@
 
   // Por encima de todo: la guirnalda de luces de la terraza.
   function drawOverlay(ctx, t) {
-    art.stringLights(ctx, 46 * T, (W - 1) * T, 9 * T + 4, t, 2);
-    art.stringLights(ctx, 46 * T, (W - 1) * T, 17 * T + 4, t + 1, 2);
+    art.stringLights(ctx, TERRACE.x * T, (W - 1) * T, (TERRACE.y + 6) * T + 4, t, 2);
+    art.stringLights(ctx, TERRACE.x * T, (W - 1) * T, (TERRACE.y + 14) * T + 4, t + 1, 2);
   }
 
   TGL.world = {
@@ -524,6 +634,7 @@
     isSolid(tx, ty) {
       return tx < 0 || ty < 0 || tx >= W || ty >= H || solid[ty * W + tx] === 1;
     },
-    spawn: { x: 42.5 * T + 8, y: 18 * T + 12 },
+    // Se aparece frente al ascensor del lobby.
+    spawn: { x: 49 * T + 8, y: 34 * T + 12 },
   };
 })();

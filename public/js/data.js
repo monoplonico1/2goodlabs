@@ -1,6 +1,7 @@
 // Contenido del sitio: salas y equipo, en español (es) e inglés (en).
 // Para cambiar textos, nombres o agregar a alguien, este es el único archivo que hay que tocar.
-// Las posiciones (x, fila) están en tiles de 16 px; ver world.js para el plano.
+// Las salas están en tiles de 16 px del edificio (ver el plano en world.js). Las posiciones del
+// equipo (x, fila) son relativas a la esquina de su sala.
 
 window.TGL = window.TGL || {};
 
@@ -24,6 +25,11 @@ TGL.roles = {
   data: { label: { es: 'Datos deportivos', en: 'Sports data' }, color: '#9cff57' },
 };
 
+const RENT_BLURB = {
+  es: 'Este espacio está disponible. Usa el buzón para preguntar por él.',
+  en: 'This space is available. Use the mailbox to ask about it.',
+};
+
 TGL.rooms = [
   {
     id: 'board',
@@ -39,7 +45,7 @@ TGL.rooms = [
       en: '2GoodLabs is a product lab. It is led by Cesar and Ricardo, two design and user experience experts, and AI is their main tool: every agent in this office stands for work they do with it. Today they are working on their own products: Zumi and Pickpals.',
     },
     infoLinks: ['https://zumiapp.co', 'https://pickpals.co'],
-    x: 1, y: 3, w: 11, h: 12,
+    x: 1, y: 19, w: 11, h: 12,
     color: '#ffc367',
   },
   {
@@ -56,7 +62,7 @@ TGL.rooms = [
     link: 'https://zumiapp.co',
     appStore: 'https://apps.apple.com/us/app/zumi-pet-health-care/id6767697574',
     infoLinks: ['https://zumiapp.co', 'https://apps.apple.com/us/app/zumi-pet-health-care/id6767697574'],
-    x: 13, y: 3, w: 15, h: 12,
+    x: 16, y: 19, w: 15, h: 12,
     color: '#5fae74',
   },
   {
@@ -71,22 +77,53 @@ TGL.rooms = [
       en: 'Pickpals is for playing sports predictions with your friends. Built by Kernel (development), Lienzo (design) and Hype (marketing); Stats finds, validates and records the sports data that powers the app.',
     },
     link: 'https://pickpals.co',
-    x: 29, y: 3, w: 16, h: 12,
+    x: 35, y: 19, w: 16, h: 12,
     color: '#4f86f0',
   },
   {
     id: 'terrace',
     name: { es: 'Terraza', en: 'Terrace' },
     blurb: { es: 'Aire libre, café y buenas ideas.', en: 'Fresh air, coffee and good ideas.' },
-    x: 46, y: 3, w: 8, h: 24,
+    x: 52, y: 19, w: 8, h: 24,
     color: '#f2a65a',
   },
   {
     id: 'lobby',
     name: 'Lobby',
     blurb: { es: 'Recepción de 2GoodLabs.', en: 'Welcome to 2GoodLabs.' },
-    x: 1, y: 18, w: 44, h: 9,
+    x: 1, y: 34, w: 50, h: 9,
     color: '#b8b0a2',
+  },
+  {
+    // Pasillos que separan las oficinas: uno horizontal y dos verticales hasta el lobby.
+    id: 'hall',
+    name: { es: 'Pasillo', en: 'Hallway' },
+    blurb: { es: 'Pasillos del edificio.', en: 'Building hallways.' },
+    rects: [[1, 14, 50, 2], [13, 3, 2, 31], [32, 3, 2, 31]],
+    quiet: true,
+    color: '#a8a295',
+  },
+  // Oficinas en arriendo. Cada una tiene un buzón para preguntar por ella.
+  {
+    id: 'rent1', rent: true, office: '101',
+    name: { es: 'Oficina 101 · Disponible', en: 'Office 101 · For rent' },
+    blurb: RENT_BLURB,
+    x: 1, y: 3, w: 11, h: 8,
+    color: '#c9c9ce',
+  },
+  {
+    id: 'rent2', rent: true, office: '102',
+    name: { es: 'Oficina 102 · Disponible', en: 'Office 102 · For rent' },
+    blurb: RENT_BLURB,
+    x: 16, y: 3, w: 15, h: 8,
+    color: '#c9c9ce',
+  },
+  {
+    id: 'rent3', rent: true, office: '103',
+    name: { es: 'Oficina 103 · Disponible', en: 'Office 103 · For rent' },
+    blurb: RENT_BLURB,
+    x: 35, y: 3, w: 16, h: 8,
+    color: '#c9c9ce',
   },
 ];
 
@@ -95,7 +132,7 @@ TGL.team = [
   // ——— Board ———
   {
     id: 'cesar', name: 'Cesar', kind: 'human', role: 'founder', room: 'board',
-    x: 3.25, row: 4, dir: 'down', breakAt: 50,
+    x: 2.25, row: 1, dir: 'down', breakAt: 50,
     look: { skin: '#e0ac7e', hair: '#2b1d14', hairStyle: 'short', body: '#2d3e5c', legs: '#1f2533' },
     bio: {
       es: 'Co-fundador de 2GoodLabs. Diseñador de producto y experiencia de usuario: decide qué construimos y cómo se siente usarlo, y trabaja con IA todos los días.',
@@ -113,7 +150,7 @@ TGL.team = [
   },
   {
     id: 'ricardo', name: 'Ricardo', kind: 'human', role: 'founder', room: 'board',
-    x: 9.25, row: 4, dir: 'down', breakAt: 50,
+    x: 8.25, row: 1, dir: 'down', breakAt: 50,
     look: { skin: '#d49a6a', hair: '#4a2e1c', hairStyle: 'side', beard: '#3b2416', body: '#8a3b3b', legs: '#262b36' },
     bio: {
       es: 'Co-fundador de 2GoodLabs. Diseñador de producto y experiencia de usuario: decide qué construimos y cómo se siente usarlo, y trabaja con IA todos los días.',
@@ -134,7 +171,7 @@ TGL.team = [
   // ——— Zumi ———
   {
     id: 'nodo', name: 'Nodo', kind: 'agent', role: 'dev', room: 'zumi',
-    x: 16.25, row: 4, dir: 'down', body: '#3f8f5a', breakAt: 0,
+    x: 3.25, row: 1, dir: 'down', body: '#3f8f5a', breakAt: 0,
     bio: {
       es: 'Agente de desarrollo de Zumi. Escribe, prueba y despliega el código de la app y del sitio.',
       en: 'Zumi\'s development agent. Writes, tests and ships the code for the app and the website.',
@@ -150,7 +187,7 @@ TGL.team = [
   },
   {
     id: 'trazo', name: 'Trazo', kind: 'agent', role: 'design', room: 'zumi',
-    x: 20.25, row: 4, dir: 'down', body: '#3f8f5a', breakAt: 15,
+    x: 7.25, row: 1, dir: 'down', body: '#3f8f5a', breakAt: 15,
     bio: {
       es: 'Agente de diseño de Zumi. Diseña pantallas, ilustraciones y el sistema visual de la marca.',
       en: 'Zumi\'s design agent. Designs the screens, illustrations and the brand\'s visual system.',
@@ -166,7 +203,7 @@ TGL.team = [
   },
   {
     id: 'eco', name: 'Eco', kind: 'agent', role: 'marketing', room: 'zumi',
-    x: 24.25, row: 4, dir: 'down', body: '#3f8f5a', breakAt: 30,
+    x: 11.25, row: 1, dir: 'down', body: '#3f8f5a', breakAt: 30,
     bio: {
       es: 'Agente de marketing de Zumi. Cuenta la historia de Zumi: contenido, campañas, redes y SEO.',
       en: 'Zumi\'s marketing agent. Tells Zumi\'s story: content, campaigns, social and SEO.',
@@ -184,7 +221,7 @@ TGL.team = [
   // ——— Pickpals ———
   {
     id: 'kernel', name: 'Kernel', kind: 'agent', role: 'dev', room: 'pickpals',
-    x: 31.25, row: 4, dir: 'down', body: '#2f5fc4', breakAt: 0,
+    x: 2.25, row: 1, dir: 'down', body: '#2f5fc4', breakAt: 0,
     bio: {
       es: 'Agente de desarrollo de Pickpals. Construye la app, la API de picks y las tablas de posiciones.',
       en: 'Pickpals\' development agent. Builds the app, the picks API and the leaderboards.',
@@ -200,7 +237,7 @@ TGL.team = [
   },
   {
     id: 'hype', name: 'Hype', kind: 'agent', role: 'marketing', room: 'pickpals',
-    x: 35.25, row: 4, dir: 'down', body: '#2f5fc4', breakAt: 30,
+    x: 6.25, row: 1, dir: 'down', body: '#2f5fc4', breakAt: 30,
     bio: {
       es: 'Agente de marketing de Pickpals. Llena las quinielas: campañas, redes y comunidad.',
       en: 'Pickpals\' marketing agent. Fills the pools: campaigns, social and community.',
@@ -216,7 +253,7 @@ TGL.team = [
   },
   {
     id: 'lienzo', name: 'Lienzo', kind: 'agent', role: 'design', room: 'pickpals',
-    x: 31.25, row: 9, dir: 'down', body: '#2f5fc4', breakAt: 15,
+    x: 2.25, row: 6, dir: 'down', body: '#2f5fc4', breakAt: 15,
     bio: {
       es: 'Agente de diseño de Pickpals. Diseña la app, las tarjetas para compartir picks y la marca.',
       en: 'Pickpals\' design agent. Designs the app, the shareable pick cards and the brand.',
@@ -232,7 +269,7 @@ TGL.team = [
   },
   {
     id: 'stats', name: 'Stats', kind: 'agent', role: 'data', room: 'pickpals',
-    x: 40.75, row: 9, dir: 'down', body: '#2f5fc4', breakAt: 45,
+    x: 11.75, row: 6, dir: 'down', body: '#2f5fc4', breakAt: 45,
     bio: {
       es: 'Agente de datos deportivos. Busca, valida y registra partidos, resultados, alineaciones y estadísticas para que Pickpals siempre tenga la información al día.',
       en: 'Sports data agent. Finds, validates and records matches, results, lineups and stats so Pickpals always has up-to-date information.',
@@ -245,11 +282,11 @@ TGL.team = [
       es: ['Buscando resultados', 'Registrando alineaciones', 'Validando marcadores', 'Actualizando calendario'],
       en: ['Looking up results', 'Recording lineups', 'Validating scores', 'Updating fixtures'],
     },
-    // Stats no se queda quieto: recorre estos puntos (x en tiles, fila) y en cada uno dice lo suyo.
+    // Stats no se queda quieto: recorre estos puntos y en cada uno dice lo suyo.
     patrol: [
-      { x: 40.75, row: 9, say: { es: 'Registrando datos en la base', en: 'Writing data to the database' } },
-      { x: 41.5, row: 4, say: { es: 'Revisando marcadores en vivo', en: 'Checking live scores' } },
-      { x: 43.5, row: 7, say: { es: 'Archivando estadísticas', en: 'Archiving stats' } },
+      { x: 11.75, row: 6, dir: 'down', say: { es: 'Registrando datos en la base', en: 'Writing data to the database' } },
+      { x: 12.5, row: 1, dir: 'up', say: { es: 'Revisando marcadores en vivo', en: 'Checking live scores' } },
+      { x: 14.5, row: 4, dir: 'right', say: { es: 'Archivando estadísticas', en: 'Archiving stats' } },
     ],
   },
 ];

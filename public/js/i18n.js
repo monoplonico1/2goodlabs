@@ -44,6 +44,8 @@
       portfolio: 'Portafolio',
       officeAlt: 'La oficina de 2GoodLabs en pixel art',
       touchTip: 'Arrastra el dedo para caminar · toca para ir a un punto',
+      rentAsk: 'Preguntar por la oficina',
+      rentMessage: 'Hola, me interesa la oficina {n} en el edificio de 2GoodLabs.',
     },
     en: {
       title: '2GoodLabs — AI-powered product lab',
@@ -86,6 +88,8 @@
       portfolio: 'Portfolio',
       officeAlt: 'The 2GoodLabs office in pixel art',
       touchTip: 'Drag your finger to walk · tap to go somewhere',
+      rentAsk: 'Ask about office',
+      rentMessage: "Hi! I'm interested in office {n} at the 2GoodLabs building.",
     },
   };
 
