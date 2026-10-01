@@ -123,8 +123,35 @@
     hair: ['#2b1d14', '#6b4a2b', '#c9a24a', '#a83232', '#d9d9de', '#1d1f24'],
   };
 
-  // Límites del plan base (en la versión de pago, otros planes subirían estos números).
-  const plan = { maxItems: 30, maxResidents: 3, maxLinks: 4 };
+  // ————————————————————————————————— Lo que se vende: espacio
+  // 1 casilla = 1 m². Las oficinas se arman con módulos de 4 × 8 m (32 m²) a lo largo de un
+  // pasillo; el fondo es fijo (8 m) y el ancho crece de a módulo. Lo que crece con el espacio
+  // es lo que cabe: objetos y personas. Colores, marca y contenido son iguales en todos.
+  // Precio de ejemplo para el prototipo (US$ por m² al mes).
+  const pricePerM2 = 0.25;
+  const sizes = [
+    { id: 'desk', name: N('Puesto en el coworking', 'Coworking desk'), w: 2, h: 2, soon: true,
+      note: N('Un escritorio en la sala compartida, con tu avatar y un agente. La puerta de entrada para la comunidad.',
+        'A desk in the shared room, with your avatar and one agent. The way in for the community.'),
+      items: 2, residents: 2, price: 5 },
+    { id: 's', name: N('Oficina S', 'Office S'), w: 8, h: 8, modules: 2, items: 16, residents: 2,
+      note: N('Un equipo pequeño o un fundador con sus agentes.', 'A small team or a founder with their agents.') },
+    { id: 'm', name: N('Oficina M', 'Office M'), w: 12, h: 8, modules: 3, items: 24, residents: 3,
+      note: N('Equipo con sala de reuniones.', 'A team with a meeting area.') },
+    { id: 'l', name: N('Oficina L', 'Office L'), w: 16, h: 8, modules: 4, items: 32, residents: 5,
+      note: N('Oficina completa con zona de descanso.', 'A full office with a lounge area.') },
+    { id: 'floor', name: N('Piso completo', 'Whole floor'), w: 48, h: 16, modules: 24, soon: true, items: 300, residents: 30,
+      note: N('Sede propia: un piso entero con varias salas, ascensor y letrero en el lobby.',
+        'Your own HQ: a whole floor with several rooms, elevator stop and a sign in the lobby.') },
+  ];
+  for (const z of sizes) {
+    z.m2 = z.w * z.h;
+    if (z.price == null) z.price = Math.round(z.m2 * pricePerM2);
+  }
+  const sizeOf = (id) => sizes.find((z) => z.id === id && !z.soon) || sizes.find((z) => z.id === 'l');
+
+  // Límites que no dependen del tamaño.
+  const plan = { maxLinks: 4 };
 
   const byType = {};
   for (const it of items) byType[it.type] = it;
@@ -161,5 +188,5 @@
     return (qp = { canvas: c, top });
   }
 
-  TGL.catalog = { items, byType, floors, walls, modes, categories, people, palettes, plan, colorable, baseColor, build };
+  TGL.catalog = { items, byType, floors, walls, modes, categories, people, palettes, plan, sizes, sizeOf, pricePerM2, colorable, baseColor, build };
 })();

@@ -125,7 +125,7 @@ body.editing #btn-directory { display: none !important; }
   font-size: 13px;
   font-weight: 700;
   color: #6b6f78;
-  padding: 8px 10px;
+  padding: 8px 7px;
   border-bottom: 2px solid transparent;
   cursor: pointer;
   white-space: nowrap;
@@ -274,6 +274,37 @@ input[type=color] { width: 32px; height: 28px; padding: 0; border: 1px solid #d6
 .ed-infobox .ed-btn { grid-column: 1 / -1; justify-self: start; }
 .ed-infobox.missing { border-color: #ffc367; background: #fffaf0; }
 .ed-primary.ed-done { background: #2e7d4f; border-color: #2e7d4f; }
+
+.ed-sizes { display: grid; gap: 6px; }
+.ed-size {
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid #e3ded3;
+  background: #fff;
+  border-radius: 10px;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.ed-size:hover:not(:disabled) { border-color: #1d1f24; }
+.ed-size.on { border-color: #ffc367; box-shadow: 0 0 0 2px #ffc367; background: #fffaf0; }
+.ed-size:disabled { cursor: default; opacity: 0.6; }
+.ed-size-plan { display: grid; place-items: center; }
+.ed-size-plan svg { max-width: 64px; height: auto; }
+.ed-size-plan rect { fill: #dde6f3; stroke: #3d5a8a; stroke-width: 1; }
+.ed-size-plan line { stroke: #3d5a8a; stroke-width: 0.6; stroke-dasharray: 1.5 1.5; }
+.ed-size.on .ed-size-plan rect { fill: #ffe3a8; stroke: #8a5a1a; }
+.ed-size.soon .ed-size-plan rect { fill: #ecebef; stroke: #b3b3bb; }
+.ed-size-txt { display: grid; gap: 1px; min-width: 0; }
+.ed-size-txt strong { font-size: 13px; }
+.ed-size-txt small { font-size: 11px; color: #6b6f78; }
+.ed-size-txt .ed-size-note { color: #8a8f98; line-height: 1.35; margin-top: 2px; }
+.ed-size b { font-size: 12px; white-space: nowrap; }
+.ed-size.soon b, .ed-size:disabled b { font-family: Silkscreen, monospace; font-weight: 400; font-size: 9px; color: #6a4c93; }
+.ed-plan { margin: 0; font-size: 12px; }
 
 .ed-foot { border-top: 1px solid #e3ded3; padding: 10px 14px 12px; display: grid; gap: 6px; background: #f1ede5; }
 .ed-cap { display: grid; grid-template-columns: 110px 1fr; align-items: center; gap: 8px; font-size: 11px; font-weight: 700; }

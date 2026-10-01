@@ -266,6 +266,14 @@
     for (let y = q.y; y < q.y + q.h; y++)
       for (let x = q.x; x < q.x + q.w; x++) solid[y * W + x] = isBlocked(grid[y * W + x]) ? 1 : 0;
     objects.filter((o) => o.tag === id).forEach(markSolid);
+    // Lo que la oficina personalizada no arrienda queda detrás de un vidrio.
+    if (q.custom && q.plan)
+      for (let y = q.y; y < q.y + q.h; y++)
+        for (let x = q.x; x < q.x + q.w; x++) if (!ownCol(q, x)) solid[y * W + x] = 1;
+  }
+  // ¿La columna x es parte del espacio arrendado de una oficina personalizada?
+  function ownCol(q, x) {
+    return !!q.custom && (!q.plan || (x >= q.x + q.plan.x0 && x < q.x + q.plan.x0 + q.plan.w));
   }
 
   // ————————————————————————————————— Estilos de superficie para oficinas personalizadas
@@ -395,7 +403,7 @@
     } else if (v === FLOOR.rent) {
       // oficina vacía: blanca, como recién pintada; si alguien la personalizó, su piso
       const q = roomAt(x, y);
-      if (q && q.custom) (FLOOR_STYLES[surfaces(q).floor] || FLOOR_STYLES.plain)(ctx, px, py, x, y, rnd, q, surfaces(q).floorColor);
+      if (q && ownCol(q, x)) (FLOOR_STYLES[surfaces(q).floor] || FLOOR_STYLES.plain)(ctx, px, py, x, y, rnd, q, surfaces(q).floorColor);
       else FLOOR_STYLES.plain(ctx, px, py, x, y, rnd, q, '#f1f1f3');
     } else if (v === FLOOR.pickpals) {
       r(ctx, px, py, T, T, '#5b719a');
@@ -603,6 +611,40 @@
     }
   }
 
+  // La parte de una sala que no entra en el tamaño arrendado: rayada, tras un vidrio, disponible.
+  const FREE_TEXT = { es: 'DISPONIBLE', en: 'AVAILABLE' };
+  function drawUnrented(ctx) {
+    for (const q of TGL.rooms.filter((x) => x.custom && x.plan && x.plan.w < x.w)) {
+      const parts = [[0, q.plan.x0], [q.plan.x0 + q.plan.w, q.w - q.plan.x0 - q.plan.w]];
+      for (const [rx, rw] of parts) {
+        if (rw <= 0) continue;
+        const x = (q.x + rx) * T, y = q.y * T, w = rw * T, h = q.h * T;
+        r(ctx, x, y, w, h, '#ecebef');
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(x, y, w, h);
+        ctx.clip();
+        for (let k = -h; k < w; k += 8) {
+          ctx.fillStyle = '#e0dfe5';
+          for (let j = 0; j < h; j++) ctx.fillRect(x + k + j, y + j, 3, 1);
+        }
+        ctx.restore();
+        // vidrio en el borde que da a la oficina
+        const gx = rx === 0 ? x + w - 3 : x;
+        r(ctx, gx, y - 2, 3, h + 2, '#9aa3ae');
+        r(ctx, gx + 1, y - 2, 1, h + 2, '#d7eef9');
+        if (rw >= 4) {
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = '#b3b3bb';
+          ctx.font = '8px Silkscreen, monospace';
+          ctx.fillText(TGL.t(FREE_TEXT), x + w / 2, y + h / 2 - 6);
+          ctx.fillText('+' + rw * q.h + ' m²', x + w / 2, y + h / 2 + 6);
+        }
+      }
+    }
+  }
+
   function renderStatic() {
     links.length = 0;
     const c = TGL.canvas(W * T, H * T), ctx = c.getContext('2d');
@@ -618,7 +660,7 @@
           if (at(x, y + 1) === FACE) r(ctx, px, py + T - 2, T, 2, WALL_EDGE);
         } else if (v === FACE) {
           const q = faceRoom(x, y);
-          if (q.custom) (WALL_STYLES[surfaces(q).walls] || WALL_STYLES.plain)(ctx, px, py, x, !isWall(at(x, y + 1)), surfaces(q).wallColor);
+          if (q.rent && ownCol(q, x)) (WALL_STYLES[surfaces(q).walls] || WALL_STYLES.plain)(ctx, px, py, x, !isWall(at(x, y + 1)), surfaces(q).wallColor);
           else r(ctx, px, py, T, T, FACE_COLOR[q.rent ? 'rent' : q.id] || FACE_COLOR.lobby);
           if (at(x, y - 1) === TOP) r(ctx, px, py, T, 3, 'rgba(0,0,0,.12)');
           if (!isWall(at(x, y + 1))) {
@@ -656,6 +698,7 @@
     for (const d of decor) drawDecor(ctx, d);
     drawSky(ctx);
     drawRentFloors(ctx);
+    drawUnrented(ctx);
     drawRug(ctx);
     return c;
   }
@@ -729,7 +772,8 @@
     // Modo noche de una oficina personalizada: penumbra y neón con su color de acento.
     for (const q of TGL.rooms) {
       if (!q.custom || q.custom.mode !== 'night') continue;
-      const x = q.x * T, y = (q.y - 2) * T, w = q.w * T, h = (q.h + 2) * T;
+      const p = q.plan || { x0: 0, w: q.w };
+      const x = (q.x + p.x0) * T, y = (q.y - 2) * T, w = p.w * T, h = (q.h + 2) * T;
       r(ctx, x, y, w, h, 'rgba(10,8,30,.42)');
       ctx.globalAlpha = 0.55 + Math.sin(t * 2) * 0.2;
       r(ctx, x, y + 2 * T, w, 2, q.custom.identity.accent);

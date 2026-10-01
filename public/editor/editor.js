@@ -9,7 +9,11 @@
   const L = {
     es: {
       open: 'Editar oficina', title: 'Editor de oficina', beta: 'BETA',
-      tItems: 'Objetos', tStyle: 'Estilo', tBrand: 'Marca', tPeople: 'Personas',
+      tSpace: 'Espacio', tItems: 'Objetos', tStyle: 'Estilo', tBrand: 'Marca', tPeople: 'Personas',
+      spaceIntro: 'Lo que se arrienda es espacio: 1 casilla = 1 m². Con más metros caben más personas y más objetos. Lo demás (colores, marca, links, plantillas) es igual en todos los tamaños.',
+      perMonth: '/mes', soon: 'Próximamente', upTo: 'Hasta {p} personas · {i} objetos', notHere: 'No cabe en esta sala',
+      priceNote: 'Precios de ejemplo: US$ {p} por m² al mes. Lo PRO son extras opcionales.',
+      shrinkConfirm: '{n} cosas quedan fuera del nuevo tamaño y se quitarán. ¿Seguir?', sizeChanged: 'Ahora tu oficina mide {m} m²',
       undo: 'Deshacer', redo: 'Rehacer', try: 'Probar', save: 'Guardar', saved: 'Guardado', unsaved: 'Cambios sin guardar',
       more: 'Más opciones', export: 'Exportar JSON', import: 'Importar JSON', clearRoom: 'Vaciar oficina',
       restore: 'Volver a "Se arrienda"', close: 'Cerrar', back: '✎ Volver al editor',
@@ -42,7 +46,11 @@
     },
     en: {
       open: 'Edit office', title: 'Office editor', beta: 'BETA',
-      tItems: 'Objects', tStyle: 'Style', tBrand: 'Brand', tPeople: 'People',
+      tSpace: 'Space', tItems: 'Objects', tStyle: 'Style', tBrand: 'Brand', tPeople: 'People',
+      spaceIntro: 'What you rent is space: 1 tile = 1 m². More meters fit more people and more objects. Everything else (colors, brand, links, templates) is the same at every size.',
+      perMonth: '/mo', soon: 'Coming soon', upTo: 'Up to {p} people · {i} objects', notHere: 'Does not fit in this room',
+      priceNote: 'Example prices: US$ {p} per m² per month. PRO items are optional extras.',
+      shrinkConfirm: '{n} things fall outside the new size and will be removed. Continue?', sizeChanged: 'Your office is now {m} m²',
       undo: 'Undo', redo: 'Redo', try: 'Try it', save: 'Save', saved: 'Saved', unsaved: 'Unsaved changes',
       more: 'More options', export: 'Export JSON', import: 'Import JSON', clearRoom: 'Empty the office',
       restore: 'Back to "For rent"', close: 'Close', back: '✎ Back to editor',
@@ -84,7 +92,7 @@
   let isOpen = false, previewing = false, dirty = false;
   let doc = null, saved = space.load(ROOM);
   let history = [], hIndex = -1;
-  let tab = 'items', category = 'all';
+  let tab = 'space', category = 'all';
   let tool = null;       // { kind: 'item', type, variant, color } | { kind: 'resident', data, index? } | { kind: 'move', ref }
   let selected = null;   // { kind: 'item' | 'resident', index }
   let hover = null;      // casilla relativa a la sala bajo el puntero
@@ -311,7 +319,7 @@
     labelButtons();
     const oldBody = panel.querySelector('.ed-body');
     const scroll = oldBody && lastTab === tab ? oldBody.scrollTop : 0;
-    const tabs = [['items', 'tItems'], ['style', 'tStyle'], ['brand', 'tBrand'], ['people', 'tPeople']];
+    const tabs = [['space', 'tSpace'], ['items', 'tItems'], ['style', 'tStyle'], ['brand', 'tBrand'], ['people', 'tPeople']];
     panel.innerHTML = `
       <header class="ed-head">
         <div><strong>${esc(tr('title'))}</strong> <span class="ed-badge">${tr('beta')}</span><small>${esc(TGL.t(room._orig ? room._orig.name : room.name))}</small></div>
@@ -346,6 +354,7 @@
   }
 
   function renderTab() {
+    if (tab === 'space') return renderSpace();
     if (tab === 'items') return renderItems();
     if (tab === 'style') return renderStyle();
     if (tab === 'brand') return renderBrand();
@@ -373,6 +382,36 @@
         <button type="button" class="ed-btn ed-danger" data-act="remove">${esc(tr('remove'))}</button>
       </div>
     </div>`;
+  }
+
+  const money = (n) => 'US$ ' + n;
+  const fill = (k, o) => tr(k).replace(/\{(\w)\}/g, (m, c) => o[c]);
+
+  // Tamaños: el producto que se vende. El dibujo es la planta, con un módulo cada 4 m.
+  function sizePlan(z) {
+    const k = 2.5, w = z.w * k, h = z.h * k;
+    let lines = '';
+    for (let x = 4; x < z.w; x += 4) lines += `<line x1="${x * k}" y1="0" x2="${x * k}" y2="${h}"/>`;
+    return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true"><rect width="${w}" height="${h}" rx="2"/>${lines}</svg>`;
+  }
+  function renderSpace() {
+    const here = space.sizesFor(ROOM);
+    return `
+      <p class="ed-hint">${esc(tr('spaceIntro'))}</p>
+      <div class="ed-sizes">${cat.sizes.map((z) => {
+        const ok = here.includes(z);
+        return `<button type="button" class="ed-size${doc.size === z.id ? ' on' : ''}${z.soon ? ' soon' : ''}" data-act="size" data-v="${z.id}" ${ok ? '' : 'disabled'}>
+          <span class="ed-size-plan">${sizePlan(z)}</span>
+          <span class="ed-size-txt">
+            <strong>${esc(nm(z))}</strong>
+            <small>${z.m2} m² · ${z.w} × ${z.h} m</small>
+            <small>${esc(fill('upTo', { p: z.residents, i: z.items }))}</small>
+            <small class="ed-size-note">${esc(TGL.t(z.note))}</small>
+          </span>
+          <b>${z.soon ? esc(tr('soon')) : ok ? money(z.price) + esc(tr('perMonth')) : esc(tr('notHere'))}</b>
+        </button>`;
+      }).join('')}</div>
+      <p class="ed-note">${esc(fill('priceNote', { p: cat.pricePerM2.toFixed(2) }))}</p>`;
   }
 
   function renderItems() {
@@ -436,7 +475,7 @@
   }
 
   function renderPeople() {
-    const full = doc.residents.length >= cat.plan.maxResidents;
+    const full = doc.residents.length >= space.limits(doc).maxResidents;
     const placing = tool && tool.kind === 'resident';
     const cards = doc.residents.map((p, i) => {
       const colors = (key, list) => `<div class="ed-field"><span>${esc(tr(key))}</span>${colorControl(`person.${i}.${key}`, p[key], list, { brand: key === 'body' || key === 'eye' })}</div>`;
@@ -475,11 +514,12 @@
   function renderFoot() {
     const foot = panel.querySelector('.ed-foot');
     if (!foot) return;
-    const pro = space.proUsage(doc);
+    const pro = space.proUsage(doc), lim = space.limits(doc), z = cat.sizeOf(doc.size);
     const bar = (label, n, max) => `<div class="ed-cap"><span>${esc(label)} ${n}/${max}</span><i><b style="width:${Math.min(100, (n / max) * 100)}%"></b></i></div>`;
     foot.innerHTML = `
-      ${bar(tr('capItems'), doc.items.length, cat.plan.maxItems)}
-      ${bar(tr('capPeople'), doc.residents.length, cat.plan.maxResidents)}
+      <p class="ed-plan"><strong>${esc(nm(z))}</strong> · ${z.m2} m² · ${money(z.price)}${esc(tr('perMonth'))}</p>
+      ${bar(tr('capItems'), doc.items.length, lim.maxItems)}
+      ${bar(tr('capPeople'), doc.residents.length, lim.maxResidents)}
       ${pro ? `<p class="ed-note"><span class="ed-pro">${tr('pro')}</span> ${esc(tr('proNote').replace('{n}', pro))}</p>` : ''}
       <p class="ed-status ${message && message.bad ? 'bad' : ''}">${esc(message ? message.text : dirty ? tr('unsaved') : tr('localNote'))}</p>`;
     // El botón dice si lo que se ve ya está guardado.
@@ -509,7 +549,7 @@
       case 'import': return fileInput.click();
       case 'clear':
         if (!confirm(tr('clearConfirm'))) return;
-        doc = space.empty(ROOM);
+        doc = Object.assign(space.empty(ROOM), { size: doc.size }); // vaciar no cambia el tamaño
         selected = tool = null;
         return commit();
       case 'restore':
@@ -519,18 +559,19 @@
         dirty = false;
         return closeEditor(true);
       case 'pick': {
-        if (doc.items.length >= cat.plan.maxItems) return flash(tr('full'), true);
+        if (doc.items.length >= space.limits(doc).maxItems) return flash(tr('full'), true);
         const def = cat.byType[el.dataset.type];
         tool = tool && tool.type === def.type ? null : { kind: 'item', type: def.type, variant: def.variants && def.variants[0] };
         selected = null;
         return render();
       }
       case 'variant': sel.variant = v; return commit();
+      case 'size': return setSize(v);
       case 'setcolor': setColor(el.dataset.path, v); return commit();
       case 'addinfo': return addInfo();
       case 'move': tool = { kind: 'move', ref: sel }; return render();
       case 'duplicate':
-        if (doc.items.length >= cat.plan.maxItems) return flash(tr('full'), true);
+        if (doc.items.length >= space.limits(doc).maxItems) return flash(tr('full'), true);
         tool = { kind: 'item', type: sel.type, variant: sel.variant, color: sel.color };
         selected = null;
         return render();
@@ -571,6 +612,21 @@
     }
   });
 
+  // Cambiar de tamaño: lo que quede fuera (o pase el límite) se quita, avisando antes.
+  function setSize(id) {
+    if (id === doc.size) return;
+    const next = space.sanitize(Object.assign(cleanDoc(), { size: id }), ROOM);
+    const lost = doc.items.length + doc.residents.length - next.items.length - next.residents.length;
+    if (lost > 0 && !confirm(fill('shrinkConfirm', { n: lost }))) return;
+    doc.size = id;
+    doc.items = next.items;
+    doc.residents = next.residents;
+    selected = tool = null;
+    openPeople.clear();
+    commit();
+    flash(fill('sizeChanged', { m: cat.sizeOf(id).m2 }));
+  }
+
   // Abrir y cerrar tarjetas de personas (el evento "toggle" no burbujea).
   panel.addEventListener('toggle', (e) => {
     const d = e.target;
@@ -580,7 +636,7 @@
 
   // Pone el bloque "?" en el primer lugar libre cerca de la entrada.
   function addInfo() {
-    if (doc.items.length >= cat.plan.maxItems) return flash(tr('full'), true);
+    if (doc.items.length >= space.limits(doc).maxItems) return flash(tr('full'), true);
     const door = world.doorEntries(ROOM)[0] || { x: 0, y: room.h - 1 };
     const spots = [];
     for (let y = 0; y < room.h; y++) for (let x = 0; x < room.w; x++) spots.push({ x, y, d: Math.abs(x - door.x) + Math.abs(y - door.y) });
@@ -681,7 +737,10 @@
     const [wx, wy] = game.worldFromEvent(e);
     return { x: Math.floor(wx / T) - room.x, y: Math.floor(wy / T) - room.y };
   };
-  const inside = (t) => t.x >= 0 && t.y >= 0 && t.x < room.w && t.y < room.h;
+  const inside = (t) => {
+    const a = space.area(doc, ROOM);
+    return t.x >= a.x0 && t.y >= 0 && t.x < a.x0 + a.w && t.y < room.h;
+  };
   const active = () => isOpen && !previewing;
 
   // Lo que hay en una casilla (personas primero, luego objetos de arriba hacia abajo).
@@ -706,7 +765,7 @@
       const why = space.canPlace(doc, ROOM, item, t.x, t.y);
       if (why) return flash(tr(why), true);
       doc.items.push(item);
-      if (doc.items.length >= cat.plan.maxItems) tool = null;
+      if (doc.items.length >= space.limits(doc).maxItems) tool = null;
       return commit();
     }
     if (tool.kind === 'resident') {
@@ -827,10 +886,13 @@
   function drawOverlay(ctx, t) {
     const ox = room.x * T, oy = room.y * T;
     ctx.save();
-    // cuadrícula
+    // cuadrícula, solo en lo arrendado
+    const a = space.area(doc, ROOM), ax = ox + a.x0 * T;
     ctx.fillStyle = 'rgba(77,140,255,.22)';
-    for (let x = 0; x <= room.w; x++) ctx.fillRect(ox + x * T, oy, 0.5, room.h * T);
-    for (let y = 0; y <= room.h; y++) ctx.fillRect(ox, oy + y * T, room.w * T, 0.5);
+    for (let x = 0; x <= a.w; x++) ctx.fillRect(ax + x * T, oy, 0.5, room.h * T);
+    for (let y = 0; y <= room.h; y++) ctx.fillRect(ax, oy + y * T, a.w * T, 0.5);
+    ctx.strokeStyle = 'rgba(77,140,255,.8)';
+    ctx.strokeRect(ax + 0.5, oy + 0.5, a.w * T - 1, room.h * T - 1);
     // entrada: siempre libre
     ctx.fillStyle = 'rgba(224,74,74,.22)';
     for (const en of world.doorEntries(ROOM)) ctx.fillRect(ox + en.x * T, oy + en.y * T, T, T);

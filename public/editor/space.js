@@ -2,7 +2,8 @@
 // lo que hoy se guarda en este navegador es exactamente lo que mañana guardaría el servidor.
 //
 // {
-//   schema: 2, room: 'rent3',
+//   schema: 3, room: 'rent3',
+//   size: 's' | 'm' | 'l',                               // lo que se arrienda (catalog.sizes)
 //   identity: { name, tagline, primary, accent },        // letrero y colores de marca
 //   surfaces: { floor, floorColor, walls, wallColor },   // patrón del catálogo + color libre
 //   mode: 'day' | 'night',
@@ -12,7 +13,7 @@
 // }
 
 (function () {
-  const SCHEMA = 2;
+  const SCHEMA = 3;
   const cat = TGL.catalog;
   const world = TGL.world;
   const KEY = (id) => 'tgl-space:' + id;
@@ -20,6 +21,7 @@
   const empty = (roomId) => ({
     schema: SCHEMA,
     room: roomId,
+    size: 's',
     identity: { name: '', tagline: '', primary: '#1d1f24', accent: '#ffc367' },
     surfaces: { floor: 'plain', floorColor: '#f1f1f3', walls: 'plain', wallColor: '#f7f7f9' },
     mode: 'day',
@@ -34,6 +36,7 @@
       id: 'ai-startup',
       name: { es: 'Startup de IA', en: 'AI startup' },
       doc: {
+        size: 'l',
         identity: { name: 'Nova AI', tagline: 'Agentes que atienden a tus clientes', primary: '#1b2a4a', accent: '#4dd6ff' },
         surfaces: { floor: 'speckle', floorColor: '#d9d9de', walls: 'stripes', wallColor: '#e4ebf5' },
         mode: 'day',
@@ -56,6 +59,7 @@
       id: 'studio',
       name: { es: 'Estudio creativo', en: 'Creative studio' },
       doc: {
+        size: 'l',
         identity: { name: 'Pixel & Co.', tagline: 'Diseño de producto con IA', primary: '#6a4c93', accent: '#ffd24d' },
         surfaces: { floor: 'herringbone', floorColor: '#c9925a', walls: 'wainscot', wallColor: '#f6dcdc' },
         mode: 'day',
@@ -77,6 +81,7 @@
       id: 'lounge',
       name: { es: 'Lounge de comunidad', en: 'Community lounge' },
       doc: {
+        size: 'l',
         identity: { name: 'The Lounge', tagline: 'Comunidad de builders con IA', primary: '#2c4a35', accent: '#ffc367' },
         surfaces: { floor: 'checker', floorColor: '#2c4a35', walls: 'brick', wallColor: '#8a4a3a' },
         mode: 'night',
@@ -119,6 +124,20 @@
     };
   }
 
+  // ————————————————————————————————— Tamaño arrendado
+  // La parte de la sala que se arrienda: centrada en la puerta, con el fondo completo.
+  function area(doc, roomId) {
+    const room = world.room(roomId), z = cat.sizeOf(doc.size);
+    const w = Math.min(z.w, room.w);
+    return { x0: Math.floor((room.w - w) / 2), w, h: room.h, size: z };
+  }
+  const limits = (doc) => {
+    const z = cat.sizeOf(doc.size);
+    return { maxItems: z.items, maxResidents: z.residents, maxLinks: cat.plan.maxLinks };
+  };
+  // Tamaños que caben en esta sala (los demás se muestran como "próximamente").
+  const sizesFor = (roomId) => cat.sizes.filter((z) => !z.soon && z.w <= world.room(roomId).w);
+
   // Dimensiones y si bloquea el paso, para cualquier cosa que ocupe casillas.
   function footprint(thing) {
     if (thing.kind === 'agent' || thing.kind === 'human') return { w: 1, h: 1, solid: true };
@@ -129,6 +148,8 @@
   // Casillas ocupadas por cosas sólidas (excepto la que se está moviendo).
   function occupancy(doc, room, skip) {
     const occ = new Uint8Array(room.w * room.h);
+    const a = area(doc, room.id);
+    for (let y = 0; y < room.h; y++) for (let x = 0; x < room.w; x++) if (x < a.x0 || x >= a.x0 + a.w) occ[y * room.w + x] = 1;
     const mark = (thing) => {
       if (thing === skip) return;
       const f = footprint(thing);
@@ -145,7 +166,8 @@
   function canPlace(doc, roomId, thing, x, y, skip) {
     const room = world.room(roomId);
     const f = footprint(thing);
-    if (x < 0 || y < 0 || x + f.w > room.w || y + f.h > room.h) return 'bounds';
+    const a = area(doc, roomId);
+    if (x < a.x0 || y < 0 || x + f.w > a.x0 + a.w || y + f.h > room.h) return 'bounds';
     const occ = occupancy(doc, room, skip);
     const entries = world.doorEntries(roomId);
     for (let yy = y; yy < y + f.h; yy++)
@@ -187,6 +209,8 @@
   function sanitize(raw, roomId) {
     const doc = empty(roomId);
     if (!raw || typeof raw !== 'object') return doc;
+    doc.size = cat.sizes.some((z) => z.id === raw.size && !z.soon) ? raw.size : 'l'; // sin tamaño = toda la sala
+    const lim = limits(doc);
     const id = raw.identity || {};
     doc.identity = {
       name: clampText(id.name, 24),
@@ -207,7 +231,7 @@
     // Objetos y personas se agregan uno a uno con las mismas reglas del editor.
     for (const it of Array.isArray(raw.items) ? raw.items : []) {
       const def = it && cat.byType[it.type];
-      if (!def || doc.items.length >= cat.plan.maxItems) continue;
+      if (!def || doc.items.length >= lim.maxItems) continue;
       const item = { type: it.type, x: it.x | 0, y: it.y | 0 };
       if (def.variants) item.variant = def.variants.includes(it.variant) ? it.variant : def.variants[0];
       // Color libre; en la versión 1 el color de sillas y sofás venía en "variant".
@@ -216,7 +240,7 @@
       if (!canPlace(doc, roomId, item, item.x, item.y)) doc.items.push(item);
     }
     for (const p of Array.isArray(raw.residents) ? raw.residents : []) {
-      if (!p || doc.residents.length >= cat.plan.maxResidents) continue;
+      if (!p || doc.residents.length >= lim.maxResidents) continue;
       const res = {
         kind: p.kind === 'human' ? 'human' : 'agent',
         name: clampText(p.name, 18) || '—',
@@ -243,6 +267,7 @@
 
     if (!doc) {
       delete room.custom;
+      delete room.plan;
       Object.assign(room, room._orig);
       world.furnishRent(room);
       world.refreshSolids(roomId);
@@ -252,6 +277,8 @@
     }
 
     room.custom = doc;
+    const a = area(doc, roomId);
+    room.plan = { x0: a.x0, w: a.w };
     const name = doc.identity.name || TGL.t(room._orig.name);
     room.name = { es: name, en: name };
     room.blurb = doc.identity.tagline ? { es: doc.identity.tagline, en: doc.identity.tagline } : room._orig.blurb;
@@ -321,7 +348,7 @@
     return n;
   }
 
-  TGL.space = { SCHEMA, empty, templates, sanitize, canPlace, footprint, apply, load, save, clear, proUsage };
+  TGL.space = { SCHEMA, empty, templates, sanitize, canPlace, footprint, apply, load, save, clear, proUsage, area, limits, sizesFor };
 
   // Al cargar la página, la oficina que alguien guardó en este navegador aparece en el edificio.
   for (const room of TGL.rooms.filter((q) => q.rent)) {

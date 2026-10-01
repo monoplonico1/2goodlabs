@@ -50,6 +50,11 @@ Qué incluye, pensado para que escale a un producto:
 
 - **El espacio es un documento JSON** con versión de esquema (`editor/space.js`): identidad,
   superficies, ambiente, objetos, personas y contenido. Es lo que guardaría el servidor.
+- **Lo que se vende es espacio** (`catalog.sizes`): 1 casilla = 1 m²; oficinas de módulos
+  de 4 × 8 m. Puesto en coworking (4 m², próximamente), S 64 m², M 96 m², L 128 m² y piso
+  completo (768 m², próximamente). El tamaño define cuántas personas y objetos caben; lo que
+  no se arrienda de la sala queda tras un vidrio como "disponible". Precio de ejemplo:
+  US$ 0,25 por m² al mes.
 - **Catálogo** (`editor/catalog.js`): objetos con tamaño, categoría, versiones y
   nivel `free` / `pro`; patrones de piso y pared; ambientes; límites del plan
   (30 objetos, 3 personas, 4 links). El editor muestra cuánto PRO usa cada espacio.
