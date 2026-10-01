@@ -17,6 +17,8 @@
   // secreto del Worker (no está en el repositorio) y debe ser una dirección verificada en
   // Email Routing de Cloudflare.
   "send_email": [{ "name": "CONTACT_EMAIL" }],
+  // Conserva las variables creadas en el panel de Cloudflare (como CONTACT_TO) en cada deploy.
+  "keep_vars": true,
   "vars": {
     "CONTACT_FROM": "contacto@2goodlabs.com"
   }
