@@ -7,7 +7,15 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <script>document.documentElement.classList.add('js')</script>
+  <script>
+    document.documentElement.classList.add('js');
+    // Quien eligió inglés antes y entra a la portada va a /en/ con una redirección real,
+    // antes de cargar nada. Una URL explícita (/en/ o ?lang=) siempre manda.
+    try {
+      if (localStorage.getItem('tgl-lang') === 'en' && /^\/(index\.html)?$/.test(location.pathname) && !/[?&]lang=/.test(location.search))
+        location.replace('/en/' + location.search + location.hash);
+    } catch (e) {}
+  </script>
   <title>{{t:title}}</title>
   <meta name="description" content="{{t:description}}">
   <link rel="canonical" href="{{canonical}}">

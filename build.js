@@ -32,8 +32,8 @@ const assets = ['public/styles.css', ...fs.readdirSync(path.join(PUB, 'js')).sor
 const version = crypto.createHash('sha1').update(assets.map(read).join('\n')).digest('hex').slice(0, 8);
 
 const LANGS = {
-  es: { path: '/', base: '', out: 'index.html', ogLocale: 'es_ES', ogLocaleAlt: 'en_US' },
-  en: { path: '/en/', base: '../', out: 'en/index.html', ogLocale: 'en_US', ogLocaleAlt: 'es_ES' },
+  es: { path: '/', base: '/', out: 'index.html', ogLocale: 'es_ES', ogLocaleAlt: 'en_US' },
+  en: { path: '/en/', base: '/', out: 'en/index.html', ogLocale: 'en_US', ogLocaleAlt: 'es_ES' },
 };
 
 const t = (v, lang) => (v && typeof v === 'object' && !Array.isArray(v) ? v[lang] : v);

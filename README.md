@@ -25,7 +25,10 @@ Cada sala tiene un bloque **?** con información de la empresa y un botón a su 
 (zumiapp.co, pickpals.co). En Zumi también hay un cartel para descargar la app en el App Store. Los letreros de Zumi y Pickpals también tienen el link debajo.
 
 Idiomas: español en `/` e inglés en `/en/`. El selector ES/EN cambia sin recargar y
-actualiza la URL; recuerda la última elección.
+actualiza la URL. La elección se recuerda: quien eligió inglés y vuelve a la portada (`/`)
+es redirigido a `/en/` antes de cargar nada. Una URL explícita (`/en/`, `?lang=`) siempre manda.
+Los recursos se referencian con rutas absolutas (`/js/…`), así que hay que servir `public/`
+como raíz.
 
 **Vista simple**: el botón de arriba muestra todo como una página normal, sin juego, con
 el formulario de contacto. Sin JavaScript es lo que se ve. El botón **Directorio** lleva a cualquier

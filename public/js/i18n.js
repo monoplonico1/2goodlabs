@@ -1,5 +1,4 @@
-// Idioma: español o inglés. Se elige con ?lang=en|es, luego lo último que eligió
-// el visitante y, si no, el idioma del navegador.
+// Idioma: español (/) o inglés (/en/). Manda la URL; ?lang=en|es la puede forzar.
 // En el HTML: data-i18n="clave" cambia el texto, data-i18n-attr="atributo:clave" un atributo.
 
 (function () {
@@ -101,9 +100,8 @@
   function initialLang() {
     const q = new URLSearchParams(location.search).get('lang');
     if (q === 'es' || q === 'en') return q;
-    const saved = storage((s) => s.getItem('tgl-lang'));
-    if (saved === 'es' || saved === 'en') return saved;
-    // Cada idioma tiene su URL (/ y /en/): manda el idioma del HTML servido.
+    // Cada idioma tiene su URL (/ y /en/): manda el idioma del HTML servido. La preferencia
+    // guardada se aplica antes, con una redirección real desde la portada (ver src/index.html).
     return document.documentElement.lang === 'en' ? 'en' : 'es';
   }
 
