@@ -15,6 +15,8 @@
       priceNote: 'Precios de ejemplo: US$ {p} por m² al mes. Lo PRO son extras opcionales.',
       reset: '↺ Empezar de cero', resetConfirm: '¿Borrar todo y empezar de cero? Se pierde lo guardado en este navegador y no se puede deshacer.',
       resetDone: 'Listo: oficina en blanco. Empieza eligiendo el tamaño.',
+      peopleFull: 'La {s} tiene espacio para {n} personas o agentes, y ya están todos.',
+      peopleUp: 'Con una {s} caben {n}.', seeSizes: 'Ver tamaños',
       where: 'Ubicación en el piso', whereHint: 'Toca el plano o usa las flechas. Solo aparecen los lugares que cumplen las normas.',
       slotAt: 'Empieza a {m} m del extremo izquierdo', legendOffice: 'Tu oficina', legendHall: 'Pasillo (del edificio)', legendFree: 'Planta libre',
       rulesTitle: 'Normas del piso',
@@ -62,6 +64,8 @@
       priceNote: 'Example prices: US$ {p} per m² per month. PRO items are optional extras.',
       reset: '↺ Start over', resetConfirm: 'Delete everything and start over? What is saved in this browser is lost and cannot be undone.',
       resetDone: 'Done: blank office. Start by choosing the size.',
+      peopleFull: 'The {s} has room for {n} people or agents, and they are all here.',
+      peopleUp: 'An {s} fits {n}.', seeSizes: 'See sizes',
       where: 'Location on the floor', whereHint: 'Tap the plan or use the arrows. Only spots that follow the floor rules are offered.',
       slotAt: 'Starts {m} m from the left end', legendOffice: 'Your office', legendHall: 'Hallway (building)', legendFree: 'Open floor',
       rulesTitle: 'Floor rules',
@@ -533,6 +537,16 @@
         <small class="ed-note">${esc(tr('badUrl'))}</small></div>`;
   }
 
+  // Por qué no se puede agregar a nadie más, y qué tamaño lo permitiría.
+  function peopleFull() {
+    const z = cat.sizeOf(doc.size);
+    const up = space.sizesFor(ROOM).find((o) => o.residents > z.residents);
+    return `<div class="ed-callout">
+      <p>${esc(fill('peopleFull', { s: nm(z), n: z.residents }))}${up ? ' ' + esc(fill('peopleUp', { s: nm(up), n: up.residents })) : ''}</p>
+      ${up ? `<button type="button" class="ed-btn" data-tab="space">${esc(tr('seeSizes'))}</button>` : ''}
+    </div>`;
+  }
+
   function renderPeople() {
     const full = doc.residents.length >= space.limits(doc).maxResidents;
     const placing = tool && tool.kind === 'resident';
@@ -567,6 +581,7 @@
         <button type="button" class="ed-btn" data-act="padd" data-v="agent" ${full ? 'disabled' : ''}>${esc(tr('addAgent'))}</button>
         <button type="button" class="ed-btn" data-act="padd" data-v="human" ${full ? 'disabled' : ''}>${esc(tr('addHuman'))}</button>
       </div>
+      ${full ? peopleFull() : ''}
       ${cards || `<p class="ed-hint">${esc(tr('noPeople'))}</p>`}`;
   }
 

@@ -305,6 +305,8 @@ input[type=color] { width: 32px; height: 28px; padding: 0; border: 1px solid #d6
 .ed-size b { font-size: 12px; white-space: nowrap; }
 .ed-size.soon b, .ed-size:disabled b { font-family: Silkscreen, monospace; font-weight: 400; font-size: 9px; color: #6a4c93; }
 .ed-plan { margin: 0; font-size: 12px; }
+.ed-callout { display: grid; gap: 8px; justify-items: start; padding: 10px; border: 1px solid #ffc367; background: #fffaf0; border-radius: 10px; }
+.ed-callout p { margin: 0; font-size: 12px; line-height: 1.45; color: #3a3d45; }
 .ed-where { display: grid; gap: 6px; }
 .ed-where svg { width: 100%; height: auto; border-radius: 6px; cursor: pointer; display: block; }
 .ed-where-row { flex-wrap: nowrap; font-size: 12px; font-weight: 600; }
