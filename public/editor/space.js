@@ -1,6 +1,6 @@
 // Un "espacio" es el documento que describe lo que alguien arrienda: una oficina o un puesto
 // en el coworking. Es solo datos (JSON): lo que hoy se guarda en este navegador es exactamente
-// lo que mañana guardaría el servidor. Un navegador puede tener varios.
+// lo que mañana guardaría el servidor. Cada persona arrienda un espacio.
 //
 // {
 //   schema: 4, id, kind: 'office' | 'desk',
@@ -20,8 +20,8 @@
   const cat = TGL.catalog;
   const world = TGL.world;
   const zone = world.zone;
-  const KEY = 'tgl-spaces';
-  const OLD_KEY = 'tgl-space:rent3';
+  const KEY = 'tgl-myspace';
+  const OLD_KEYS = ['tgl-spaces', 'tgl-space:rent3']; // pruebas anteriores: se descartan
   const DEPTH = 8;
 
   const newId = (kind) => (kind === 'desk' ? 'd-' : 'o-') + Math.random().toString(36).slice(2, 8);
@@ -402,19 +402,16 @@
   }
 
   // ————————————————————————————————— Guardado local (por ahora)
-  // Todos los espacios de este navegador, ya validados y ubicados.
+  // El espacio de este navegador (lista de 0 o 1), ya validado y ubicado.
   function load() {
     let raw = null;
     try {
       raw = JSON.parse(localStorage.getItem(KEY) || 'null');
-      if (!raw) {
-        const old = JSON.parse(localStorage.getItem(OLD_KEY) || 'null'); // versión con una sola oficina
-        if (old) raw = { spaces: [old] };
-      }
+      OLD_KEYS.forEach((k) => localStorage.removeItem(k));
     } catch (e) {
       raw = null;
     }
-    const list = raw && Array.isArray(raw.spaces) ? raw.spaces.map(sanitize) : [];
+    const list = raw && Array.isArray(raw.spaces) ? raw.spaces.slice(0, 1).map(sanitize) : [];
     return settle(list);
   }
   // Devuelve true solo si quedó escrito (se relee para comprobarlo).
@@ -422,7 +419,6 @@
     try {
       const txt = JSON.stringify({ schema: SCHEMA, spaces: list });
       localStorage.setItem(KEY, txt);
-      localStorage.removeItem(OLD_KEY);
       return localStorage.getItem(KEY) === txt;
     } catch (e) {
       return false;

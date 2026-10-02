@@ -36,10 +36,17 @@ persona y tiene el mismo contenido en texto (para lectores de pantalla y buscado
 
 ## Editor de oficinas (beta)
 
-Un módulo aparte, en `public/editor/`, para arrendar y personalizar espacios en la zona de
-arriendo: oficinas del ancho que se quiera y puestos en el coworking. Un navegador puede tener
-varios y por ahora se guardan ahí (`localStorage`, clave `tgl-spaces`). Se enciende y apaga
-en `public/js/features.js`:
+Un módulo aparte, en `public/editor/`, para arrendar y personalizar **un** espacio en la zona
+de arriendo: una oficina o un puesto en el coworking. Se guarda en el navegador
+(`localStorage`, clave `tgl-myspace`). Dos momentos, los dos paso a paso:
+
+1. **Arrendar**: qué (puesto u oficina) → tamaño → dónde (solo lugares que cumplen las
+   normas) → confirmar.
+2. **Personalizar**: marca → estilo → muebles → personas (un puesto: marca → personas).
+   Cambiar de tamaño o de lugar, o pasar de puesto a oficina, vuelve al paso a paso
+   (menú ⋯) y conserva lo personalizado que quepa.
+
+Se enciende y apaga en `public/js/features.js`:
 
 | `editor:` | Qué pasa |
 | --- | --- |

@@ -8,7 +8,21 @@
 
   const L = {
     es: {
-      open: 'Mis espacios', create: 'Arrendar espacio', title: 'Editor de oficina', beta: 'BETA',
+      open: 'Mi espacio', create: 'Arrendar un espacio',
+      officeSize: 'Oficina {s}', brandColors: 'Colores de tu marca', wStep: 'Paso {n} de {t}', next: 'Siguiente →', prev: '← Atrás', finish: 'Terminar',
+      w1Title: '¿Qué quieres arrendar?', w1Hint: 'Puedes cambiarlo después.',
+      deskCard: 'Un puesto en el coworking', deskCardNote: 'Un escritorio fijo en la sala compartida: tu avatar, un agente y tu tarjeta con links.',
+      officeCard: 'Una oficina propia', officeCardNote: 'Una sala con tus muros, tu letrero, tus muebles y tu equipo.',
+      from: 'desde {p}/mes',
+      w2Title: '¿De qué tamaño?', w2Hint: 'Todas tienen 8 m de fondo. Pagas por metro cuadrado: con más metros caben más personas y más objetos.',
+      people: '{n} personas o agentes',
+      w3Title: '¿Dónde?', w3Office: 'Ya la ubicamos en un lugar libre. Toca el plano (o el edificio) para moverla, o usa las flechas. Solo te dejamos elegir lugares con pasillo.',
+      w3Desk: 'Toca un puesto verde del plano (o del edificio) para elegirlo.', move: 'Mover',
+      w4Title: 'Confirma', w4Hint: 'Por ahora es una prueba: no se cobra nada y se guarda solo en este navegador.',
+      sumWhat: 'Qué', sumSize: 'Tamaño', sumWhere: 'Dónde', sumPrice: 'Precio', perMonthLong: '{p} al mes',
+      rent: 'Arrendar · {p}/mes', applyChange: 'Guardar el cambio', rented: '¡Listo, es tuyo! Ahora ponle tu marca.',
+      changePlace: 'Cambiar tamaño o lugar', stepCount: '{n} de {t}',
+      sBrand: 'Marca', sStyle: 'Estilo', sItems: 'Muebles', sPeople: 'Personas', title: 'Editor de oficina', beta: 'BETA',
       homeTitle: 'Zona de arriendo', homeIntro: 'Toca la planta libre del plano para construir ahí una oficina del ancho que quieras, o toca un puesto verde del coworking.',
       newOffice: '+ Oficina', newDesk: '+ Puesto en el coworking', desksFree: '{n} libres', mySpaces: 'Mis espacios', none: 'Todavía no arriendas nada.',
       edit: 'Editar', total: '{n} espacios · {p}/mes', officeN: 'Oficina {n}', deskN: 'Puesto {n}', home: 'Mis espacios',
@@ -17,7 +31,7 @@
       rowLabel: 'Fila {r}', rowA: 'Fila A · arriba', rowB: 'Fila B · abajo', deskHint: 'Toca otro puesto verde del plano para cambiarte.',
       deskColor: 'Color del escritorio', upgrade: 'Mudarse a una oficina →', upgradeNote: 'Te llevas tu marca, tu descripción, tus links y tu gente.',
       upgradeConfirm: '¿Pasar de este puesto a una oficina? El puesto queda libre al guardar.', upgradeDone: 'Ahora es una oficina. Ajusta su ancho y su lugar.',
-      legendMine: 'Tus espacios', legendCowork: 'Coworking', legendDesk: 'Puesto libre', floorSoon: 'Piso completo (768 m²): próximamente.',
+      legendMine: 'Tu espacio', legendCowork: 'Coworking', legendDesk: 'Puesto libre', floorSoon: 'Piso completo (768 m²): próximamente.',
       deleteAll: 'Borrar todo', deleteAllConfirm: '¿Borrar todos tus espacios de este navegador? No se puede deshacer.', you: 'Tú',
       peopleFullDesk: 'Un puesto tiene lugar para {n}: tú y un agente. En una oficina caben más.',
       peopleFullOffice: 'Con {m} m² caben {n} personas o agentes, y ya están todos. Si agrandas la oficina caben más.',
@@ -69,7 +83,21 @@
       saveError: 'No se pudo guardar: este navegador no permite guardar datos (¿modo privado?).',
     },
     en: {
-      open: 'My spaces', create: 'Rent a space', title: 'Office editor', beta: 'BETA',
+      open: 'My space', create: 'Rent a space',
+      officeSize: 'Office {s}', brandColors: 'Your brand colors', wStep: 'Step {n} of {t}', next: 'Next →', prev: '← Back', finish: 'Finish',
+      w1Title: 'What do you want to rent?', w1Hint: 'You can change it later.',
+      deskCard: 'A coworking desk', deskCardNote: 'A fixed desk in the shared room: your avatar, one agent and your card with links.',
+      officeCard: 'Your own office', officeCardNote: 'A room with your walls, your sign, your furniture and your team.',
+      from: 'from {p}/mo',
+      w2Title: 'How big?', w2Hint: 'All are 8 m deep. You pay per square meter: more meters fit more people and more objects.',
+      people: '{n} people or agents',
+      w3Title: 'Where?', w3Office: 'We already put it in a free spot. Tap the plan (or the building) to move it, or use the arrows. Only spots with a hallway are allowed.',
+      w3Desk: 'Tap a green desk on the plan (or in the building) to pick it.', move: 'Move',
+      w4Title: 'Confirm', w4Hint: 'This is a test for now: nothing is charged and it is saved only in this browser.',
+      sumWhat: 'What', sumSize: 'Size', sumWhere: 'Where', sumPrice: 'Price', perMonthLong: '{p} per month',
+      rent: 'Rent · {p}/mo', applyChange: 'Save the change', rented: 'Done, it is yours! Now add your brand.',
+      changePlace: 'Change size or location', stepCount: '{n} of {t}',
+      sBrand: 'Brand', sStyle: 'Style', sItems: 'Furniture', sPeople: 'People', title: 'Office editor', beta: 'BETA',
       homeTitle: 'Rental area', homeIntro: 'Tap the open floor on the plan to build an office there, as wide as you like, or tap a green desk in the coworking.',
       newOffice: '+ Office', newDesk: '+ Coworking desk', desksFree: '{n} free', mySpaces: 'My spaces', none: 'You are not renting anything yet.',
       edit: 'Edit', total: '{n} spaces · {p}/mo', officeN: 'Office {n}', deskN: 'Desk {n}', home: 'My spaces',
@@ -78,7 +106,7 @@
       rowLabel: 'Row {r}', rowA: 'Row A · top', rowB: 'Row B · bottom', deskHint: 'Tap another green desk on the plan to switch.',
       deskColor: 'Desk color', upgrade: 'Move to an office →', upgradeNote: 'You keep your brand, description, links and people.',
       upgradeConfirm: 'Turn this desk into an office? The desk is freed when you save.', upgradeDone: 'It is an office now. Adjust its width and location.',
-      legendMine: 'Your spaces', legendCowork: 'Coworking', legendDesk: 'Free desk', floorSoon: 'Whole floor (768 m²): coming soon.',
+      legendMine: 'Your space', legendCowork: 'Coworking', legendDesk: 'Free desk', floorSoon: 'Whole floor (768 m²): coming soon.',
       deleteAll: 'Delete all', deleteAllConfirm: 'Delete all your spaces from this browser? This cannot be undone.', you: 'You',
       peopleFullDesk: 'A desk has room for {n}: you and one agent. An office fits more.',
       peopleFullOffice: 'With {m} m² there is room for {n} people or agents, and they are all here. A wider office fits more.',
@@ -139,7 +167,7 @@
   // ————————————————————————————————— Estado
   let isOpen = false, previewing = false, dirty = false;
   let saved = space.load();   // los espacios guardados en este navegador
-  let view = 'home';          // 'home' (zona de arriendo y mis espacios) | 'edit' (un espacio)
+  let view = 'edit';          // 'wizard' (arrendar, paso a paso) | 'edit' (personalizar)
   let doc = null;             // el espacio que se está editando
   let history = [], hIndex = -1;
   let tab = 'space', category = 'all';
@@ -184,26 +212,30 @@
   labelButtons();
 
   // ————————————————————————————————— Abrir y cerrar
+  // Dos momentos: arrendar (un paso a paso: qué, tamaño, dónde, confirmar) y personalizar
+  // (también por pasos: marca, estilo, muebles, personas). Cada persona arrienda un espacio.
   const isMobile = () => window.matchMedia('(max-width: 700px)').matches;
   const others = () => saved.filter((d) => d.id !== doc.id);
   const othersAfterSave = () => saved.filter((d) => d.id !== doc.id && d.id !== upgradedFrom);
   const spaceName = (d) => d.identity.name || (d.kind === 'desk' ? fill('deskN', { n: d.desk + 1 }) : fill('officeN', { n: d.number }));
+  const mine = () => saved[0] || null;
 
-  // Muestra en el edificio lo guardado o, mientras se edita, lo guardado más el borrador.
+  // Muestra en el edificio lo guardado o, mientras se arrienda o edita, el borrador.
   function show() {
-    space.render(view === 'edit' && doc ? others().concat(cleanDoc()) : saved);
+    space.render(doc ? others().concat(cleanDoc()) : saved);
     ROOM = doc ? doc.id : null;
     room = doc ? world.room(doc.kind === 'desk' ? 'cowork' : doc.id) : null;
   }
 
-  // La cámara: la zona de arriendo completa, o el espacio que se edita con algo de contexto.
+  // La cámara: la zona de arriendo completa al elegir, o el espacio con algo de contexto.
   let lastFocus = '';
-  const focusKey = () => (room ? [view, room.x, room.y, room.w].join() : view);
+  const wholeZone = () => view === 'wizard' && wiz.step !== 'confirm';
+  const focusKey = () => (room && !wholeZone() ? [view, room.x, room.y, room.w].join() : 'zone');
   const refocus = () => { if (isOpen && !previewing && focusKey() !== lastFocus) requestAnimationFrame(focusRoom); };
   function focusRoom() {
     const mobile = isMobile();
     let f = { x: 0, y: 0, w: 52, h: 32 };
-    if (view === 'edit' && room) {
+    if (room && !wholeZone()) {
       const w = Math.max(room.w + 4, 20);
       f = { x: Math.max(0, room.x + Math.floor(room.w / 2) - Math.floor(w / 2)), y: room.y - 2, w, h: room.h + 2 };
     }
@@ -215,28 +247,27 @@
     }));
   }
 
-  function openEditor() {
+  function openPanel() {
     isOpen = true;
     previewing = false;
-    view = 'home';
-    doc = null;
-    dirty = false;
-    tool = selected = drag = null;
-    show();
     document.body.classList.add('editing');
     panel.hidden = false;
     btn.hidden = true;
     game.setFrozen(true);
     game.overlays.add(drawOverlay);
-    render();
-    requestAnimationFrame(focusRoom);
+  }
+  // El botón: si ya arriendo algo, lo personalizo; si no, empieza el paso a paso.
+  function openEditor() {
+    openPanel();
+    if (mine()) editSpace(mine());
+    else startWizard('new');
   }
 
   function closeEditor(force) {
-    if (!force && dirty && !confirm(tr('leaveConfirm'))) return;
+    if (!force && view === 'edit' && dirty && !confirm(tr('leaveConfirm'))) return;
     isOpen = previewing = false;
-    view = 'home';
-    doc = null;
+    view = 'edit';
+    doc = wiz = null;
     dirty = false;
     tool = selected = drag = null;
     show();
@@ -250,59 +281,120 @@
     game.setFrozen(false);
   }
 
-  // Editar un espacio (nuevo o guardado) y volver a la lista.
-  function editSpace(d, isNew) {
+  // ————————————————————————————————— Arrendar, paso a paso
+  // wiz: { mode: 'new' | 'change' | 'upgrade', step, kind, back (el espacio antes del cambio) }
+  let wiz = null;
+  const STEPS = { new: { desk: ['kind', 'place', 'confirm'], office: ['kind', 'size', 'place', 'confirm'] }, change: { desk: ['place', 'confirm'], office: ['size', 'place', 'confirm'] } };
+  const stepsOf = () => STEPS[wiz.mode === 'upgrade' ? 'change' : wiz.mode][wiz.kind];
+
+  function startWizard(mode) {
+    view = 'wizard';
+    tool = selected = drag = null;
+    const back = mode === 'new' ? null : clone(doc || mine());
+    wiz = { mode, kind: mode === 'upgrade' ? 'office' : back ? back.kind : null, back };
+    wiz.step = mode === 'new' ? 'kind' : stepsOf()[0];
+    doc = back ? clone(back) : null;
+    if (mode === 'upgrade') draftOffice(clone(back).identity, 8);
+    show();
+    render();
+    requestAnimationFrame(focusRoom);
+  }
+  // Borrador de oficina de ancho w en el primer lugar libre (o el más chico que quepa).
+  function draftOffice(identity, w) {
+    const d = doc && doc.kind === 'office' ? doc : Object.assign(space.empty('office'), wiz.back && wiz.mode === 'change' ? { id: wiz.back.id } : {});
+    const list = saved.filter((o) => !wiz.back || o.id !== wiz.back.id);
+    const place = space.fitPlace(list, d, d.x != null ? d.row : 'A', d.x, w);
+    if (!place) return false;
+    const rowBefore = d.x != null ? d.row : null;
+    Object.assign(d, place, { w });
+    if (!d.number || place.row !== rowBefore) d.number = space.numberFor(list, d, place.row);
+    if (identity) d.identity = identity;
+    doc = d;
+    return true;
+  }
+  function draftDesk() {
+    const list = saved.filter((o) => !wiz.back || o.id !== wiz.back.id);
+    const free = space.freeDesks(list);
+    if (!free.length) return false;
+    const d = Object.assign(space.empty('desk'), wiz.back && wiz.back.kind === 'desk' ? { id: wiz.back.id } : {});
+    d.desk = free[0];
+    d.residents = [{ kind: 'human', name: tr('you'), title: '', bio: '', lines: [], x: 0, y: 0, body: cat.people.body[0], eye: cat.people.eye[0], skin: cat.people.skin[1], hair: cat.people.hair[0] }];
+    doc = d;
+    return true;
+  }
+  function wizGo(dir) {
+    const steps = stepsOf(), i = steps.indexOf(wiz.step) + dir;
+    if (i < 0) return;
+    if (i >= steps.length) return confirmRent();
+    wiz.step = steps[i];
+    show();
+    render();
+    refocus();
+  }
+  function chooseKind(kind) {
+    wiz.kind = kind;
+    doc = null;
+    const ok = kind === 'desk' ? draftDesk() : draftOffice(null, 8);
+    if (!ok) return flash(tr(kind === 'desk' ? 'noDesk' : 'noSpace'), true);
+    wizGo(1);
+  }
+  function chooseSize(w) {
+    if (!draftOffice(null, w)) return flash(fill('noWidth', { w }), true);
+    show();
+    render();
+  }
+
+  // Confirmar: lo nuevo se guarda tal cual; un cambio de tamaño o lugar conserva todo lo
+  // personalizado que todavía quepa.
+  function confirmRent() {
+    let next = cleanDoc();
+    if (wiz.back) {
+      const keep = { id: next.id, kind: next.kind, w: next.w, row: next.row, x: next.x, number: next.number, desk: next.desk };
+      const base = clone(wiz.back);
+      if (wiz.mode === 'upgrade') base.residents = base.residents.map((p, i) => Object.assign(p, { x: 1 + i * 2, y: 2 }));
+      next = space.sanitize(Object.assign(base, keep));
+      const lost = wiz.back.items.length + wiz.back.residents.length - next.items.length - next.residents.length;
+      if (lost > 0 && !confirm(fill('shrinkConfirm', { n: lost }))) return;
+    }
+    if (wiz.mode !== 'change' && next.kind === 'office' && !next.items.some((it) => it.type === 'info')) {
+      // el bloque "?" va de una, cerca de la puerta: así la descripción y los links se ven
+      const a = space.area(next), door = space.entriesOf(a)[0];
+      const spots = [];
+      for (let y = 0; y < a.h; y++) for (let x = 0; x < a.w; x++) spots.push({ x, y, d: Math.abs(x - door.x) + Math.abs(y - door.y) });
+      spots.sort((p, q) => (p.d < 2) - (q.d < 2) || p.d - q.d);
+      const spot = spots.find((p) => !space.canPlace(next, { type: 'info' }, p.x, p.y));
+      if (spot) next.items.push({ type: 'info', x: spot.x, y: spot.y });
+    }
+    if (!space.save([next])) return flash(tr('saveError'), true);
+    saved = [next];
+    const isNew = wiz.mode === 'new';
+    wiz = null;
+    editSpace(next);
+    if (isNew) flash(tr('rented'));
+  }
+
+  // ————————————————————————————————— Personalizar, por pasos
+  const editSteps = () => (doc.kind === 'desk' ? ['brand', 'people'] : ['brand', 'style', 'items', 'people']);
+  function editSpace(d) {
     view = 'edit';
-    upgradedFrom = null;
     doc = clone(d);
     history = [JSON.stringify(doc)];
     hIndex = 0;
-    dirty = !!isNew;
-    tool = selected = drag = null;
-    openPeople.clear();
-    tab = isNew ? 'space' : d.kind === 'desk' ? 'brand' : 'items';
-    show();
-    render();
-    requestAnimationFrame(focusRoom);
-  }
-  function goHome(force) {
-    if (!force && dirty && !confirm(tr('leaveConfirm'))) return;
-    view = 'home';
-    upgradedFrom = null;
-    doc = null;
     dirty = false;
     tool = selected = drag = null;
+    openPeople.clear();
+    tab = 'brand';
     show();
     render();
     requestAnimationFrame(focusRoom);
   }
-
-  // Nueva oficina (de 8 m) en el lugar válido más cercano al pedido; nuevo puesto libre.
-  // Lugar para una oficina nueva: si 8 m no caben, el ancho más chico que sí quepa (las
-  // normas no dejan retazos). Con fila y x pedidas, solo en esa fila.
-  function placeNew(list, d, row, x) {
-    for (let w = zone.RULES.minWidth; w <= zone.RULES.maxWidth; w++) {
-      const p = space.fitPlace(list, d, row || 'A', x == null ? null : x, w);
-      if (p && (!row || x == null || p.row === row)) {
-        Object.assign(d, p, { w });
-        d.number = space.numberFor(list, d, p.row);
-        return true;
-      }
-    }
-    return false;
-  }
-  function newOffice(row, x) {
-    const d = space.empty('office');
-    if (!placeNew(saved, d, row, x)) return flash(tr('noSpace'), true);
-    editSpace(d, true);
-  }
-  function newDesk(n) {
-    const free = space.freeDesks(saved);
-    if (!free.length) return flash(tr('noDesk'), true);
-    const d = space.empty('desk');
-    d.desk = n != null && free.includes(n) ? n : free[0];
-    d.residents = [{ kind: 'human', name: tr('you'), title: '', bio: '', lines: [], x: 0, y: 0, body: cat.people.body[0], eye: cat.people.eye[0], skin: cat.people.skin[1], hair: cat.people.hair[0] }];
-    editSpace(d, true);
+  function editGo(dir) {
+    const steps = editSteps(), i = steps.indexOf(tab) + dir;
+    if (i < 0) return;
+    if (i >= steps.length) { save(); return closeEditor(true); }
+    tab = steps[i];
+    tool = selected = null;
+    render();
   }
 
   // Probar: se camina por la oficina con los cambios, sin el panel.
@@ -454,9 +546,9 @@
   function render() {
     labelButtons();
     const oldBody = panel.querySelector('.ed-body');
-    const here = view === 'home' ? 'home' : tab;
+    const here = view === 'wizard' ? 'w-' + wiz.step : tab;
     const scroll = oldBody && lastTab === here ? oldBody.scrollTop : 0;
-    if (view === 'home') renderHome();
+    if (view === 'wizard') renderWizard();
     else renderEdit();
     lastTab = here;
     const body = panel.querySelector('.ed-body');
@@ -469,45 +561,85 @@
     renderFoot();
   }
 
-  // Zona de arriendo: el plano, crear oficina o puesto, y la lista de lo que ya arriendo.
-  function renderHome() {
-    const total = saved.reduce((n, d) => n + space.price(d), 0);
-    const free = space.freeDesks(saved).length;
-    const list = saved.map((d) => `
-      <button type="button" class="ed-space" data-act="edit" data-id="${d.id}">
-        <i style="--c:${d.identity.primary}"></i>
-        <span><strong>${esc(spaceName(d))}</strong><small>${esc(d.kind === 'desk' ? fill('deskN', { n: d.desk + 1 }) : fill('officeN', { n: d.number }))} · ${space.m2(d)} m² · ${money(space.price(d))}${esc(tr('perMonth'))}</small></span>
-        <b>${esc(tr('edit'))}</b>
-      </button>`).join('');
+  // ————————————————————————————————— Panel del paso a paso
+  function renderWizard() {
+    const steps = wiz.kind ? stepsOf() : STEPS.new.office;
+    const n = steps.indexOf(wiz.step) + 1;
+    const body = { kind: wizKind, size: wizSize, place: wizPlace, confirm: wizConfirm }[wiz.step]();
     panel.innerHTML = `
       <header class="ed-head">
-        <div><strong>${esc(tr('homeTitle'))}</strong> <span class="ed-badge">${tr('beta')}</span><small>${esc(fill('total', { n: saved.length, p: money(total) }))}</small></div>
+        <div class="ed-head-title"><small>${esc(fill('wStep', { n, t: steps.length }))}</small><strong>${esc(tr({ kind: 'w1Title', size: 'w2Title', place: 'w3Title', confirm: 'w4Title' }[wiz.step]))}</strong></div>
         <button type="button" class="ed-icon" data-act="close" aria-label="${esc(tr('close'))}">✕</button>
       </header>
-      <div class="ed-body">
-        <div class="ed-row">
-          <button type="button" class="ed-btn ed-primary" data-act="newoffice">${esc(tr('newOffice'))}</button>
-          <button type="button" class="ed-btn" data-act="newdesk" ${free ? '' : 'disabled'}>${esc(tr('newDesk'))} · ${esc(fill('desksFree', { n: free }))}</button>
-        </div>
-        <p class="ed-hint">${esc(tr('homeIntro'))}</p>
-        ${zoneMap()}
-        <h3 class="ed-h">${esc(tr('mySpaces'))}</h3>
-        ${list || `<p class="ed-hint">${esc(tr('none'))}</p>`}
-        <p class="ed-note">${esc(fill('priceNote', { p: cat.pricePerM2.toFixed(2) }))} ${esc(tr('floorSoon'))}</p>
-        <details class="ed-rules"><summary>${esc(tr('rulesTitle'))}</summary><ol>${tr('rules').map((r) => `<li>${esc(r)}</li>`).join('')}</ol></details>
-      </div>
+      <div class="ed-progress">${steps.map((st, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('')}</div>
+      <div class="ed-body">${body}</div>
       <footer class="ed-foot"></footer>`;
   }
+  function wizKind() {
+    const card = (kind, title, note, price) => `
+      <button type="button" class="ed-choice" data-act="kind" data-v="${kind}">
+        <strong>${esc(tr(title))}</strong><small>${esc(tr(note))}</small><b>${esc(price)}</b>
+      </button>`;
+    return `
+      ${card('desk', 'deskCard', 'deskCardNote', money(cat.desk.price) + tr('perMonth'))}
+      ${card('office', 'officeCard', 'officeCardNote', fill('from', { p: money(Math.round(8 * 8 * cat.pricePerM2)) }))}
+      <p class="ed-hint">${esc(tr('w1Hint'))}</p>`;
+  }
+  function wizSize() {
+    const list = saved.filter((o) => !wiz.back || o.id !== wiz.back.id);
+    return `
+      <p class="ed-hint">${esc(tr('w2Hint'))}</p>
+      ${cat.sizes.filter((z) => !z.soon).map((z) => {
+        const d = { w: z.w, kind: 'office' }, fits = !!space.fitPlace(list, Object.assign(space.empty('office'), { id: doc && doc.id }), 'A', null, z.w);
+        return `<button type="button" class="ed-choice${doc && doc.w === z.w ? ' on' : ''}" data-act="wsize" data-v="${z.w}" ${fits ? '' : 'disabled'}>
+          <span class="ed-size-plan">${sizePlan(z.w)}</span>
+          <span><strong>${esc(fill('officeSize', { s: nm(z) }))}</strong><small>${z.w} × 8 m · ${z.w * 8} m²</small><small>${esc(fill('people', { n: space.limits(d).maxResidents }))}</small></span>
+          <b>${money(Math.round(z.w * 8 * cat.pricePerM2))}${esc(tr('perMonth'))}</b>
+        </button>`;
+      }).join('')}
+      <p class="ed-note">${esc(tr('floorSoon'))}</p>`;
+  }
+  function wizPlace() {
+    if (doc.kind === 'desk') return `<p class="ed-hint">${esc(tr('w3Desk'))}</p>${zoneMap()}`;
+    const ok = space.startsFor(others(), doc, doc.row), i = ok.indexOf(doc.x);
+    return `
+      <p class="ed-hint">${esc(tr('w3Office'))}</p>
+      ${zoneMap()}
+      <div class="ed-row ed-where-row">
+        <button type="button" class="ed-icon" data-act="slot" data-v="-1" ${i <= 0 ? 'disabled' : ''} aria-label="◀">◀</button>
+        <span>${esc(fill('slotAt', { r: doc.row, m: doc.x }))}</span>
+        <button type="button" class="ed-icon" data-act="slot" data-v="1" ${i >= ok.length - 1 ? 'disabled' : ''} aria-label="▶">▶</button>
+      </div>
+      <details class="ed-rules"><summary>${esc(tr('rulesTitle'))}</summary><ol>${tr('rules').map((r) => `<li>${esc(r)}</li>`).join('')}</ol></details>`;
+  }
+  function wizConfirm() {
+    const row = (k, v) => `<div class="ed-sum-row"><span>${esc(tr(k))}</span><strong>${esc(v)}</strong></div>`;
+    const desk = doc.kind === 'desk';
+    return `
+      <div class="ed-summary">
+        ${row('sumWhat', tr(desk ? 'deskCard' : 'officeCard'))}
+        ${desk ? '' : row('sumSize', doc.w + ' × 8 m · ' + space.m2(doc) + ' m²')}
+        ${row('sumWhere', desk ? 'Coworking · ' + fill('deskN', { n: doc.desk + 1 }) : fill('officeN', { n: doc.number }) + ' · ' + fill('rowLabel', { r: doc.row }))}
+        ${row('sumPrice', fill('perMonthLong', { p: money(space.price(doc)) }))}
+      </div>
+      <p class="ed-hint">${esc(tr('w4Hint'))}</p>`;
+  }
+  function sizePlan(w) {
+    const k = 2.5;
+    let lines = '';
+    for (let x = 4; x < w; x += 4) lines += `<line x1="${x * k}" y1="0" x2="${x * k}" y2="${8 * k}"/>`;
+    return `<svg viewBox="0 0 ${w * k} ${8 * k}" width="${w * k}" height="${8 * k}" aria-hidden="true"><rect width="${w * k}" height="${8 * k}" rx="2"/>${lines}</svg>`;
+  }
 
+  // ————————————————————————————————— Panel de personalizar
   function renderEdit() {
-    const tabs = doc.kind === 'desk'
-      ? [['space', 'tSpace'], ['brand', 'tBrand'], ['people', 'tPeople']]
-      : [['space', 'tSpace'], ['items', 'tItems'], ['style', 'tStyle'], ['brand', 'tBrand'], ['people', 'tPeople']];
-    if (!tabs.some(([id]) => id === tab)) tab = 'space';
+    const steps = editSteps();
+    if (!steps.includes(tab)) tab = steps[0];
+    const n = steps.indexOf(tab) + 1;
+    const label = { brand: 'sBrand', style: 'sStyle', items: 'sItems', people: 'sPeople' };
     panel.innerHTML = `
       <header class="ed-head">
-        <button type="button" class="ed-icon" data-act="home" title="${esc(tr('home'))}" aria-label="${esc(tr('home'))}">←</button>
-        <div class="ed-head-title"><strong>${esc(spaceName(doc))}</strong> <span class="ed-badge">${tr('beta')}</span><small>${esc(doc.kind === 'desk' ? fill('deskN', { n: doc.desk + 1 }) + ' · Coworking' : fill('officeN', { n: doc.number }) + ' · ' + fill('rowLabel', { r: doc.row }))}</small></div>
+        <div class="ed-head-title"><strong>${esc(spaceName(doc))}</strong><small>${esc(doc.kind === 'desk' ? 'Coworking · ' + fill('deskN', { n: doc.desk + 1 }) : fill('officeN', { n: doc.number }) + ' · ' + space.m2(doc) + ' m²')} · ${money(space.price(doc))}${esc(tr('perMonth'))}</small></div>
         <button type="button" class="ed-icon" data-act="close" aria-label="${esc(tr('close'))}">✕</button>
       </header>
       <div class="ed-tools">
@@ -516,6 +648,8 @@
         <button type="button" class="ed-btn" data-act="preview">▶ ${esc(tr('try'))}</button>
         <details class="ed-more"><summary class="ed-icon" title="${esc(tr('more'))}" aria-label="${esc(tr('more'))}">⋯</summary>
           <div class="ed-menu">
+            <button type="button" data-act="change">${esc(tr('changePlace'))}</button>
+            ${doc.kind === 'desk' ? `<button type="button" data-act="upgrade">${esc(tr('upgrade'))}</button>` : ''}
             <button type="button" data-act="export">${esc(tr('export'))}</button>
             <button type="button" data-act="import">${esc(tr('import'))}</button>
             <button type="button" data-act="clear">${esc(tr('clearRoom'))}</button>
@@ -524,13 +658,12 @@
         </details>
         <button type="button" class="ed-btn ed-primary" data-act="save">${esc(tr('save'))}</button>
       </div>
-      <nav class="ed-tabs">${tabs.map(([id, k]) => `<button type="button" data-tab="${id}" class="${tab === id ? 'on' : ''}">${esc(tr(k))}</button>`).join('')}</nav>
+      <nav class="ed-tabs ed-stepper">${steps.map((id, i) => `<button type="button" data-tab="${id}" class="${tab === id ? 'on' : ''}"><i>${i + 1}</i>${esc(tr(label[id]))}</button>`).join('')}</nav>
       <div class="ed-body">${renderTab()}</div>
       <footer class="ed-foot"></footer>`;
   }
 
   function renderTab() {
-    if (tab === 'space') return renderSpace();
     if (tab === 'items') return renderItems();
     if (tab === 'style') return renderStyle();
     if (tab === 'brand') return renderBrand();
@@ -581,7 +714,7 @@
         else if (run.t === 'cowork') {
           svg += rc(run.s, row.y, len, row.h, '#f2c48f');
           zone.DESKS.forEach((d, n) => {
-            const owner = (view === 'edit' && doc && doc.kind === 'desk' ? others().concat(doc) : saved).find((o) => o.kind === 'desk' && o.desk === n);
+            const owner = (doc ? others().concat(doc) : saved).find((o) => o.kind === 'desk' && o.desk === n);
             const c = !owner ? '#3f8f5a' : doc && owner.id === doc.id ? '#ffc367' : mine.has(owner.id) ? '#c98a2c' : '#8a6a4a';
             svg += rc(run.s + d.x, row.y + d.y, 2, 1, c, owner && doc && owner.id === doc.id ? ' stroke="#8a5a1a" stroke-width="0.3"' : '');
           });
@@ -616,23 +749,16 @@
     }
     return null;
   }
-  // Tocar el plano (o el edificio) en la casilla (tx, ty).
+  // Tocar el plano (o el edificio) en la casilla (tx, ty): al elegir dónde, mueve el borrador.
   function pickZone(tx, ty) {
+    if (view !== 'wizard' || wiz.step !== 'place') return;
     const hit = zoneHit(tx, ty);
     if (!hit) return;
-    if (view === 'home') {
-      const desk = hit.kind === 'cowork' && hit.desk >= 0 ? saved.find((d) => d.kind === 'desk' && d.desk === hit.desk) : null;
-      const office = hit.kind === 'office' ? saved.find((d) => d.id === hit.id) : null;
-      if (desk || office) return editSpace(desk || office);
-      if (hit.kind === 'cowork' && hit.desk >= 0) return newDesk(hit.desk);
-      if (hit.kind === 'free') return newOffice(hit.row, hit.x - 4);
-      return;
-    }
     if (doc.kind === 'desk') {
       if (hit.kind !== 'cowork' || hit.desk < 0 || hit.desk === doc.desk) return;
       if (!space.freeDesks(others(), doc).includes(hit.desk)) return flash(tr('noDesk'), true);
       doc.desk = hit.desk;
-      return commit();
+      return changed();
     }
     moveOffice(hit.row, hit.x - Math.floor(doc.w / 2));
   }
@@ -645,48 +771,14 @@
     if (row !== doc.row) doc.number = space.numberFor(others(), doc, row);
     doc.row = row;
     doc.x = next;
-    commit();
+    changed();
   }
-
-  function renderSpace() {
-    return doc.kind === 'desk' ? renderDeskSpace() : renderOfficeSpace();
-  }
-  function renderOfficeSpace() {
-    const lim = space.limits(doc);
-    const ok = space.startsFor(others(), doc, doc.row), i = ok.indexOf(doc.x);
-    return `
-      <p class="ed-hint">${esc(tr('spaceIntro'))}</p>
-      <h3 class="ed-h">${esc(tr('widthTitle'))}</h3>
-      <div class="ed-row ed-where-row">
-        <button type="button" class="ed-icon" data-act="width" data-v="-1" ${doc.w <= zone.RULES.minWidth ? 'disabled' : ''} aria-label="−">−</button>
-        <span><strong>${doc.w} m</strong> × 8 m = ${space.m2(doc)} m² · ${money(space.price(doc))}${esc(tr('perMonth'))}</span>
-        <button type="button" class="ed-icon" data-act="width" data-v="1" ${doc.w >= zone.RULES.maxWidth ? 'disabled' : ''} aria-label="+">+</button>
-      </div>
-      <div class="ed-row"><small class="ed-note">${esc(tr('presetHint'))}</small>
-        ${cat.sizes.filter((z) => !z.soon).map((z) => `<button type="button" class="ed-chip-text${doc.w === z.w ? ' on' : ''}" data-act="width" data-set="${z.w}">${esc(nm(z))} · ${z.w} m</button>`).join('')}
-      </div>
-      <p class="ed-hint">${esc(fill('capacity', { p: lim.maxResidents, i: lim.maxItems }))}</p>
-      <p class="ed-note">${esc(fill('priceNote', { p: cat.pricePerM2.toFixed(2) }))}</p>
-      <h3 class="ed-h">${esc(tr('where'))}</h3>
-      ${zoneMap()}
-      <div class="ed-row ed-where-row">
-        <button type="button" class="ed-icon" data-act="slot" data-v="-1" ${i <= 0 ? 'disabled' : ''} aria-label="◀">◀</button>
-        <span>${esc(fill('slotAt', { r: doc.row, m: doc.x }))}</span>
-        <button type="button" class="ed-icon" data-act="slot" data-v="1" ${i >= ok.length - 1 ? 'disabled' : ''} aria-label="▶">▶</button>
-      </div>
-      <div class="ed-row">${zone.ROWS.map((r) => `<button type="button" class="ed-chip-text${doc.row === r.id ? ' on' : ''}" data-act="row" data-v="${r.id}">${esc(tr('row' + r.id))}</button>`).join('')}</div>
-      <p class="ed-hint">${esc(tr('whereHint'))}</p>
-      <p class="ed-note">${esc(tr('floorSoon'))}</p>
-      <details class="ed-rules"><summary>${esc(tr('rulesTitle'))}</summary><ol>${tr('rules').map((r) => `<li>${esc(r)}</li>`).join('')}</ol></details>`;
-  }
-  function renderDeskSpace() {
-    return `
-      <p class="ed-hint">${esc(TGL.t(cat.desk.note))}</p>
-      <p class="ed-plan"><strong>${esc(fill('deskN', { n: doc.desk + 1 }))}</strong> · ${cat.desk.m2} m² · ${money(cat.desk.price)}${esc(tr('perMonth'))}</p>
-      ${zoneMap()}
-      <p class="ed-hint">${esc(tr('deskHint'))}</p>
-      <div class="ed-field"><span>${esc(tr('deskColor'))}</span>${colorControl('deskColor', doc.deskColor || cat.baseColor(cat.byType.desk), cat.palettes.item, { reset: true, isOriginal: !doc.deskColor })}</div>
-      <div class="ed-callout"><p>${esc(tr('upgradeNote'))}</p><button type="button" class="ed-btn" data-act="upgrade">${esc(tr('upgrade'))}</button></div>`;
+  // En el paso a paso no hay historial: solo se redibuja.
+  function changed() {
+    if (view !== 'wizard') return commit();
+    show();
+    render();
+    refocus();
   }
 
   function renderItems() {
@@ -709,6 +801,9 @@
       <button type="button" class="ed-opt${current === o.id ? ' on' : ''}" data-act="${kind === 'floor' ? 'floor' : 'walls'}" data-v="${o.id}">
         <img src="${patternThumb(kind, o.id, color)}" alt=""><span>${esc(nm(o))}</span>${proBadge(o.tier)}</button>`).join('');
     return `
+      <h3 class="ed-h">${esc(tr('brandColors'))}</h3>
+      ${brandColor('primary')}
+      ${brandColor('accent')}
       <h3 class="ed-h">${esc(tr('templates'))}</h3>
       <div class="ed-row">${space.templates.map((t) => `<button type="button" class="ed-btn" data-act="template" data-v="${t.id}">${esc(nm(t))}</button>`).join('')}</div>
       <h3 class="ed-h">${esc(tr('floor'))}</h3>
@@ -721,12 +816,12 @@
         <button type="button" class="ed-opt${doc.mode === m.id ? ' on' : ''}" data-act="mode" data-v="${m.id}"><span>${esc(nm(m))}</span>${proBadge(m.tier)}</button>`).join('')}</div>`;
   }
 
+  const BRAND_COLORS = ['#1d1f24', '#1b2a4a', '#2c4a35', '#6a4c93', '#8a3b3b', '#b5654a', '#ffc367', '#4dd6ff', '#9cff57', '#ff6fa8', '#f2a65a', '#ffffff'];
+  const brandColor = (key) => `<div class="ed-field"><span>${esc(tr(key))}</span>${colorControl('identity.' + key, doc.identity[key], BRAND_COLORS, { brand: false })}</div>`;
   function renderBrand() {
     const id = doc.identity;
-    const colorRow = (key) => colorControl('identity.' + key, id[key],
-      ['#1d1f24', '#1b2a4a', '#2c4a35', '#6a4c93', '#8a3b3b', '#b5654a', '#ffc367', '#4dd6ff', '#9cff57', '#ff6fa8', '#f2a65a', '#ffffff'], { brand: false });
-    const info = cat.byType.info, hasInfo = doc.items.some((it) => cat.byType[it.type].info);
-    const infoBox = `<div class="ed-infobox${hasInfo ? '' : ' missing'}">
+    const info = cat.byType.info, hasInfo = doc.kind === 'desk' || doc.items.some((it) => cat.byType[it.type].info);
+    const infoBox = hasInfo ? '' : `<div class="ed-infobox${hasInfo ? '' : ' missing'}">
       <img src="${thumb(info)}" alt="">
       <div><strong>${esc(tr('infoTitle'))}</strong><small>${esc(tr(hasInfo ? 'infoPlaced' : 'infoMissing'))}</small></div>
       ${hasInfo ? '' : `<button type="button" class="ed-btn ed-primary" data-act="addinfo">${esc(tr('addInfo'))}</button>`}
@@ -740,13 +835,12 @@
     return `
       ${field(tr('name'), `<input value="${esc(id.name)}" maxlength="24" data-field="identity.name">`)}
       ${field(tr('tagline'), `<input value="${esc(id.tagline)}" maxlength="60" data-field="identity.tagline">`)}
-      <div class="ed-field"><span>${esc(tr('primary'))}</span>${colorRow('primary')}</div>
-      <div class="ed-field"><span>${esc(tr('accent'))}</span>${colorRow('accent')}</div>
       ${infoBox}
       ${field(tr('about'), `<textarea rows="3" maxlength="280" data-field="content.about">${esc(doc.content.about)}</textarea>`)}
       <div class="ed-field"><span>${esc(tr('links'))}</span>${links}
         ${doc.content.links.length < cat.plan.maxLinks ? `<button type="button" class="ed-btn" data-act="link">${esc(tr('addLink'))}</button>` : ''}
-        <small class="ed-note">${esc(tr('badUrl'))}</small></div>`;
+        <small class="ed-note">${esc(tr('badUrl'))}</small></div>
+      ${doc.kind === 'desk' ? `<div class="ed-field"><span>${esc(tr('deskColor'))}</span>${colorControl('deskColor', doc.deskColor || cat.baseColor(cat.byType.desk), cat.palettes.item, { reset: true, isOriginal: !doc.deskColor })}</div>` : ''}`;
   }
 
   // Por qué no se puede agregar a nadie más, y qué lo permitiría.
@@ -800,21 +894,26 @@
   function renderFoot() {
     const foot = panel.querySelector('.ed-foot');
     if (!foot) return;
-    const status = `<p class="ed-status ${message && message.bad ? 'bad' : ''}">${esc(message ? message.text : dirty ? tr('unsaved') : tr('localNote'))}</p>`;
-    if (view === 'home') {
-      foot.innerHTML = `<div class="ed-foot-row">${status}${saved.length ? `<button type="button" class="ed-btn ed-danger ed-reset" data-act="deleteall">${esc(tr('deleteAll'))}</button>` : ''}</div>`;
+    const status = (fallback) => `<p class="ed-status ${message && message.bad ? 'bad' : ''}">${esc(message ? message.text : fallback)}</p>`;
+    if (view === 'wizard') {
+      const steps = wiz.kind ? stepsOf() : STEPS.new.office, i = steps.indexOf(wiz.step);
+      const last = i === steps.length - 1;
+      const nextLabel = last ? (wiz.mode === 'new' ? fill('rent', { p: money(space.price(doc)) }) : tr('applyChange')) : tr('next');
+      foot.innerHTML = `
+        ${message ? status('') : ''}
+        <div class="ed-nav">
+          <button type="button" class="ed-btn" data-act="wprev" ${i <= 0 && wiz.mode === 'new' ? 'disabled' : ''}>${esc(tr('prev'))}</button>
+          ${wiz.step === 'kind' ? '' : `<button type="button" class="ed-btn ed-primary" data-act="wnext">${esc(nextLabel)}</button>`}
+        </div>`;
       return;
     }
-    const pro = space.proUsage(doc), lim = space.limits(doc);
-    const bar = (label, n, max) => `<div class="ed-cap"><span>${esc(label)} ${n}/${max}</span><i><b style="width:${Math.min(100, (n / max) * 100)}%"></b></i></div>`;
+    const steps = editSteps(), i = steps.indexOf(tab), last = i === steps.length - 1;
     foot.innerHTML = `
-      <p class="ed-plan"><strong>${esc(doc.kind === 'desk' ? fill('deskN', { n: doc.desk + 1 }) : fill('officeN', { n: doc.number }))}</strong> · ${space.m2(doc)} m² · ${money(space.price(doc))}${esc(tr('perMonth'))}</p>
-      ${doc.kind === 'desk' ? '' : bar(tr('capItems'), doc.items.length, lim.maxItems)}
-      ${bar(tr('capPeople'), doc.residents.length, lim.maxResidents)}
-      ${pro ? `<p class="ed-note"><span class="ed-pro">${tr('pro')}</span> ${esc(tr('proNote').replace('{n}', pro))}</p>` : ''}
-      <div class="ed-foot-row">
-        ${status}
-        <button type="button" class="ed-btn ed-danger ed-reset" data-act="reset">${esc(tr('reset'))}</button>
+      ${status(dirty ? tr('unsaved') : tr('localNote'))}
+      <div class="ed-nav">
+        <button type="button" class="ed-btn" data-act="eprev" ${i <= 0 ? 'disabled' : ''}>${esc(tr('prev'))}</button>
+        <span class="ed-nav-count">${esc(fill('stepCount', { n: i + 1, t: steps.length }))}</span>
+        <button type="button" class="ed-btn ed-primary" data-act="enext">${esc(last ? tr('finish') : tr('next'))}</button>
       </div>`;
     // El botón dice si lo que se ve ya está guardado.
     const sb = panel.querySelector('[data-act=save]');
@@ -835,23 +934,22 @@
     const sel = selected && selected.kind === 'item' ? doc.items[selected.index] : null;
     switch (act) {
       case 'close': return closeEditor();
-      case 'home': return goHome();
-      case 'edit': return editSpace(saved.find((d) => d.id === el.dataset.id));
-      case 'newoffice': return newOffice();
-      case 'newdesk': return newDesk();
-      case 'deleteall':
-        if (!confirm(tr('deleteAllConfirm'))) return;
-        if (!space.save([])) return flash(tr('saveError'), true);
-        saved = [];
-        show();
-        return render();
+      case 'kind': return chooseKind(v);
+      case 'wsize': return chooseSize(Number(v));
+      case 'wnext': return wizGo(1);
+      case 'wprev':
+        // el primer paso de un cambio vuelve a personalizar, sin tocar nada
+        if (wiz.mode !== 'new' && stepsOf().indexOf(wiz.step) === 0) return editSpace(wiz.back);
+        return wizGo(-1);
+      case 'enext': return editGo(1);
+      case 'eprev': return editGo(-1);
+      case 'change': return startWizard('change');
+      case 'upgrade': return startWizard('upgrade');
       case 'zonemap': {
         const box = el.getBoundingClientRect();
         return pickZone(Math.floor(((e.clientX - box.left) / box.width) * MAP.w), Math.floor(((e.clientY - box.top) / box.height) * MAP.h));
       }
-      case 'width': return el.dataset.set ? setWidth(Number(el.dataset.set)) : setWidth(doc.w + Number(v), Number(v));
-      case 'row': return v === doc.row ? null : moveOffice(v, doc.x);
-      case 'upgrade': return upgrade();
+
       case 'undo': return undo();
       case 'redo': return redo();
       case 'save': return save();
@@ -866,10 +964,10 @@
         return resetSpace();
       case 'restore': {
         if (!confirm(tr('restoreConfirm'))) return;
-        const list = others();
-        if (!space.save(list)) return flash(tr('saveError'), true);
-        saved = list;
-        return goHome(true);
+        if (!space.save([])) return flash(tr('saveError'), true);
+        saved = [];
+        doc = null;
+        return closeEditor(true);
       }
       case 'pick': {
         if (doc.items.length >= space.limits(doc).maxItems) return flash(tr('full'), true);
@@ -885,7 +983,7 @@
         const next = dir > 0 ? ok.find((x) => x >= cur + 4) ?? ok.find((x) => x > cur) : [...ok].reverse().find((x) => x <= cur - 4) ?? [...ok].reverse().find((x) => x < cur);
         if (next == null) return;
         doc.x = next;
-        return commit();
+        return changed();
       }
       case 'setcolor': setColor(el.dataset.path, v); return commit();
       case 'addinfo': return addInfo();
@@ -940,33 +1038,6 @@
     }
   });
 
-  // Cambiar el ancho: se mantiene el borde derecho si las normas lo permiten (si no, el lugar
-  // válido más cercano). Lo que quede fuera, o pase el nuevo límite, se quita avisando antes.
-  // dir: con − y + se salta al siguiente ancho que quepa en algún lugar.
-  function setWidth(w, dir) {
-    w = Math.max(zone.RULES.minWidth, Math.min(zone.RULES.maxWidth, Math.round(w)));
-    if (w === doc.w) return;
-    // Primero en la misma fila (con − y +, el siguiente ancho que quepa); si no, en otra fila.
-    const want = w, near = (ok, x) => ok.reduce((b, s) => (Math.abs(s - x) < Math.abs(b - x) ? s : b), ok[0]);
-    let place = null;
-    for (let k = w; k >= zone.RULES.minWidth && k <= zone.RULES.maxWidth; k += dir || 1000) {
-      const ok = space.startsFor(others(), doc, doc.row, k);
-      if (ok.length) { place = { row: doc.row, x: near(ok, doc.x + doc.w - k) }; w = k; break; }
-      if (!dir) break;
-    }
-    if (!place) { w = want; place = space.fitPlace(others(), doc, doc.row, doc.x + doc.w - w, w); }
-    if (!place) return flash(fill('noWidth', { w }), true);
-    const next = space.sanitize(Object.assign(cleanDoc(), { w }, place));
-    const lost = doc.items.length + doc.residents.length - next.items.length - next.residents.length;
-    if (lost > 0 && !confirm(fill('shrinkConfirm', { n: lost }))) return;
-    if (place.row !== doc.row) doc.number = space.numberFor(others(), doc, place.row);
-    Object.assign(doc, { w, row: place.row, x: place.x, items: next.items, residents: next.residents });
-    selected = tool = null;
-    openPeople.clear();
-    commit();
-    flash(fill('sizeChanged', { m: space.m2(doc) }));
-  }
-
   // Vaciar el espacio: se mantienen su tipo, su tamaño y su lugar.
   function resetSpace() {
     const keep = { id: doc.id, kind: doc.kind, w: doc.w, row: doc.row, x: doc.x, number: doc.number, desk: doc.desk };
@@ -975,25 +1046,6 @@
     openPeople.clear();
     commit();
     flash(tr('resetDone'));
-  }
-
-  // De puesto a oficina: se lleva la marca, la descripción, los links y la gente.
-  function upgrade() {
-    if (!confirm(tr('upgradeConfirm'))) return;
-    const d = space.empty('office');
-    if (!placeNew(others(), d)) return flash(tr('noSpace'), true);
-    Object.assign(d, { identity: doc.identity, content: doc.content });
-    d.residents = doc.residents.map((p, i) => Object.assign({}, p, { x: 1 + i * 2, y: 2 }));
-    upgradedFrom = doc.id; // el puesto se libera al guardar
-    doc = space.sanitize(d);
-    dirty = true;
-    tab = 'space';
-    history = [JSON.stringify(doc)];
-    hIndex = 0;
-    show();
-    render();
-    refocus();
-    flash(tr('upgradeDone'));
   }
 
   // Abrir y cerrar tarjetas de personas (el evento "toggle" no burbujea).
@@ -1243,7 +1295,7 @@
     if (mod && e.key.toLowerCase() === 's') { e.preventDefault(); return save(); }
     if (typing) return;
     if (e.key === 'Escape') {
-      if (tool || selected) { tool = selected = null; render(); } else if (view === 'edit') goHome(); else closeEditor();
+      if (tool || selected) { tool = selected = null; render(); } else closeEditor();
     } else if ((e.key === 'Delete' || e.key === 'Backspace') && selected && building()) {
       e.preventDefault();
       if (selected.kind === 'item') doc.items.splice(selected.index, 1);
@@ -1276,7 +1328,7 @@
       ctx.setLineDash([]);
     };
     const cw = world.room('cowork');
-    const list = view === 'edit' && doc ? others().concat(doc) : saved;
+    const list = doc ? others().concat(doc) : saved;
     for (const d of list) {
       const cur = doc && d.id === doc.id;
       if (d.kind === 'desk') { const k = zone.DESKS[d.desk]; dashed(cw.x + k.x, cw.y + k.y - 1, 2, 3, cur ? '#ffc367' : 'rgba(255,195,103,.6)'); }
