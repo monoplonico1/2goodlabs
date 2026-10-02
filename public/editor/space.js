@@ -1,29 +1,35 @@
-// Un "espacio" es el documento que describe una oficina personalizada. Es solo datos (JSON):
-// lo que hoy se guarda en este navegador es exactamente lo que mañana guardaría el servidor.
+// Un "espacio" es el documento que describe lo que alguien arrienda: una oficina o un puesto
+// en el coworking. Es solo datos (JSON): lo que hoy se guarda en este navegador es exactamente
+// lo que mañana guardaría el servidor. Un navegador puede tener varios.
 //
 // {
-//   schema: 3, room: 'rent3',
-//   size: 's' | 'm' | 'l' | 'xl',                        // lo que se arrienda (catalog.sizes)
-//   slot: n,                                              // dónde empieza en la planta libre (m desde la izquierda)
+//   schema: 4, id, kind: 'office' | 'desk',
+//   office: w (8–24 m de ancho, 8 de fondo), row ('A' | 'B'), x (columna donde empieza), number
+//   desk:   desk (número de puesto en el coworking)
 //   identity: { name, tagline, primary, accent },        // letrero y colores de marca
 //   surfaces: { floor, floorColor, walls, wallColor },   // patrón del catálogo + color libre
 //   mode: 'day' | 'night',
-//   items: [{ type, x, y, variant?, color? }],            // x, y relativos a la sala
+//   items: [{ type, x, y, variant?, color? }],            // x, y relativos a la oficina
 //   residents: [{ kind: 'agent'|'human', name, title, bio, lines: [], x, y, body, eye, skin, hair }],
 //   content: { about, links: [{ label, url }] },
+//   deskColor,                                            // solo puestos
 // }
 
 (function () {
-  const SCHEMA = 3;
+  const SCHEMA = 4;
   const cat = TGL.catalog;
   const world = TGL.world;
-  const KEY = (id) => 'tgl-space:' + id;
+  const zone = world.zone;
+  const KEY = 'tgl-spaces';
+  const OLD_KEY = 'tgl-space:rent3';
+  const DEPTH = 8;
 
-  const empty = (roomId) => ({
+  const newId = (kind) => (kind === 'desk' ? 'd-' : 'o-') + Math.random().toString(36).slice(2, 8);
+  const empty = (kind) => ({
     schema: SCHEMA,
-    room: roomId,
-    size: 's',
-    slot: null,
+    id: newId(kind || 'office'),
+    kind: kind || 'office',
+    w: 8, row: 'A', x: null, number: null, desk: null, deskColor: null,
     identity: { name: '', tagline: '', primary: '#1d1f24', accent: '#ffc367' },
     surfaces: { floor: 'plain', floorColor: '#f1f1f3', walls: 'plain', wallColor: '#f7f7f9' },
     mode: 'day',
@@ -38,7 +44,7 @@
       id: 'ai-startup',
       name: { es: 'Startup de IA', en: 'AI startup' },
       doc: {
-        size: 'l',
+        w: 16,
         identity: { name: 'Nova AI', tagline: 'Agentes que atienden a tus clientes', primary: '#1b2a4a', accent: '#4dd6ff' },
         surfaces: { floor: 'speckle', floorColor: '#d9d9de', walls: 'stripes', wallColor: '#e4ebf5' },
         mode: 'day',
@@ -61,7 +67,7 @@
       id: 'studio',
       name: { es: 'Estudio creativo', en: 'Creative studio' },
       doc: {
-        size: 'l',
+        w: 16,
         identity: { name: 'Pixel & Co.', tagline: 'Diseño de producto con IA', primary: '#6a4c93', accent: '#ffd24d' },
         surfaces: { floor: 'herringbone', floorColor: '#c9925a', walls: 'wainscot', wallColor: '#f6dcdc' },
         mode: 'day',
@@ -83,7 +89,7 @@
       id: 'lounge',
       name: { es: 'Lounge de comunidad', en: 'Community lounge' },
       doc: {
-        size: 'l',
+        w: 16,
         identity: { name: 'The Lounge', tagline: 'Comunidad de builders con IA', primary: '#2c4a35', accent: '#ffc367' },
         surfaces: { floor: 'checker', floorColor: '#2c4a35', walls: 'brick', wallColor: '#8a4a3a' },
         mode: 'night',
@@ -126,28 +132,43 @@
     };
   }
 
-  // ————————————————————————————————— Tamaño arrendado
-  // La oficina mide lo que se arrienda: el edificio construye sus muros a esa medida
-  // (world.setOffice). Coordenadas relativas a su esquina; la puerta va centrada abajo.
-  function area(doc) {
-    const z = cat.sizeOf(doc.size);
-    return { x0: 0, w: z.w, h: z.h, size: z };
-  }
-  // Dónde puede ir la oficina en la planta libre según las normas del piso (world.floor),
-  // como metros desde el extremo izquierdo. Si se pide un lugar que no cumple, el más cercano.
-  const slots = (doc) => world.floor.starts(area(doc).w).map((x) => x - world.floor.STRIP.x);
-  function fitSlot(doc, want) {
-    const ok = slots(doc);
-    if (want == null || !isFinite(want)) return ok[ok.length - 1];
-    return ok.reduce((best, s) => (Math.abs(s - want) <= Math.abs(best - want) ? s : best), ok[0]);
-  }
+  // ————————————————————————————————— Tamaño y lugar
+  // La oficina mide lo que se arrienda y el edificio construye sus muros a esa medida
+  // (world.zone). Coordenadas relativas a su esquina; la puerta va centrada abajo.
+  const area = (doc) => (doc.kind === 'desk' ? { x0: 0, w: 2, h: 2 } : { x0: 0, w: doc.w, h: DEPTH });
   const entriesOf = (a) => [{ x: Math.floor(a.w / 2) - 1, y: a.h - 1 }, { x: Math.floor(a.w / 2), y: a.h - 1 }];
-  const limits = (doc) => {
-    const z = cat.sizeOf(doc.size);
-    return { maxItems: z.items, maxResidents: z.residents, maxLinks: cat.plan.maxLinks };
-  };
-  // Tamaños que caben en esta sala (los demás se muestran como "próximamente").
+  const m2 = (doc) => (doc.kind === 'desk' ? cat.desk.m2 : doc.w * DEPTH);
+  const price = (doc) => (doc.kind === 'desk' ? cat.desk.price : Math.round(m2(doc) * cat.pricePerM2));
+  // Más metros, más gente y más objetos.
+  const limits = (doc) => (doc.kind === 'desk'
+    ? { maxItems: 0, maxResidents: cat.desk.residents, maxLinks: cat.plan.maxLinks }
+    : { maxItems: doc.w * 2, maxResidents: Math.ceil(doc.w * 0.9), maxLinks: cat.plan.maxLinks });
   const sizesFor = () => cat.sizes.filter((z) => !z.soon);
+
+  // Oficinas como las entiende el edificio.
+  const leasesOf = (list) => list.filter((d) => d.kind === 'office' && d.x != null).map((d) => ({ id: d.id, row: d.row, a: d.x, w: d.w, number: d.number }));
+  // Lugares válidos para una oficina de ancho w en una fila, con las demás donde están.
+  const startsFor = (list, doc, row, w) => zone.starts(leasesOf(list), row, w == null ? doc.w : w, doc.id);
+  // El lugar válido más cercano al pedido: primero en la misma fila, si no en la otra.
+  function fitPlace(list, doc, row, x, w) {
+    const rows = [row].concat(zone.ROWS.map((r) => r.id).filter((r) => r !== row));
+    for (const rw of rows) {
+      const ok = startsFor(list, doc, rw, w);
+      if (!ok.length) continue;
+      const want = x == null ? ok[0] : x;
+      return { row: rw, x: ok.reduce((best, s) => (Math.abs(s - want) < Math.abs(best - want) ? s : best), ok[0]) };
+    }
+    return null;
+  }
+  // Número de oficina: 1xx abajo (fila B), 2xx arriba (fila A).
+  function numberFor(list, doc, row) {
+    const base = row === 'A' ? 201 : 101;
+    const used = list.filter((d) => d.id !== doc.id && d.kind === 'office').map((d) => d.number);
+    let n = base;
+    while (used.includes(n)) n++;
+    return n;
+  }
+  const freeDesks = (list, doc) => zone.DESKS.map((d, i) => i).filter((i) => !list.some((o) => o.kind === 'desk' && o.id !== (doc && doc.id) && o.desk === i));
 
   // Dimensiones y si bloquea el paso, para cualquier cosa que ocupe casillas.
   function footprint(thing) {
@@ -172,7 +193,7 @@
   }
 
   // ¿Se puede poner "thing" en (x, y)? Devuelve null si sí, o el motivo si no.
-  function canPlace(doc, roomId, thing, x, y, skip) {
+  function canPlace(doc, thing, x, y, skip) {
     const room = area(doc);
     const f = footprint(thing);
     if (x < 0 || y < 0 || x + f.w > room.w || y + f.h > room.h) return 'bounds';
@@ -214,11 +235,22 @@
   }
 
   // Limpia un documento que viene de afuera (guardado, importado o plantilla).
-  function sanitize(raw, roomId) {
-    const doc = empty(roomId);
+  function sanitize(raw) {
+    const doc = empty(raw && raw.kind === 'desk' ? 'desk' : 'office');
     if (!raw || typeof raw !== 'object') return doc;
-    doc.size = cat.sizes.some((z) => z.id === raw.size && !z.soon) ? raw.size : 'l'; // sin tamaño = toda la sala
-    doc.slot = fitSlot(doc, raw.slot == null ? null : Number(raw.slot));
+    if (/^[od]-[a-z0-9]{1,12}$/.test(raw.id || '')) doc.id = raw.id;
+    if (doc.kind === 'desk') {
+      doc.desk = Number.isInteger(raw.desk) && raw.desk >= 0 && raw.desk < zone.DESKS.length ? raw.desk : null;
+      doc.deskColor = isColor(raw.deskColor) ? raw.deskColor.toLowerCase() : null;
+    } else {
+      // Ancho en metros; los espacios de antes traían un tamaño (s/m/l/xl) y un "slot".
+      const preset = cat.sizes.find((z) => z.id === raw.size);
+      const w = Number.isFinite(raw.w) ? Math.round(raw.w) : preset ? preset.w : 16;
+      doc.w = Math.max(zone.RULES.minWidth, Math.min(zone.RULES.maxWidth, w));
+      doc.row = zone.ROWS.some((r) => r.id === raw.row) ? raw.row : 'A';
+      doc.x = Number.isFinite(raw.x) ? Math.round(raw.x) : Number.isFinite(raw.slot) ? 1 + Math.round(raw.slot) : null;
+      doc.number = Number.isInteger(raw.number) ? raw.number : null;
+    }
     const lim = limits(doc);
     const id = raw.identity || {};
     doc.identity = {
@@ -246,7 +278,7 @@
       // Color libre; en la versión 1 el color de sillas y sofás venía en "variant".
       const color = isColor(it.color) ? it.color : def.paint && isColor(it.variant) ? it.variant : null;
       if (color && cat.colorable(def)) item.color = color.toLowerCase();
-      if (!canPlace(doc, roomId, item, item.x, item.y)) doc.items.push(item);
+      if (!canPlace(doc, item, item.x, item.y)) doc.items.push(item);
     }
     for (const p of Array.isArray(raw.residents) ? raw.residents : []) {
       if (!p || doc.residents.length >= lim.maxResidents) continue;
@@ -263,56 +295,102 @@
         skin: isColor(p.skin) ? p.skin : cat.people.skin[0],
         hair: isColor(p.hair) ? p.hair : cat.people.hair[0],
       };
-      if (!canPlace(doc, roomId, res, res.x, res.y)) doc.residents.push(res);
+      if (doc.kind === 'desk' || !canPlace(doc, res, res.x, res.y)) doc.residents.push(res);
     }
     return doc;
   }
 
-  // ————————————————————————————————— Aplicar al edificio
-  function apply(roomId, doc) {
-    const room = world.room(roomId);
-    if (!room._orig) room._orig = { name: room.name, blurb: room.blurb, info: room.info, infoTitle: room.infoTitle, infoLinks: room.infoLinks };
-    world.removeTagged(roomId);
-
-    if (!doc) {
-      delete room.custom;
-      world.setOffice(roomId, 0);
-      Object.assign(room, room._orig);
-      world.furnishRent(room);
-      world.refreshSolids(roomId);
-      TGL.game.setResidents(roomId, []);
-      TGL.game.refreshStatic();
-      return;
+  // ————————————————————————————————— Ubicar una lista de espacios (validar y acomodar)
+  // Cada oficina queda donde pidió si cumple las normas con las anteriores; si no, en el lugar
+  // válido más cercano; si no cabe en ninguna parte, se descarta. Igual con los puestos.
+  function settle(list) {
+    const out = [];
+    for (const d of list) {
+      if (d.kind === 'office') {
+        const ok = d.x != null && startsFor(out, d, d.row).includes(d.x);
+        const place = ok ? { row: d.row, x: d.x } : fitPlace(out, d, d.row, d.x);
+        if (!place) continue;
+        if (place.row !== d.row || !d.number) d.number = numberFor(out, d, place.row);
+        Object.assign(d, place);
+      } else {
+        const free = freeDesks(out, d);
+        if (!free.length) continue;
+        if (!free.includes(d.desk)) d.desk = free[0];
+      }
+      out.push(d);
     }
+    return out;
+  }
 
+  // ————————————————————————————————— Aplicar al edificio
+  // Muestra exactamente esta lista: construye las oficinas, cambia los escritorios del
+  // coworking y pone objetos y personas.
+  let shown = [];
+  function render(list) {
+    for (const d of shown) {
+      world.removeTagged(d.id);
+      TGL.game.setResidents(d.id, []);
+      if (d.kind === 'desk' && d.desk != null) { world.removeTagged('desk-' + d.desk); zone.freeDesk(d.desk); }
+    }
+    for (let i = TGL.rooms.length - 1; i >= 0; i--) if (TGL.rooms[i].deskRoom && !list.some((d) => d.id === TGL.rooms[i].id)) TGL.rooms.splice(i, 1);
+    if (!zone.build(leasesOf(list))) return false;
+    for (const d of list) (d.kind === 'desk' ? deskContent : officeContent)(d);
+    world.refreshAllSolids();
+    for (const d of list) TGL.game.setResidents(d.id, residentsOf(d));
+    shown = list.slice();
+    TGL.game.refreshStatic();
+    return true;
+  }
+
+  // Lo que el edificio muestra de alguien: nombre, descripción y links (bloque "?").
+  function brand(room, doc, fallback) {
+    const name = doc.identity.name || fallback;
     room.custom = doc;
-    world.setOffice(roomId, area(doc).w, world.floor.STRIP.x + fitSlot(doc, doc.slot));
-    const name = doc.identity.name || TGL.t(room._orig.name);
     room.name = { es: name, en: name };
-    room.blurb = doc.identity.tagline ? { es: doc.identity.tagline, en: doc.identity.tagline } : room._orig.blurb;
+    room.blurb = doc.identity.tagline ? { es: doc.identity.tagline, en: doc.identity.tagline } : { es: '', en: '' };
     room.infoTitle = name;
-    room.info = { es: doc.content.about || doc.identity.tagline, en: doc.content.about || doc.identity.tagline };
+    const about = doc.content.about || doc.identity.tagline || '';
+    room.info = { es: about, en: about };
     room.infoLinks = doc.content.links.map((l) => l.url);
+  }
 
+  function officeContent(doc) {
+    const room = world.room(doc.id);
+    brand(room, doc, (TGL.lang === 'en' ? 'Office ' : 'Oficina ') + doc.number);
     for (const it of doc.items) {
       const def = cat.byType[it.type];
       world.addObject(cat.build(def, it), room.x + it.x, room.y + it.y, def.w, def.h, {
-        tag: roomId,
+        tag: doc.id,
         solid: def.solid !== false,
         floor: !!def.floor,
         anim: def.anim || null,
-        interact: def.info ? { type: 'info', room: roomId } : null,
+        interact: def.info ? { type: 'info', room: doc.id } : null,
       });
     }
-    world.refreshSolids(roomId);
+  }
 
+  // Un puesto: su escritorio (con su color) y una "sala" sin superficie solo para su tarjeta.
+  function deskContent(doc) {
+    let room = world.room(doc.id);
+    if (!room) TGL.rooms.push((room = { id: doc.id, deskRoom: true, rects: [], color: '#f2a65a' }));
+    brand(room, doc, (TGL.lang === 'en' ? 'Desk ' : 'Puesto ') + (doc.desk + 1));
+    const cw = world.room('cowork'), d = zone.DESKS[doc.desk], def = cat.byType.desk;
+    world.removeTagged('desk-' + doc.desk);
+    world.addObject(cat.build(def, { color: doc.deskColor }), cw.x + d.x, cw.y + d.y, 2, 1, {
+      tag: doc.id, anim: def.anim, interact: { type: 'info', room: doc.id },
+    });
+  }
+
+  function residentsOf(doc) {
     const lines = (p) => (p.lines.length ? p.lines : ['…']);
-    TGL.game.setResidents(roomId, doc.residents.map((p, i) => ({
-      id: roomId + '-' + i,
+    const desk = doc.kind === 'desk' ? zone.DESKS[doc.desk] : null;
+    return doc.residents.map((p, i) => ({
+      id: doc.id + '-' + i,
+      room: desk ? 'cowork' : doc.id,
       kind: p.kind,
       name: p.name,
-      x: p.x + 0.5,
-      row: p.y,
+      x: (desk ? desk.x + i : p.x) + 0.5,
+      row: desk ? desk.y + 1 : p.y,
       body: p.body,
       eye: p.kind === 'agent' ? p.eye : undefined,
       look: { skin: p.skin, hair: p.hair, hairStyle: 'short', body: p.body, legs: '#262b36' },
@@ -320,35 +398,40 @@
       bio: { es: p.bio || '', en: p.bio || '' },
       tasks: { es: [], en: [] },
       statuses: { es: lines(p), en: lines(p) },
-    })));
-    TGL.game.refreshStatic();
+    }));
   }
 
   // ————————————————————————————————— Guardado local (por ahora)
-  function load(roomId) {
+  // Todos los espacios de este navegador, ya validados y ubicados.
+  function load() {
+    let raw = null;
     try {
-      const raw = localStorage.getItem(KEY(roomId));
-      return raw ? sanitize(JSON.parse(raw), roomId) : null;
+      raw = JSON.parse(localStorage.getItem(KEY) || 'null');
+      if (!raw) {
+        const old = JSON.parse(localStorage.getItem(OLD_KEY) || 'null'); // versión con una sola oficina
+        if (old) raw = { spaces: [old] };
+      }
     } catch (e) {
-      return null;
+      raw = null;
     }
+    const list = raw && Array.isArray(raw.spaces) ? raw.spaces.map(sanitize) : [];
+    return settle(list);
   }
   // Devuelve true solo si quedó escrito (se relee para comprobarlo).
-  function save(roomId, doc) {
+  function save(list) {
     try {
-      const txt = JSON.stringify(doc);
-      localStorage.setItem(KEY(roomId), txt);
-      return localStorage.getItem(KEY(roomId)) === txt;
+      const txt = JSON.stringify({ schema: SCHEMA, spaces: list });
+      localStorage.setItem(KEY, txt);
+      localStorage.removeItem(OLD_KEY);
+      return localStorage.getItem(KEY) === txt;
     } catch (e) {
       return false;
     }
   }
-  function clear(roomId) {
-    try { localStorage.removeItem(KEY(roomId)); } catch (e) { /* nada que borrar */ }
-  }
 
   // Cuánto de lo que usa el espacio es PRO (lo que en la versión de pago se cobraría).
   function proUsage(doc) {
+    if (doc.kind === 'desk') return 0;
     let n = doc.items.filter((it) => cat.byType[it.type].tier === 'pro').length;
     if (cat.floors.find((f) => f.id === doc.surfaces.floor).tier === 'pro') n++;
     if (cat.walls.find((f) => f.id === doc.surfaces.walls).tier === 'pro') n++;
@@ -356,11 +439,11 @@
     return n;
   }
 
-  TGL.space = { SCHEMA, slots, fitSlot, empty, templates, sanitize, canPlace, footprint, apply, load, save, clear, proUsage, area, limits, sizesFor, entriesOf };
+  TGL.space = {
+    SCHEMA, empty, newId, templates, sanitize, canPlace, footprint, proUsage, area, limits, sizesFor, entriesOf,
+    m2, price, startsFor, fitPlace, numberFor, freeDesks, settle, render, load, save,
+  };
 
-  // Al cargar la página, la oficina que alguien guardó en este navegador aparece en el edificio.
-  for (const room of TGL.rooms.filter((q) => q.rent)) {
-    const saved = load(room.id);
-    if (saved) apply(room.id, saved);
-  }
+  // Al cargar la página, lo que se guardó en este navegador aparece en el edificio.
+  render(load());
 })();

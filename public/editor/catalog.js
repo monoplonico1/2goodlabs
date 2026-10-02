@@ -124,33 +124,26 @@
   };
 
   // ————————————————————————————————— Lo que se vende: espacio
-  // 1 casilla = 1 m². Las oficinas se arman con módulos de 4 × 8 m (32 m²) a lo largo de un
-  // pasillo; el fondo es fijo (8 m) y el ancho crece de a módulo. Lo que crece con el espacio
-  // es lo que cabe: objetos y personas. Colores, marca y contenido son iguales en todos.
-  // Precio de ejemplo para el prototipo (US$ por m² al mes).
+  // 1 casilla = 1 m². Una oficina tiene 8 m de fondo y el ancho que se quiera, de 8 a 24 m
+  // (las normas del piso están en js/world.js). Con más metros caben más personas y objetos;
+  // colores, marca y contenido son iguales en todos. Precio de ejemplo (US$ por m² al mes).
   const pricePerM2 = 0.25;
+  // Atajos de ancho. "Piso completo" todavía no se puede arrendar.
   const sizes = [
-    { id: 'desk', name: N('Puesto en el coworking', 'Coworking desk'), w: 2, h: 2, soon: true,
-      note: N('Un escritorio en la sala compartida, con tu avatar y un agente. La puerta de entrada para la comunidad.',
-        'A desk in the shared room, with your avatar and one agent. The way in for the community.'),
-      items: 2, residents: 2, price: 5 },
-    { id: 's', name: N('Oficina S', 'Office S'), w: 8, h: 8, modules: 2, items: 16, residents: 6,
-      note: N('Un equipo pequeño o un fundador con sus agentes.', 'A small team or a founder with their agents.') },
-    { id: 'm', name: N('Oficina M', 'Office M'), w: 12, h: 8, modules: 3, items: 24, residents: 9,
-      note: N('Equipo con sala de reuniones.', 'A team with a meeting area.') },
-    { id: 'l', name: N('Oficina L', 'Office L'), w: 16, h: 8, modules: 4, items: 32, residents: 15,
-      note: N('Oficina completa con zona de descanso.', 'A full office with a lounge area.') },
-    { id: 'xl', name: N('Oficina XL', 'Office XL'), w: 24, h: 8, modules: 6, items: 48, residents: 21,
-      note: N('El ancho máximo de una oficina: así siempre hay un pasillo a menos de 24 m.', 'The widest an office can be: so there is always a hallway within 24 m.') },
-    { id: 'floor', name: N('Piso completo', 'Whole floor'), w: 48, h: 16, modules: 24, soon: true, items: 300, residents: 90,
-      note: N('Sede propia: un piso entero con varias salas, ascensor y letrero en el lobby.',
-        'Your own HQ: a whole floor with several rooms, elevator stop and a sign in the lobby.') },
+    { id: 's', name: N('S', 'S'), w: 8, note: N('Un equipo pequeño o un fundador con sus agentes.', 'A small team or a founder with their agents.') },
+    { id: 'm', name: N('M', 'M'), w: 12, note: N('Equipo con sala de reuniones.', 'A team with a meeting area.') },
+    { id: 'l', name: N('L', 'L'), w: 16, note: N('Oficina completa con zona de descanso.', 'A full office with a lounge area.') },
+    { id: 'xl', name: N('XL', 'XL'), w: 24, note: N('El ancho máximo: así siempre hay un pasillo a menos de 24 m.', 'The widest one: so there is always a hallway within 24 m.') },
+    { id: 'floor', name: N('Piso completo', 'Whole floor'), w: 48, soon: true,
+      note: N('Sede propia: un piso entero con varias salas, ascensor y letrero en el lobby.', 'Your own HQ: a whole floor with several rooms, elevator stop and a sign in the lobby.') },
   ];
-  for (const z of sizes) {
-    z.m2 = z.w * z.h;
-    if (z.price == null) z.price = Math.round(z.m2 * pricePerM2);
-  }
-  const sizeOf = (id) => sizes.find((z) => z.id === id && !z.soon) || sizes.find((z) => z.id === 'l');
+  // Puesto en el coworking: la puerta de entrada para la comunidad.
+  const desk = {
+    m2: 4, price: 5, residents: 2,
+    name: N('Puesto en el coworking', 'Coworking desk'),
+    note: N('Un escritorio fijo en la sala compartida, con tu avatar, un agente y tu tarjeta con links.',
+      'A fixed desk in the shared room, with your avatar, one agent and your card with links.'),
+  };
 
   // Límites que no dependen del tamaño.
   const plan = { maxLinks: 4 };
@@ -190,5 +183,5 @@
     return (qp = { canvas: c, top });
   }
 
-  TGL.catalog = { items, byType, floors, walls, modes, categories, people, palettes, plan, sizes, sizeOf, pricePerM2, colorable, baseColor, build };
+  TGL.catalog = { items, byType, floors, walls, modes, categories, people, palettes, plan, sizes, desk, pricePerM2, colorable, baseColor, build };
 })();

@@ -981,6 +981,7 @@
   let frozen = false;
   const overlays = new Set();
   // Personas que el dueño de una sala pone en ella (residentes); reemplaza las anteriores.
+  // key: a quién pertenecen (una oficina o un puesto); cada persona puede traer su sala en "room".
   function setResidents(roomId, list) {
     for (let i = npcs.length - 1; i >= 0; i--) if (npcs[i].resident === roomId) npcs.splice(i, 1);
     for (const m of list) {

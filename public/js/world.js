@@ -20,29 +20,37 @@
 
 (function () {
   const T = TGL.T, r = TGL.rect, art = TGL.art;
-  const W = 61, H = 44;
+  const W = 61, H0 = 44;
+  let H = H0;
   const TOP = 1, FACE = 2, SKY = 3, RAIL = 4;
-  const FLOOR = { lobby: 10, board: 11, zumi: 12, pickpals: 13, terrace: 14, hall: 15, rent: 16, open: 17 };
+  const FLOOR = { lobby: 10, board: 11, zumi: 12, pickpals: 13, terrace: 14, hall: 15, rent: 16, open: 17, cowork: 18 };
+  const isFloor = (v) => v >= 10;
   const room = (id) => TGL.rooms.find((q) => q.id === id);
   const rectsOf = (q) => q.rects || [[q.x, q.y, q.w, q.h]];
-  const floorOf = (q) => (q.rent ? FLOOR.rent : q.open ? FLOOR.open : FLOOR[q.id]);
+  const floorOf = (q) => (q.rent ? FLOOR.rent : q.open ? FLOOR.open : q.cowork ? FLOOR.cowork : FLOOR[q.id]);
   const TERRACE = room('terrace');
 
-  // Con el editor de oficinas encendido (js/features.js), el piso de arriba deja de tener
-  // oficinas vacías: es una planta libre en arriendo, y cada oficina que alguien arma se
-  // construye ahí con sus muros, del tamaño exacto que arrienda (ver setOffice).
+  // Con el editor de oficinas encendido (js/features.js) el edificio crece hacia arriba: la
+  // zona de arriendo tiene dos filas de oficinas (A arriba, B abajo) con un pasillo entre
+  // ellas, un coworking y planta libre. Las oficinas se construyen ahí con el editor, del
+  // tamaño y en el lugar que cada uno arriende, siguiendo las normas del piso (más abajo).
   const OPEN = !!(TGL.featureOn && TGL.featureOn('editor'));
-  const STRIP = { x: 1, y: 3, w: 50, h: 8 };
+  const OY = OPEN ? 16 : 0; // filas nuevas arriba
   if (OPEN) {
-    for (const id of ['rent1', 'rent2']) TGL.rooms.splice(TGL.rooms.indexOf(room(id)), 1);
+    for (const id of ['rent1', 'rent2', 'rent3']) TGL.rooms.splice(TGL.rooms.indexOf(room(id)), 1);
     room('hall').rects = [[1, 14, 50, 2], [13, 14, 2, 20], [32, 14, 2, 20]];
-    Object.assign(room('rent3'), { x: STRIP.x + STRIP.w, w: 0 }); // sin construir
     TGL.rooms.push({
-      id: 'open', open: true,
+      id: 'open', open: true, rects: [],
       name: { es: 'Planta libre · Se arrienda', en: 'Open floor · For rent' },
       blurb: { es: 'Espacio libre del piso. Aquí se construyen las oficinas, del tamaño que cada uno arriende.', en: 'Free floor space. Offices are built here, as big as each tenant rents.' },
-      x: STRIP.x, y: STRIP.y, w: STRIP.w, h: STRIP.h,
       color: '#c9c9ce',
+    }, {
+      id: 'cowork', cowork: true, x: 1, y: 3, w: 11, h: 8,
+      name: { es: 'Coworking', en: 'Coworking' },
+      blurb: { es: 'Puestos para creadores que trabajan con IA.', en: 'Desks for people who build with AI.' },
+      infoTitle: 'Coworking',
+      info: { es: 'Puestos para creadores que trabajan con IA: tu avatar, un agente y tu tarjeta con links. Se arriendan desde el editor (✎ arriba a la derecha).', en: 'Desks for people who build with AI: your avatar, one agent and your card with links. Rent one from the editor (✎ top right).' },
+      color: '#f2a65a',
     });
   }
 
@@ -67,7 +75,7 @@
     { k: 'v', x: 51, y: 37, h: 2, to: 'terrace', glass: true },
   ];
 
-  const grid = new Array(W * H).fill(TOP);
+  let grid = new Array(W * H).fill(TOP);
   const at = (x, y) => (x < 0 || y < 0 || x >= W || y >= H ? TOP : grid[y * W + x]);
   const set = (x, y, v) => { grid[y * W + x] = v; };
   const isWall = (v) => v === TOP || v === FACE;
@@ -95,7 +103,7 @@
   DOORS.forEach(openDoor);
 
   // Terraza: sin muros. Arriba se ve el cielo y alrededor hay baranda de vidrio.
-  const SKY_H = TERRACE.y - 1;
+  let SKY_H = TERRACE.y - 1;
   for (let x = TERRACE.x; x < W; x++) {
     for (let y = 0; y < SKY_H; y++) set(x, y, SKY);
     set(x, SKY_H, RAIL);
@@ -273,6 +281,23 @@
     put(art.plant(21), 33, 3, 1, 1);
   }
 
+  // El edificio crece OY filas hacia arriba: todo lo construido baja OY filas.
+  if (OPEN) {
+    const old = grid;
+    H = H0 + OY;
+    grid = new Array(W * H);
+    for (let y = 0; y < H; y++)
+      for (let x = 0; x < W; x++) grid[y * W + x] = y < OY ? (x >= TERRACE.x ? SKY : TOP) : old[(y - OY) * W + x];
+    for (const q of TGL.rooms) {
+      if (q.rects) q.rects = q.rects.map(([a, b, c, d]) => [a, b + OY, c, d]);
+      if (q.y != null) q.y += OY;
+    }
+    for (const d of DOORS) d.y += OY;
+    for (const o of objects) { o.y += OY * T; o.sortY += OY * T; }
+    for (const sp of breakSpots) sp.y += OY;
+    SKY_H += OY;
+  }
+
   // ————————————————————————————————— Colisiones
   const solid = new Uint8Array(W * H);
   for (let i = 0; i < W * H; i++) solid[i] = isBlocked(grid[i]) ? 1 : 0;
@@ -375,7 +400,7 @@
 
   // ————————————————————————————————— Capa estática
   const WALL_TOP = '#2f2925', WALL_EDGE = '#51473f';
-  const FACE_COLOR = { open: '#ece9e2', board: '#f7f7f9', zumi: '#e2eedc', pickpals: '#dde6f3', lobby: '#ece6da', hall: '#e6e1d7', rent: '#f7f7f9' };
+  const FACE_COLOR = { open: '#ece9e2', cowork: '#fdf0d5', board: '#f7f7f9', zumi: '#e2eedc', pickpals: '#dde6f3', lobby: '#ece6da', hall: '#e6e1d7', rent: '#f7f7f9' };
 
   function roomAt(tx, ty) {
     for (const q of TGL.rooms)
@@ -424,7 +449,9 @@
       // planta libre: concreto sin terminar, con la marca de cada módulo de 4 m
       r(ctx, px, py, T, T, '#cdc9c0');
       for (let k = 0; k < 3; k++) r(ctx, px + Math.floor(rnd() * 16), py + Math.floor(rnd() * 16), 1, 1, '#c2beb4');
-      if ((STRIP.x + STRIP.w - x) % 4 === 0) for (let k = 0; k < T; k += 4) r(ctx, px, py + k, 1, 2, '#b3aea3');
+      if (x % 4 === 1) for (let k = 0; k < T; k += 4) r(ctx, px, py + k, 1, 2, '#b3aea3');
+    } else if (v === FLOOR.cowork) {
+      FLOOR_STYLES.planks(ctx, px, py, x, y, rnd, null, '#d9b07a');
     } else if (v === FLOOR.pickpals) {
       r(ctx, px, py, T, T, '#5b719a');
       r(ctx, px, py, T, 1, '#536890');
@@ -476,6 +503,7 @@
     { k: 'sign', x: 44, y: 32, w: 3, text: 'PICKPALS', fg: '#9cc0ff', url: 'https://pickpals.co', link: '#2f5fc4' },
     { k: 'elevator', x: 48, y: 32, w: 2 },
   ];
+  if (OPEN) for (const d of decor) d.y += OY;
 
   // Zonas clicables del mundo (los links bajo los letreros). Se llenan al pintar.
   const links = [];
@@ -493,7 +521,7 @@
     } else if (d.k === 'plate' || d.k === 'sign') {
       // Una oficina personalizada muestra su nombre y sus colores en lugar de "se arrienda".
       const own = d.room && room(d.room).custom;
-      if (own) d = Object.assign({}, d, { text: own.identity.name || '—', bg: own.identity.primary, fg: own.identity.accent });
+      if (own) d = Object.assign({}, d, { text: own.identity.name || TGL.t(room(d.room).name) || '—', bg: own.identity.primary, fg: own.identity.accent });
       const ph = d.k === 'sign' ? 11 : 13, top = d.k === 'sign' ? py + 5 : py + 4;
       r(ctx, px + 2, top + 1, pw - 4, ph, 'rgba(0,0,0,.18)');
       r(ctx, px + 1, top, pw - 2, ph, d.bg || '#23262d');
@@ -559,7 +587,7 @@
   }
 
   function drawRug(ctx) {
-    const x = 18 * T, y = 36 * T, w = 19 * T, h = 4 * T;
+    const x = 18 * T, y = (36 + OY) * T, w = 19 * T, h = 4 * T;
     r(ctx, x + 2, y + 2, w, h, 'rgba(0,0,0,.2)');
     r(ctx, x, y, w, h, '#ffc367');
     r(ctx, x + 2, y + 2, w - 4, h - 4, '#1d1f24');
@@ -623,18 +651,29 @@
   function drawRentFloors(ctx) {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    for (const q of TGL.rooms.filter((x) => (x.rent || x.open) && !x.custom && x.w > 0)) {
+    for (const q of TGL.rooms.filter((x) => x.rent && !x.custom && !x.lease)) {
       const cx = (q.x + q.w / 2) * T, cy = (q.y + 3) * T;
-      ctx.fillStyle = q.open ? '#bdb8ad' : '#d4d4da';
+      ctx.fillStyle = '#d4d4da';
       ctx.font = '16px Silkscreen, monospace';
       ctx.fillText(TGL.t(RENT_TEXT), cx, cy);
       ctx.font = '8px Silkscreen, monospace';
-      ctx.fillStyle = q.open ? '#a39e93' : '#b3b3bb';
-      const m2 = rectsOf(q).reduce((n, rr) => n + rr[2] * rr[3], 0);
-      ctx.fillText(m2 + ' m²  ·  ' + (q.open ? TGL.t(OPEN_TEXT) : q.office), cx, cy + 16);
+      ctx.fillStyle = '#b3b3bb';
+      ctx.fillText(q.w * q.h + ' m²  ·  ' + q.office, cx, cy + 16);
     }
+    // Planta libre: cada tramo dice cuántos m² quedan.
+    const open = room('open');
+    if (open)
+      for (const [rx, ry, rw, rh] of open.rects) {
+        if (rw < 8) continue;
+        const cx = (rx + rw / 2) * T, cy = (ry + 3) * T;
+        ctx.fillStyle = '#bdb8ad';
+        ctx.font = (rw >= 14 ? 16 : 8) + 'px Silkscreen, monospace';
+        ctx.fillText(TGL.t(RENT_TEXT), cx, cy);
+        ctx.font = '8px Silkscreen, monospace';
+        ctx.fillStyle = '#a39e93';
+        ctx.fillText(rw * rh + ' m²', cx, cy + 14);
+      }
   }
-  const OPEN_TEXT = { es: 'planta libre · módulos de 4 × 8 m', en: 'open floor · 4 × 8 m modules' };
 
   function renderStatic() {
     links.length = 0;
@@ -771,116 +810,230 @@
     }
   }
 
-  // ————————————————————————————————— Planta libre: normas del piso
-  // Los pasillos son del edificio: no se venden ni se cierran. Para que siempre se pueda
-  // construir otra oficina al lado (o en filas de arriba y abajo en pisos más grandes) y
-  // llegar a ella, toda oficina que no esté contra el muro del edificio deja a ese lado un
-  // pasillo de 2 m que atraviesa la fila y desemboca en el pasillo principal. Lo que queda
-  // libre al lado mide 0 o al menos una oficina S: no quedan retazos inservibles.
-  const RULES = { hall: 2, minFree: 8, maxWidth: 24 };
-  const OPEN_DOORS = [5, 22, 42];
+  // ————————————————————————————————— Zona de arriendo: normas del piso
+  // Los pasillos son del edificio: no se venden ni se cierran. Toda oficina tiene la puerta
+  // sobre el pasillo de abajo de su fila. Entre una oficina y cualquier otra cosa que no sea
+  // un muro del edificio (otra oficina o planta libre) queda un pasillo de 2 m que cruza la
+  // fila; en la fila B ese pasillo sube hasta el pasillo del medio, así siempre se llega a la
+  // fila A. Junto a una oficina quedan 0 m o al menos 8 m libres: no hay retazos.
+  const RULES = { hall: 2, minFree: 8, minWidth: 8, maxWidth: 24 };
+  // Filas (y, alto) con sus tramos entre muros del edificio ('wall') y pasillos ('hall').
+  const ROWS = [
+    { id: 'A', y: 3, h: 8, hallY: 14, up: false, bays: [{ L: 1, R: 50, l: 'wall', r: 'wall' }] },
+    { id: 'B', y: 19, h: 8, hallY: 30, up: true, bays: [{ L: 1, R: 12, l: 'wall', r: 'hall' }, { L: 15, R: 31, l: 'hall', r: 'hall' }, { L: 34, R: 50, l: 'hall', r: 'wall' }] },
+  ];
+  const ZONE_X0 = 1, ZONE_X1 = 50, ZONE_Y1 = 30; // filas 0..29; el pasillo principal está en 30
+  const COWORK = { id: 'cowork', row: 'B', a: 1, w: 11, fixed: true };
+  // Puestos del coworking (relativos a la sala): escritorio de 2 × 1 y, delante, dos personas.
+  const DESKS = [0, 3, 6, 9].flatMap((x) => [{ x, y: 1 }]).concat([0, 3, 6, 9].map((x) => ({ x, y: 4 })));
 
-  // Cómo queda la fila con una oficina de ancho w que empieza en a (o null si rompe las normas).
-  function stripPlan(w, a) {
-    const L = STRIP.x, R = STRIP.x + STRIP.w - 1, b = a + w - 1;
-    if (!w) return { free: [[L, R]], halls: [], walls: [] };
-    if (w > RULES.maxWidth || a < L || b > R) return null;
-    const plan = { a, b, free: [], halls: [], walls: [] };
-    if (a > L) {
-      const freeEnd = a - 2 - RULES.hall; // muro en a-1, pasillo antes
-      if (freeEnd - L + 1 < RULES.minFree) return null;
-      plan.walls.push(a - 1);
-      plan.halls.push(a - 1 - RULES.hall);
-      plan.free.push([L, freeEnd]);
+  // Columnas de un hueco de n casillas entre dos bordes ('wall' | 'hall' | 'office').
+  function fillGap(n, left, right) {
+    const off = (k) => k === 'office';
+    const free = (k) => Array(Math.max(0, k)).fill('free');
+    if (!off(left) && !off(right)) return free(n);
+    if (off(left) && off(right)) {
+      if (n === 4) return ['wall', 'hall', 'hall', 'wall']; // pasillo compartido
+      if (n >= 6 + RULES.minFree) return ['wall', 'hall', 'hall', ...free(n - 6), 'hall', 'hall', 'wall'];
+      return null;
     }
-    if (b < R) {
-      const freeStart = b + 2 + RULES.hall;
-      if (R - freeStart + 1 < RULES.minFree) return null;
-      plan.walls.push(b + 1);
-      plan.halls.push(b + 2);
-      plan.free.push([freeStart, R]);
+    const edge = off(left) ? right : left;
+    let cols;
+    if (n === (edge === 'wall' ? 0 : 1)) cols = Array(n).fill('wall'); // pegada al muro o al pasillo
+    else if (n >= 3 + RULES.minFree) cols = ['wall', 'hall', 'hall', ...free(n - 3)];
+    else return null;
+    return off(left) ? cols : cols.reverse();
+  }
+  // Plano de todo el piso para estas oficinas: por fila, el tipo de cada columna
+  // ('free' | 'hall' | 'wall' | id de la oficina). null si algo rompe las normas.
+  function floorPlan(leases) {
+    const plan = {};
+    for (const o of leases) {
+      const row = ROWS.find((q) => q.id === o.row);
+      if (!row || !row.bays.some((b) => o.a >= b.L && o.a + o.w - 1 <= b.R)) return null;
+    }
+    for (const row of ROWS) {
+      const cols = {};
+      for (const bay of row.bays) {
+        const list = leases.filter((o) => o.row === row.id && o.a >= bay.L && o.a <= bay.R).sort((p, q) => p.a - q.a);
+        let cur = bay.L, left = bay.l;
+        const put = (arr) => { arr.forEach((t, i) => { cols[cur + i] = t; }); cur += arr.length; };
+        for (const o of list) {
+          if (o.a < cur) return null;
+          const g = fillGap(o.a - cur, left, 'office');
+          if (!g) return null;
+          put(g);
+          put(Array(o.w).fill(o.id));
+          left = 'office';
+        }
+        const g = fillGap(bay.R - cur + 1, left, bay.r);
+        if (!g) return null;
+        put(g);
+      }
+      plan[row.id] = cols;
     }
     return plan;
   }
-  // Dónde puede empezar una oficina de ancho w (x absoluta de su primera columna).
-  function officeStarts(w) {
-    const out = [];
-    for (let a = STRIP.x; a + w - 1 <= STRIP.x + STRIP.w - 1; a++) if (stripPlan(w, a)) out.push(a);
+  // Dónde puede empezar (x) una oficina de ancho w en una fila, con las demás donde están.
+  function starts(leases, rowId, w, skipId) {
+    const others = [COWORK].concat(leases.filter((o) => o.id !== skipId && o.id !== COWORK.id)), out = [];
+    if (w < RULES.minWidth || w > RULES.maxWidth) return out;
+    for (const bay of ROWS.find((q) => q.id === rowId).bays)
+      for (let a = bay.L; a + w - 1 <= bay.R; a++) if (floorPlan(others.concat({ id: '?', row: rowId, a, w }))) out.push(a);
     return out;
   }
 
-  // Construye la fila: oficina (si w > 0) con sus muros, pasillos laterales y planta libre.
-  const BASE_HALLS = room('hall').rects.slice();
-  function setOffice(id, w, a) {
-    if (!OPEN) return;
-    const starts = officeStarts(w);
-    if (w && !starts.includes(a)) a = starts[starts.length - 1];
-    const plan = stripPlan(w, a);
-    const off = room(id), open = room('open'), hall = room('hall');
-    off.w = w;
-    off.x = w ? a : STRIP.x + STRIP.w;
-    const Y0 = STRIP.y, Y1 = STRIP.y + STRIP.h; // filas de la oficina: Y0..Y1-1; muro inferior Y1..Y1+2
-    for (let x = STRIP.x; x < STRIP.x + STRIP.w; x++) {
-      set(x, 0, TOP); set(x, 1, FACE); set(x, 2, FACE);
-      for (let y = Y0; y < Y1; y++) set(x, y, w && x >= a && x <= plan.b ? FLOOR.rent : FLOOR.open);
-      set(x, Y1, TOP); set(x, Y1 + 1, FACE); set(x, Y1 + 2, FACE);
-    }
-    for (const wx of plan.walls) for (let y = 0; y < Y1; y++) set(wx, y, TOP);
-    for (const hx of plan.halls)
-      for (let x = hx; x < hx + RULES.hall; x++) for (let y = Y0; y < Y1 + 3; y++) set(x, y, FLOOR.hall);
-    hall.rects = BASE_HALLS.concat(plan.halls.map((hx) => [hx, Y0, RULES.hall, STRIP.h + 3]));
-    open.rects = plan.free.map(([s0, s1]) => [s0, Y0, s1 - s0 + 1, STRIP.h]);
-    const big = open.rects.slice().sort((p, q) => q[2] - p[2])[0] || [STRIP.x, Y0, 0, STRIP.h];
-    [open.x, open.y, open.w, open.h] = big;
+  // Construye la zona de arriendo con estas oficinas (además del coworking). Crea o quita las
+  // salas de cada oficina; su contenido lo pone el editor (editor/space.js).
+  let leases = [];
+  function buildZone(list) {
+    if (!OPEN) return false;
+    const all = [COWORK].concat(list.filter((o) => o.id !== COWORK.id));
+    const plan = floorPlan(all);
+    if (!plan) return false;
+    leases = all;
 
-    // Puertas: la de la oficina, centrada; las de la planta libre donde quepan.
-    DOORS = DOORS.filter((d) => !d.strip);
-    const strip = [];
-    if (w) strip.push({ k: 'h', x: a + Math.floor(w / 2) - 1, y: Y1, w: 2, from: id, to: 'hall', strip: true });
-    for (const dx of OPEN_DOORS)
-      if (plan.free.some(([s0, s1]) => dx >= s0 && dx + 1 <= s1)) strip.push({ k: 'h', x: dx, y: Y1, w: 2, from: 'open', to: 'hall', strip: true });
-    strip.forEach(openDoor);
-    DOORS.push(...strip);
-
-    // Ventanas, letreros y cuadros, sin tapar puertas ni pasillos.
-    for (let i = decor.length - 1; i >= 0; i--) if (decor[i].strip) decor.splice(i, 1);
-    const add = (d) => decor.push(Object.assign(d, { strip: true }));
-    const gaps = strip.map((d) => [d.x, d.x + 1]).concat(plan.halls.map((hx) => [hx, hx + RULES.hall - 1]));
-    const clear = (x, dw) => !gaps.some(([g0, g1]) => x <= g1 + 1 && x + dw - 1 >= g0 - 1) && x >= STRIP.x && x + dw - 1 <= STRIP.x + STRIP.w - 1;
-    for (const [s0, s1] of plan.free) {
-      const len = s1 - s0 + 1, plateX = s0 + Math.floor(len / 2) - 3;
-      const plate = len >= 10;
-      if (plate) add({ k: 'plate', x: plateX, y: 1, w: 6, text: RENT_TEXT, bg: '#1d1f24', fg: '#ffc367' });
-      for (let gx = s0; gx + 3 <= s1; gx += 6) if (!plate || gx + 4 <= plateX || gx >= plateX + 6) add({ k: 'glass', x: gx, y: 1, w: 4 });
-    }
-    for (const px of [9, 27]) if (clear(px, 2)) add({ k: 'painting', x: px, y: Y1 + 1, w: 2 });
-    if (w) {
-      const side = Math.floor((w - 6) / 2);
-      add({ k: 'plate', room: id, x: a + side, y: 1, w: 6, text: RENT_TEXT, bg: '#1d1f24', fg: '#ffc367' });
-      if (side >= 2) {
-        add({ k: 'glass', x: a, y: 1, w: Math.min(4, side) });
-        add({ k: 'glass', x: a + w - Math.min(4, side), y: 1, w: Math.min(4, side) });
+    // Salas de oficinas: crear las nuevas, ubicar todas, quitar las que ya no están.
+    for (let i = TGL.rooms.length - 1; i >= 0; i--) if (TGL.rooms[i].lease && !all.some((o) => o.id === TGL.rooms[i].id)) TGL.rooms.splice(i, 1);
+    for (const o of all) {
+      const row = ROWS.find((q) => q.id === o.row);
+      let q = room(o.id);
+      if (!q) {
+        q = { id: o.id, rent: true, lease: true, office: o.number, color: '#c9c9ce', name: { es: 'Oficina ' + o.number, en: 'Office ' + o.number }, blurb: { es: '', en: '' } };
+        TGL.rooms.push(q);
       }
-      const door = strip[0];
-      const sx = [door.x + 3, door.x - 4].find((x) => clear(x, 3));
-      if (sx != null) add({ k: 'sign', x: sx, y: Y1 + 1, w: 3, text: off.office, fg: '#ffc367' });
+      Object.assign(q, { x: o.a, y: row.y, w: o.w, h: row.h });
+      if (q.lease) { q.office = o.number; if (!q.custom) q.name = { es: 'Oficina ' + o.number, en: 'Office ' + o.number }; }
     }
+
+    // 1. Todo muro. 2. Pasillo del medio y pasillos verticales del edificio. 3. Filas.
+    for (let y = 0; y < ZONE_Y1; y++) for (let x = ZONE_X0; x <= ZONE_X1; x++) set(x, y, TOP);
+    for (let x = ZONE_X0; x <= ZONE_X1; x++) for (let y = 14; y < 16; y++) set(x, y, FLOOR.hall);
+    for (const hx of [13, 32]) for (let x = hx; x < hx + 2; x++) for (let y = 16; y < ZONE_Y1; y++) set(x, y, FLOOR.hall);
+    const hallRects = [[1, 30, 50, 2], [1, 14, 50, 2], [13, 16, 2, 34], [32, 16, 2, 34]], freeRects = [];
+    for (const row of ROWS) {
+      const cols = plan[row.id], runs = [];
+      for (let x = ZONE_X0; x <= ZONE_X1; x++) {
+        const t = cols[x];
+        if (t == null || t === 'wall') continue;
+        const last = runs[runs.length - 1];
+        if (last && last.t === t && last.e === x - 1) last.e = x; else runs.push({ t, s: x, e: x });
+        const fl = t === 'free' ? FLOOR.open : t === 'hall' ? FLOOR.hall : floorOf(room(t));
+        for (let y = row.y; y < row.y + row.h; y++) set(x, y, fl);
+        if (t === 'hall') {
+          for (let y = row.y + row.h; y < row.hallY; y++) set(x, y, FLOOR.hall);
+          if (row.up) for (let y = row.y - 3; y < row.y; y++) set(x, y, FLOOR.hall);
+        }
+      }
+      for (const run of runs) {
+        if (run.t === 'free') freeRects.push([run.s, row.y, run.e - run.s + 1, row.h]);
+        if (run.t === 'hall') hallRects.push([run.s, row.up ? row.y - 3 : row.y, run.e - run.s + 1, row.hallY - row.y + (row.up ? 3 : 0)]);
+      }
+      row.runs = runs;
+    }
+    room('hall').rects = hallRects.concat(room('hall').rects.filter((rc) => rc[1] > ZONE_Y1 + 1 && !(rc[0] === 13 || rc[0] === 32)));
+    room('open').rects = freeRects;
+
+    // 4. Caras de muro: las dos filas sobre cualquier piso.
+    for (let x = ZONE_X0; x <= ZONE_X1; x++)
+      for (let y = 1; y <= ZONE_Y1; y++)
+        if (isFloor(at(x, y)) && at(x, y - 1) === TOP) {
+          set(x, y - 1, FACE);
+          if (at(x, y - 2) === TOP) set(x, y - 2, FACE);
+        }
+
+    // 5. Puertas: cada oficina, centrada; la planta libre, una cada ~16 m.
+    DOORS = DOORS.filter((d) => !d.zone);
+    const doors = [];
+    for (const o of all) {
+      const row = ROWS.find((q) => q.id === o.row);
+      doors.push({ k: 'h', x: o.a + Math.floor(o.w / 2) - 1, y: row.y + row.h, w: 2, from: o.id, to: 'hall', zone: true });
+    }
+    for (const row of ROWS)
+      for (const run of row.runs.filter((rn) => rn.t === 'free')) {
+        const len = run.e - run.s + 1;
+        if (len < 4) continue;
+        const n = Math.max(1, Math.floor(len / 16));
+        for (let k = 0; k < n; k++) doors.push({ k: 'h', x: run.s + Math.round(((k + 0.5) * len) / n) - 1, y: row.y + row.h, w: 2, from: 'open', to: 'hall', zone: true });
+      }
+    doors.forEach(openDoor);
+    DOORS.push(...doors);
+
+    // 6. Ventanas, letreros y cuadros, sin tapar puertas ni pasillos.
+    for (let i = decor.length - 1; i >= 0; i--) if (decor[i].zone) decor.splice(i, 1);
+    const add = (d) => decor.push(Object.assign(d, { zone: true }));
+    for (const row of ROWS) {
+      const outside = !row.up; // la fila A da a la calle: ventanas
+      for (const run of row.runs) {
+        const len = run.e - run.s + 1;
+        if (run.t === 'hall') continue;
+        if (run.t === 'free') {
+          const plateX = run.s + Math.floor(len / 2) - 3, plate = len >= 10;
+          if (plate) add({ k: 'plate', x: plateX, y: row.y - 2, w: 6, text: RENT_TEXT, bg: '#1d1f24', fg: '#ffc367' });
+          if (outside) for (let gx = run.s; gx + 3 <= run.e; gx += 6) if (!plate || gx + 4 <= plateX || gx >= plateX + 6) add({ k: 'glass', x: gx, y: row.y - 2, w: 4 });
+          continue;
+        }
+        const q = room(run.t), side = Math.floor((len - 6) / 2);
+        add(q.cowork
+          ? { k: 'plate', x: run.s + side, y: row.y - 2, w: 6, text: { es: 'COWORKING', en: 'COWORKING' }, bg: '#1d1f24', fg: '#f2a65a' }
+          : { k: 'plate', room: q.id, x: run.s + side, y: row.y - 2, w: 6, text: RENT_TEXT, bg: '#1d1f24', fg: '#ffc367' });
+        if (outside && side >= 2) {
+          add({ k: 'glass', x: run.s, y: row.y - 2, w: Math.min(4, side) });
+          add({ k: 'glass', x: run.e + 1 - Math.min(4, side), y: row.y - 2, w: Math.min(4, side) });
+        }
+      }
+    }
+    const gaps = doors.map((d) => [d.x, d.x + 1]).concat(hallRects.filter((rc) => rc[2] <= 2).map((rc) => [rc[0], rc[0] + rc[2] - 1]));
+    const clear = (x, dw) => x >= ZONE_X0 && x + dw - 1 <= ZONE_X1 && !gaps.some(([g0, g1]) => x <= g1 + 1 && x + dw - 1 >= g0 - 1);
+    for (const o of all) {
+      const row = ROWS.find((q) => q.id === o.row), door = doors.find((d) => d.from === o.id);
+      const sx = [door.x + 3, door.x - 4].find((x) => clear(x, 3));
+      if (sx != null && o.number) add({ k: 'sign', x: sx, y: row.hallY - 2, w: 3, text: String(o.number), fg: '#ffc367' });
+      if (sx != null) gaps.push([sx, sx + 2]);
+    }
+    for (const [px, py] of [[8, 28], [26, 28], [42, 28], [6, 12], [24, 12], [44, 12]]) if (clear(px, 2)) add({ k: 'painting', x: px, y: py, w: 2 });
 
     for (let i = 0; i < W * H; i++) solid[i] = isBlocked(grid[i]) ? 1 : 0;
     objects.forEach(markSolid);
+    return true;
   }
-  if (OPEN) setOffice('rent3', 0);
+
+  // Coworking: escritorios libres (el editor los cambia por los de quien arrienda el puesto).
+  function freeDesk(n) {
+    const q = room('cowork'), d = DESKS[n];
+    const t = art.table(2, 1), c = TGL.canvas(t.canvas.width, t.canvas.height), x = c.getContext('2d');
+    x.drawImage(t.canvas, 0, 0);
+    r(x, 11, 5, 10, 5, '#3f8f5a'); // tarjeta "libre"
+    r(x, 13, 7, 6, 1, '#d6f5df');
+    put({ canvas: c, top: 0 }, q.x + d.x, q.y + d.y, 2, 1, { tag: 'desk-' + n });
+  }
+  if (OPEN) {
+    buildZone([]);
+    const q = room('cowork');
+    DESKS.forEach((d, n) => freeDesk(n));
+    put(art.plant(22), q.x, q.y + 7, 1, 1, { tag: 'cowork' });
+    put(art.coffeeCounter(3), q.x + 7, q.y + 7, 3, 1, { tag: 'cowork' });
+    put(art.waterCooler(), q.x + 10, q.y + 7, 1, 1, { tag: 'cowork' });
+    put(art.qblock(), q.x + 2, q.y + 7, 1, 1, { tag: 'cowork', anim: art.qblockAnim, interact: { type: 'info', room: 'cowork' } });
+    put(art.whitePlant(23), q.x + 10, q.y, 1, 1, { tag: 'cowork' });
+    buildZone([]);
+  }
 
   TGL.world = {
     W, H, grid, solid, objects, links, breakSpots, roomAt, drawWallAnims, drawOverlay, renderStatic,
     T, room, refreshSolids, furnishRent, FLOOR_STYLES, WALL_STYLES, OPEN,
-    // Planta libre: normas, dónde cabe una oficina y construirla.
-    floor: { STRIP, RULES, plan: stripPlan, starts: officeStarts }, setOffice,
+    // Zona de arriendo: normas, filas, dónde cabe una oficina y construirla.
+    zone: { RULES, ROWS, DESKS, COWORK, plan: floorPlan, starts, build: buildZone, freeDesk, get leases() { return leases; } },
     // Para el editor: sacar y agregar objetos de una sala, y las casillas frente a sus puertas.
     removeTagged(tag) {
       for (let i = objects.length - 1; i >= 0; i--) if (objects[i].tag === tag) objects.splice(i, 1);
     },
     addObject: put,
+    // Recalcula todas las colisiones (después de reconstruir la zona de arriendo).
+    refreshAllSolids() {
+      for (let i = 0; i < W * H; i++) solid[i] = isBlocked(grid[i]) ? 1 : 0;
+      objects.forEach(markSolid);
+    },
     doorEntries(id) {
       const q = room(id), out = [];
       for (const d of DOORS)
@@ -891,6 +1044,6 @@
       return tx < 0 || ty < 0 || tx >= W || ty >= H || solid[ty * W + tx] === 1;
     },
     // Se aparece frente al ascensor del lobby.
-    spawn: { x: 49 * T + 8, y: 34 * T + 12 },
+    spawn: { x: 49 * T + 8, y: (34 + OY) * T + 12 },
   };
 })();

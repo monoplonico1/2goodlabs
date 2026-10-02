@@ -1,34 +1,46 @@
-// Editor de oficinas (beta). Por ahora edita una sola sala y guarda en este navegador.
-// Se enciende y apaga desde js/features.js.
+// Editor de espacios (beta): oficinas en la zona de arriendo y puestos en el coworking.
+// Un navegador puede tener varios; por ahora se guardan solo aquí. Se enciende y apaga desde
+// js/features.js.
 
 (function () {
-  const ROOM = 'rent3'; // oficina de arriba a la derecha
-  const cat = TGL.catalog, space = TGL.space, world = TGL.world, game = TGL.game, T = world.T;
-  const room = world.room(ROOM);
+  const cat = TGL.catalog, space = TGL.space, world = TGL.world, game = TGL.game, T = world.T, zone = world.zone;
+  let ROOM = null, room = null; // sala del espacio que se está editando
 
   const L = {
     es: {
-      open: 'Editar oficina', create: 'Crear mi oficina', title: 'Editor de oficina', beta: 'BETA',
+      open: 'Mis espacios', create: 'Arrendar espacio', title: 'Editor de oficina', beta: 'BETA',
+      homeTitle: 'Zona de arriendo', homeIntro: 'Toca la planta libre del plano para construir ahí una oficina del ancho que quieras, o toca un puesto verde del coworking.',
+      newOffice: '+ Oficina', newDesk: '+ Puesto en el coworking', desksFree: '{n} libres', mySpaces: 'Mis espacios', none: 'Todavía no arriendas nada.',
+      edit: 'Editar', total: '{n} espacios · {p}/mes', officeN: 'Oficina {n}', deskN: 'Puesto {n}', home: 'Mis espacios',
+      noSpace: 'No queda lugar para una oficina de ese ancho ahí.', noDesk: 'No quedan puestos libres.', noWidth: 'Una oficina de {w} m no cabe en ningún lugar libre.',
+      widthTitle: 'Ancho', presetHint: 'De 8 a 24 m, de a metro. Atajos:', capacity: 'Caben {p} personas o agentes y {i} objetos.',
+      rowLabel: 'Fila {r}', rowA: 'Fila A · arriba', rowB: 'Fila B · abajo', deskHint: 'Toca otro puesto verde del plano para cambiarte.',
+      deskColor: 'Color del escritorio', upgrade: 'Mudarse a una oficina →', upgradeNote: 'Te llevas tu marca, tu descripción, tus links y tu gente.',
+      upgradeConfirm: '¿Pasar de este puesto a una oficina? El puesto queda libre al guardar.', upgradeDone: 'Ahora es una oficina. Ajusta su ancho y su lugar.',
+      legendMine: 'Tus espacios', legendCowork: 'Coworking', legendDesk: 'Puesto libre', floorSoon: 'Piso completo (768 m²): próximamente.',
+      deleteAll: 'Borrar todo', deleteAllConfirm: '¿Borrar todos tus espacios de este navegador? No se puede deshacer.', you: 'Tú',
+      peopleFullDesk: 'Un puesto tiene lugar para {n}: tú y un agente. En una oficina caben más.',
+      peopleFullOffice: 'Con {m} m² caben {n} personas o agentes, y ya están todos. Si agrandas la oficina caben más.',
       tSpace: 'Espacio', tItems: 'Objetos', tStyle: 'Estilo', tBrand: 'Marca', tPeople: 'Personas',
       spaceIntro: 'Lo que se arrienda es espacio: 1 casilla = 1 m². Con más metros caben más personas y más objetos. Lo demás (colores, marca, links, plantillas) es igual en todos los tamaños.',
       perMonth: '/mes', soon: 'Próximamente', upTo: 'Hasta {p} personas · {i} objetos', notHere: 'No cabe en esta sala',
       priceNote: 'Precios de ejemplo: US$ {p} por m² al mes. Lo PRO son extras opcionales.',
-      reset: '↺ Empezar de cero', resetConfirm: '¿Borrar todo y empezar de cero? Se pierde lo guardado en este navegador y no se puede deshacer.',
+      reset: '↺ Empezar de cero', resetConfirm: '¿Vaciar este espacio y empezar de cero? Su tamaño y su lugar se mantienen.',
       resetDone: 'Listo: oficina en blanco. Empieza eligiendo el tamaño.',
       peopleFull: 'La {s} tiene espacio para {n} personas o agentes, y ya están todos.',
       peopleUp: 'Con una {s} caben {n}.', seeSizes: 'Ver tamaños',
-      where: 'Ubicación en el piso', whereHint: 'Toca el plano o usa las flechas. Solo aparecen los lugares que cumplen las normas.',
-      slotAt: 'Empieza a {m} m del extremo izquierdo', legendOffice: 'Tu oficina', legendHall: 'Pasillo (del edificio)', legendFree: 'Planta libre',
+      where: 'Ubicación en el piso', whereHint: 'Toca el plano para llevar la oficina a cualquier lugar libre de las dos filas, o usa las flechas. Solo se aceptan lugares que cumplen las normas.',
+      slotAt: 'Fila {r} · desde el metro {m}', legendOffice: 'Tu oficina', legendHall: 'Pasillo (del edificio)', legendFree: 'Planta libre',
       rulesTitle: 'Normas del piso',
       rules: ['Los pasillos son del edificio: no se venden ni se cierran.',
-        'Toda oficina tiene su puerta sobre el pasillo principal.',
-        'Entre una oficina y el espacio libre siempre queda un pasillo de 2 m que cruza la fila: así se puede construir otra oficina al lado (o arriba y abajo, en pisos más grandes) y llegar a ella.',
+        'Toda oficina tiene su puerta sobre el pasillo de abajo de su fila.',
+        'Entre una oficina y el espacio libre (u otra oficina) siempre hay un pasillo de 2 m que cruza la fila. En la fila B ese pasillo sube hasta el pasillo del medio: así siempre se llega a la fila A.',
         'Al lado de una oficina quedan 0 m o al menos 8 m libres (una oficina S): no quedan retazos.',
-        'Una oficina mide como máximo 24 m de ancho. Para más espacio: otra oficina o el piso completo.'],
+        'Una oficina mide de 8 a 24 m de ancho y 8 de fondo. Para más espacio: otra oficina o el piso completo.'],
       shrinkConfirm: '{n} cosas quedan fuera del nuevo tamaño y se quitarán. ¿Seguir?', sizeChanged: 'Ahora tu oficina mide {m} m²',
       undo: 'Deshacer', redo: 'Rehacer', try: 'Probar', save: 'Guardar', saved: 'Guardado', unsaved: 'Cambios sin guardar',
-      more: 'Más opciones', export: 'Exportar JSON', import: 'Importar JSON', clearRoom: 'Vaciar oficina',
-      restore: 'Volver a "Se arrienda"', close: 'Cerrar', back: '✎ Volver al editor',
+      more: 'Más opciones', export: 'Exportar JSON', import: 'Importar JSON', clearRoom: 'Vaciar este espacio',
+      restore: 'Dejar de arrendar este espacio', close: 'Cerrar', back: '✎ Volver al editor',
       placeHint: 'Haz clic en la oficina para ponerlo. Esc para cancelar.',
       placePerson: 'Haz clic en la oficina para ubicar a esta persona. Esc para cancelar.',
       selectHint: 'Elige un objeto y ponlo en la oficina. Haz clic en algo ya puesto para moverlo, cambiarle el color o quitarlo.',
@@ -46,7 +58,7 @@
       bounds: 'Eso queda fuera de la oficina', overlap: 'Ya hay algo ahí', door: 'Hay que dejar libre la entrada',
       blocked: 'Así algo quedaría sin paso', full: 'Llegaste al límite de tu plan',
       leaveConfirm: '¿Salir sin guardar? Se pierden los cambios.', clearConfirm: '¿Vaciar la oficina?',
-      restoreConfirm: '¿Volver a dejarla en arriendo? Se borra lo guardado en este navegador.',
+      restoreConfirm: '¿Dejar de arrendar este espacio? Se borra de este navegador.',
       importError: 'Ese archivo no es una oficina válida.', localNote: 'Por ahora se guarda solo en este navegador.',
       color: 'Color', original: 'Original', custom: 'Cualquier color', pattern: 'Diseño',
       floorColor: 'Color del piso', wallColor: 'Color de las paredes',
@@ -57,27 +69,39 @@
       saveError: 'No se pudo guardar: este navegador no permite guardar datos (¿modo privado?).',
     },
     en: {
-      open: 'Edit office', create: 'Create my office', title: 'Office editor', beta: 'BETA',
+      open: 'My spaces', create: 'Rent a space', title: 'Office editor', beta: 'BETA',
+      homeTitle: 'Rental area', homeIntro: 'Tap the open floor on the plan to build an office there, as wide as you like, or tap a green desk in the coworking.',
+      newOffice: '+ Office', newDesk: '+ Coworking desk', desksFree: '{n} free', mySpaces: 'My spaces', none: 'You are not renting anything yet.',
+      edit: 'Edit', total: '{n} spaces · {p}/mo', officeN: 'Office {n}', deskN: 'Desk {n}', home: 'My spaces',
+      noSpace: 'There is no room for an office that wide there.', noDesk: 'There are no free desks left.', noWidth: 'A {w} m office does not fit in any free spot.',
+      widthTitle: 'Width', presetHint: 'From 8 to 24 m, one meter at a time. Shortcuts:', capacity: 'Fits {p} people or agents and {i} objects.',
+      rowLabel: 'Row {r}', rowA: 'Row A · top', rowB: 'Row B · bottom', deskHint: 'Tap another green desk on the plan to switch.',
+      deskColor: 'Desk color', upgrade: 'Move to an office →', upgradeNote: 'You keep your brand, description, links and people.',
+      upgradeConfirm: 'Turn this desk into an office? The desk is freed when you save.', upgradeDone: 'It is an office now. Adjust its width and location.',
+      legendMine: 'Your spaces', legendCowork: 'Coworking', legendDesk: 'Free desk', floorSoon: 'Whole floor (768 m²): coming soon.',
+      deleteAll: 'Delete all', deleteAllConfirm: 'Delete all your spaces from this browser? This cannot be undone.', you: 'You',
+      peopleFullDesk: 'A desk has room for {n}: you and one agent. An office fits more.',
+      peopleFullOffice: 'With {m} m² there is room for {n} people or agents, and they are all here. A wider office fits more.',
       tSpace: 'Space', tItems: 'Objects', tStyle: 'Style', tBrand: 'Brand', tPeople: 'People',
       spaceIntro: 'What you rent is space: 1 tile = 1 m². More meters fit more people and more objects. Everything else (colors, brand, links, templates) is the same at every size.',
       perMonth: '/mo', soon: 'Coming soon', upTo: 'Up to {p} people · {i} objects', notHere: 'Does not fit in this room',
       priceNote: 'Example prices: US$ {p} per m² per month. PRO items are optional extras.',
-      reset: '↺ Start over', resetConfirm: 'Delete everything and start over? What is saved in this browser is lost and cannot be undone.',
+      reset: '↺ Start over', resetConfirm: 'Empty this space and start over? Its size and location stay.',
       resetDone: 'Done: blank office. Start by choosing the size.',
       peopleFull: 'The {s} has room for {n} people or agents, and they are all here.',
       peopleUp: 'An {s} fits {n}.', seeSizes: 'See sizes',
-      where: 'Location on the floor', whereHint: 'Tap the plan or use the arrows. Only spots that follow the floor rules are offered.',
-      slotAt: 'Starts {m} m from the left end', legendOffice: 'Your office', legendHall: 'Hallway (building)', legendFree: 'Open floor',
+      where: 'Location on the floor', whereHint: 'Tap the plan to move the office to any free spot in either row, or use the arrows. Only spots that follow the floor rules are accepted.',
+      slotAt: 'Row {r} · from meter {m}', legendOffice: 'Your office', legendHall: 'Hallway (building)', legendFree: 'Open floor',
       rulesTitle: 'Floor rules',
       rules: ['Hallways belong to the building: they are never sold or closed.',
-        'Every office has its door on the main hallway.',
-        'Between an office and free space there is always a 2 m hallway across the row, so another office can be built next to it (or above and below, on bigger floors) and reached.',
+        'Every office has its door on the hallway below its row.',
+        'Between an office and free space (or another office) there is always a 2 m hallway across the row. In row B it runs up to the middle hallway, so row A can always be reached.',
         'Next to an office there are either 0 m or at least 8 m free (an S office): no useless leftovers.',
-        'An office is at most 24 m wide. For more space: another office or the whole floor.'],
+        'An office is 8 to 24 m wide and 8 m deep. For more space: another office or the whole floor.'],
       shrinkConfirm: '{n} things fall outside the new size and will be removed. Continue?', sizeChanged: 'Your office is now {m} m²',
       undo: 'Undo', redo: 'Redo', try: 'Try it', save: 'Save', saved: 'Saved', unsaved: 'Unsaved changes',
-      more: 'More options', export: 'Export JSON', import: 'Import JSON', clearRoom: 'Empty the office',
-      restore: 'Back to "For rent"', close: 'Close', back: '✎ Back to editor',
+      more: 'More options', export: 'Export JSON', import: 'Import JSON', clearRoom: 'Empty this space',
+      restore: 'Stop renting this space', close: 'Close', back: '✎ Back to editor',
       placeHint: 'Click inside the office to place it. Esc to cancel.',
       placePerson: 'Click inside the office to place this person. Esc to cancel.',
       selectHint: 'Pick an object and place it in the office. Click anything already placed to move, recolor or remove it.',
@@ -95,7 +119,7 @@
       bounds: 'That is outside the office', overlap: 'Something is already there', door: 'The entrance must stay clear',
       blocked: 'That would leave something unreachable', full: 'You reached your plan limit',
       leaveConfirm: 'Leave without saving? Your changes will be lost.', clearConfirm: 'Empty the office?',
-      restoreConfirm: 'Put it back up for rent? What is saved in this browser will be deleted.',
+      restoreConfirm: 'Stop renting this space? It is deleted from this browser.',
       importError: 'That file is not a valid office.', localNote: 'For now it is saved only in this browser.',
       color: 'Color', original: 'Original', custom: 'Any color', pattern: 'Pattern',
       floorColor: 'Floor color', wallColor: 'Wall color',
@@ -114,7 +138,9 @@
 
   // ————————————————————————————————— Estado
   let isOpen = false, previewing = false, dirty = false;
-  let doc = null, saved = space.load(ROOM);
+  let saved = space.load();   // los espacios guardados en este navegador
+  let view = 'home';          // 'home' (zona de arriendo y mis espacios) | 'edit' (un espacio)
+  let doc = null;             // el espacio que se está editando
   let history = [], hIndex = -1;
   let tab = 'space', category = 'all';
   let tool = null;       // { kind: 'item', type, variant, color } | { kind: 'resident', data, index? } | { kind: 'move', ref }
@@ -122,6 +148,7 @@
   let hover = null;      // casilla relativa a la sala bajo el puntero
   let drag = null;       // { ref, startX, startY, dx, dy, moved }
   let message = null, messageTimer = null;
+  let upgradedFrom = null;           // puesto que pasa a oficina (se libera al guardar)
   let lastTab = null, reveal = null; // para conservar el scroll del panel entre renders
   const openPeople = new Set();      // tarjetas de personas abiertas (índices)
 
@@ -151,40 +178,51 @@
   document.body.appendChild(fileInput);
 
   function labelButtons() {
-    btn.innerHTML = '✎ ' + esc(tr(saved ? 'open' : 'create')) + ' <span class="ed-badge">' + tr('beta') + '</span>';
+    btn.innerHTML = '✎ ' + esc(tr(saved.length ? 'open' : 'create')) + ' <span class="ed-badge">' + tr('beta') + '</span>';
     backPill.textContent = tr('back');
   }
   labelButtons();
 
   // ————————————————————————————————— Abrir y cerrar
-  // Si el tamaño de la oficina cambia, sus muros se mueven y la cámara se reacomoda.
-  let lastW = -1;
-  let lastX = -1;
-  const refocus = () => { if (isOpen && !previewing && (room.w !== lastW || room.x !== lastX)) requestAnimationFrame(focusRoom); };
   const isMobile = () => window.matchMedia('(max-width: 700px)').matches;
+  const others = () => saved.filter((d) => d.id !== doc.id);
+  const othersAfterSave = () => saved.filter((d) => d.id !== doc.id && d.id !== upgradedFrom);
+  const spaceName = (d) => d.identity.name || (d.kind === 'desk' ? fill('deskN', { n: d.desk + 1 }) : fill('officeN', { n: d.number }));
+
+  // Muestra en el edificio lo guardado o, mientras se edita, lo guardado más el borrador.
+  function show() {
+    space.render(view === 'edit' && doc ? others().concat(cleanDoc()) : saved);
+    ROOM = doc ? doc.id : null;
+    room = doc ? world.room(doc.kind === 'desk' ? 'cowork' : doc.id) : null;
+  }
+
+  // La cámara: la zona de arriendo completa, o el espacio que se edita con algo de contexto.
+  let lastFocus = '';
+  const focusKey = () => (room ? [view, room.x, room.y, room.w].join() : view);
+  const refocus = () => { if (isOpen && !previewing && focusKey() !== lastFocus) requestAnimationFrame(focusRoom); };
   function focusRoom() {
     const mobile = isMobile();
-    // La oficina y un poco de la planta libre de al lado, para ver cuánto espacio ocupa.
-    const w = Math.max(room.w + 4, 20);
-    lastW = room.w;
-    lastX = room.x;
-    game.setFocus({
-      x: room.x + room.w + 1 - w, y: room.y - 2, w, h: room.h + 2,
+    let f = { x: 0, y: 0, w: 52, h: 32 };
+    if (view === 'edit' && room) {
+      const w = Math.max(room.w + 4, 20);
+      f = { x: Math.max(0, room.x + Math.floor(room.w / 2) - Math.floor(w / 2)), y: room.y - 2, w, h: room.h + 2 };
+    }
+    lastFocus = focusKey();
+    game.setFocus(Object.assign(f, {
       padR: mobile ? 0 : panel.offsetWidth + 24,
       padB: mobile ? panel.offsetHeight : 0,
       padT: mobile ? 56 : 0,
-    });
+    }));
   }
 
   function openEditor() {
     isOpen = true;
     previewing = false;
-    doc = clone(saved || room.custom || space.empty(ROOM));
-    history = [JSON.stringify(doc)];
-    hIndex = 0;
+    view = 'home';
+    doc = null;
     dirty = false;
-    tool = selected = null;
-    space.apply(ROOM, doc);
+    tool = selected = drag = null;
+    show();
     document.body.classList.add('editing');
     panel.hidden = false;
     btn.hidden = true;
@@ -197,8 +235,11 @@
   function closeEditor(force) {
     if (!force && dirty && !confirm(tr('leaveConfirm'))) return;
     isOpen = previewing = false;
+    view = 'home';
+    doc = null;
+    dirty = false;
     tool = selected = drag = null;
-    space.apply(ROOM, saved);
+    show();
     document.body.classList.remove('editing');
     panel.hidden = true;
     backPill.hidden = true;
@@ -207,6 +248,61 @@
     game.overlays.delete(drawOverlay);
     game.setFocus(null);
     game.setFrozen(false);
+  }
+
+  // Editar un espacio (nuevo o guardado) y volver a la lista.
+  function editSpace(d, isNew) {
+    view = 'edit';
+    upgradedFrom = null;
+    doc = clone(d);
+    history = [JSON.stringify(doc)];
+    hIndex = 0;
+    dirty = !!isNew;
+    tool = selected = drag = null;
+    openPeople.clear();
+    tab = isNew ? 'space' : d.kind === 'desk' ? 'brand' : 'items';
+    show();
+    render();
+    requestAnimationFrame(focusRoom);
+  }
+  function goHome(force) {
+    if (!force && dirty && !confirm(tr('leaveConfirm'))) return;
+    view = 'home';
+    upgradedFrom = null;
+    doc = null;
+    dirty = false;
+    tool = selected = drag = null;
+    show();
+    render();
+    requestAnimationFrame(focusRoom);
+  }
+
+  // Nueva oficina (de 8 m) en el lugar válido más cercano al pedido; nuevo puesto libre.
+  // Lugar para una oficina nueva: si 8 m no caben, el ancho más chico que sí quepa (las
+  // normas no dejan retazos). Con fila y x pedidas, solo en esa fila.
+  function placeNew(list, d, row, x) {
+    for (let w = zone.RULES.minWidth; w <= zone.RULES.maxWidth; w++) {
+      const p = space.fitPlace(list, d, row || 'A', x == null ? null : x, w);
+      if (p && (!row || x == null || p.row === row)) {
+        Object.assign(d, p, { w });
+        d.number = space.numberFor(list, d, p.row);
+        return true;
+      }
+    }
+    return false;
+  }
+  function newOffice(row, x) {
+    const d = space.empty('office');
+    if (!placeNew(saved, d, row, x)) return flash(tr('noSpace'), true);
+    editSpace(d, true);
+  }
+  function newDesk(n) {
+    const free = space.freeDesks(saved);
+    if (!free.length) return flash(tr('noDesk'), true);
+    const d = space.empty('desk');
+    d.desk = n != null && free.includes(n) ? n : free[0];
+    d.residents = [{ kind: 'human', name: tr('you'), title: '', bio: '', lines: [], x: 0, y: 0, body: cat.people.body[0], eye: cat.people.eye[0], skin: cat.people.skin[1], hair: cat.people.hair[0] }];
+    editSpace(d, true);
   }
 
   // Probar: se camina por la oficina con los cambios, sin el panel.
@@ -240,7 +336,7 @@
     if (history.length > 60) history.shift();
     hIndex = history.length - 1;
     dirty = true;
-    space.apply(ROOM, doc);
+    show();
     render();
     refocus();
   }
@@ -250,7 +346,7 @@
     doc = JSON.parse(history[hIndex]);
     selected = tool = null;
     dirty = true;
-    space.apply(ROOM, doc);
+    show();
     render();
     refocus();
   }
@@ -260,17 +356,20 @@
     doc = JSON.parse(history[hIndex]);
     selected = tool = null;
     dirty = true;
-    space.apply(ROOM, doc);
+    show();
     render();
     refocus();
   }
   // Antes de guardar, lo que está a medio escribir (frases vacías, links incompletos) se limpia.
   function save() {
+    if (!doc) return;
     doc = cleanDoc();
-    if (!space.save(ROOM, doc)) { render(); return flash(tr('saveError'), true); }
-    saved = clone(doc);
+    const list = othersAfterSave().concat(doc);
+    if (!space.save(list)) { render(); return flash(tr('saveError'), true); }
+    saved = clone(list);
+    upgradedFrom = null;
     dirty = false;
-    space.apply(ROOM, doc);
+    show();
     render();
     flash(tr('savedLocal'));
   }
@@ -329,6 +428,7 @@
       const it = doc.items[selected.index];
       if (v) it.color = v; else delete it.color;
     } else if (p[0] === 'person') doc.residents[Number(p[1])][p[2]] = v;
+    else if (p[0] === 'deskColor') doc.deskColor = v || null;
     else doc[p[0]][p[1]] = v;
   }
 
@@ -354,11 +454,60 @@
   function render() {
     labelButtons();
     const oldBody = panel.querySelector('.ed-body');
-    const scroll = oldBody && lastTab === tab ? oldBody.scrollTop : 0;
-    const tabs = [['space', 'tSpace'], ['items', 'tItems'], ['style', 'tStyle'], ['brand', 'tBrand'], ['people', 'tPeople']];
+    const here = view === 'home' ? 'home' : tab;
+    const scroll = oldBody && lastTab === here ? oldBody.scrollTop : 0;
+    if (view === 'home') renderHome();
+    else renderEdit();
+    lastTab = here;
+    const body = panel.querySelector('.ed-body');
+    body.scrollTop = scroll;
+    if (reveal) {
+      const el = body.querySelector(reveal);
+      if (el) el.scrollIntoView({ block: 'nearest' });
+      reveal = null;
+    }
+    renderFoot();
+  }
+
+  // Zona de arriendo: el plano, crear oficina o puesto, y la lista de lo que ya arriendo.
+  function renderHome() {
+    const total = saved.reduce((n, d) => n + space.price(d), 0);
+    const free = space.freeDesks(saved).length;
+    const list = saved.map((d) => `
+      <button type="button" class="ed-space" data-act="edit" data-id="${d.id}">
+        <i style="--c:${d.identity.primary}"></i>
+        <span><strong>${esc(spaceName(d))}</strong><small>${esc(d.kind === 'desk' ? fill('deskN', { n: d.desk + 1 }) : fill('officeN', { n: d.number }))} · ${space.m2(d)} m² · ${money(space.price(d))}${esc(tr('perMonth'))}</small></span>
+        <b>${esc(tr('edit'))}</b>
+      </button>`).join('');
     panel.innerHTML = `
       <header class="ed-head">
-        <div><strong>${esc(tr('title'))}</strong> <span class="ed-badge">${tr('beta')}</span><small>${esc(TGL.t(room._orig ? room._orig.name : room.name))}</small></div>
+        <div><strong>${esc(tr('homeTitle'))}</strong> <span class="ed-badge">${tr('beta')}</span><small>${esc(fill('total', { n: saved.length, p: money(total) }))}</small></div>
+        <button type="button" class="ed-icon" data-act="close" aria-label="${esc(tr('close'))}">✕</button>
+      </header>
+      <div class="ed-body">
+        <div class="ed-row">
+          <button type="button" class="ed-btn ed-primary" data-act="newoffice">${esc(tr('newOffice'))}</button>
+          <button type="button" class="ed-btn" data-act="newdesk" ${free ? '' : 'disabled'}>${esc(tr('newDesk'))} · ${esc(fill('desksFree', { n: free }))}</button>
+        </div>
+        <p class="ed-hint">${esc(tr('homeIntro'))}</p>
+        ${zoneMap()}
+        <h3 class="ed-h">${esc(tr('mySpaces'))}</h3>
+        ${list || `<p class="ed-hint">${esc(tr('none'))}</p>`}
+        <p class="ed-note">${esc(fill('priceNote', { p: cat.pricePerM2.toFixed(2) }))} ${esc(tr('floorSoon'))}</p>
+        <details class="ed-rules"><summary>${esc(tr('rulesTitle'))}</summary><ol>${tr('rules').map((r) => `<li>${esc(r)}</li>`).join('')}</ol></details>
+      </div>
+      <footer class="ed-foot"></footer>`;
+  }
+
+  function renderEdit() {
+    const tabs = doc.kind === 'desk'
+      ? [['space', 'tSpace'], ['brand', 'tBrand'], ['people', 'tPeople']]
+      : [['space', 'tSpace'], ['items', 'tItems'], ['style', 'tStyle'], ['brand', 'tBrand'], ['people', 'tPeople']];
+    if (!tabs.some(([id]) => id === tab)) tab = 'space';
+    panel.innerHTML = `
+      <header class="ed-head">
+        <button type="button" class="ed-icon" data-act="home" title="${esc(tr('home'))}" aria-label="${esc(tr('home'))}">←</button>
+        <div class="ed-head-title"><strong>${esc(spaceName(doc))}</strong> <span class="ed-badge">${tr('beta')}</span><small>${esc(doc.kind === 'desk' ? fill('deskN', { n: doc.desk + 1 }) + ' · Coworking' : fill('officeN', { n: doc.number }) + ' · ' + fill('rowLabel', { r: doc.row }))}</small></div>
         <button type="button" class="ed-icon" data-act="close" aria-label="${esc(tr('close'))}">✕</button>
       </header>
       <div class="ed-tools">
@@ -378,15 +527,6 @@
       <nav class="ed-tabs">${tabs.map(([id, k]) => `<button type="button" data-tab="${id}" class="${tab === id ? 'on' : ''}">${esc(tr(k))}</button>`).join('')}</nav>
       <div class="ed-body">${renderTab()}</div>
       <footer class="ed-foot"></footer>`;
-    lastTab = tab;
-    const body = panel.querySelector('.ed-body');
-    body.scrollTop = scroll;
-    if (reveal) {
-      const el = body.querySelector(reveal);
-      if (el) el.scrollIntoView({ block: 'nearest' });
-      reveal = null;
-    }
-    renderFoot();
   }
 
   function renderTab() {
@@ -423,58 +563,130 @@
   const money = (n) => 'US$ ' + n;
   const fill = (k, o) => tr(k).replace(/\{(\w)\}/g, (m, c) => o[c]);
 
-  // Tamaños: el producto que se vende. El dibujo es la planta, con un módulo cada 4 m.
-  function sizePlan(z) {
-    const k = 2.5, w = z.w * k, h = z.h * k;
-    let lines = '';
-    for (let x = 4; x < z.w; x += 4) lines += `<line x1="${x * k}" y1="0" x2="${x * k}" y2="${h}"/>`;
-    return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true"><rect width="${w}" height="${h}" rx="2"/>${lines}</svg>`;
+  // ————————————————————————————————— Plano de la zona de arriendo
+  // Dibuja lo que el edificio tiene construido ahora (filas, pasillos, oficinas, coworking).
+  // Se puede tocar: en la lista, para crear o abrir; editando, para mover la oficina o el puesto.
+  const MAP = { w: 52, h: 32 };
+  function zoneMap() {
+    const rc = (x, y, w, h, c, extra) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${c}"${extra || ''}/>`;
+    const txt = (x, y, t, c) => `<text x="${x}" y="${y}" fill="${c}" font-size="2.2" text-anchor="middle" font-family="Silkscreen, monospace">${esc(t)}</text>`;
+    const hall = '#a8a295';
+    const mine = new Set(saved.map((d) => d.id).concat(doc ? [doc.id] : []));
+    let svg = rc(0, 0, MAP.w, 30, '#2f2925') + rc(1, 30, 50, 2, hall) + rc(1, 14, 50, 2, hall) + rc(13, 16, 2, 16, hall) + rc(32, 16, 2, 16, hall);
+    for (const row of zone.ROWS) {
+      for (const run of row.runs || []) {
+        const len = run.e - run.s + 1;
+        if (run.t === 'free') svg += rc(run.s, row.y, len, row.h, '#cdc9c0');
+        else if (run.t === 'hall') svg += rc(run.s, row.up ? row.y - 3 : row.y, len, row.hallY - row.y + (row.up ? 3 : 0), hall);
+        else if (run.t === 'cowork') {
+          svg += rc(run.s, row.y, len, row.h, '#f2c48f');
+          zone.DESKS.forEach((d, n) => {
+            const owner = (view === 'edit' && doc && doc.kind === 'desk' ? others().concat(doc) : saved).find((o) => o.kind === 'desk' && o.desk === n);
+            const c = !owner ? '#3f8f5a' : doc && owner.id === doc.id ? '#ffc367' : mine.has(owner.id) ? '#c98a2c' : '#8a6a4a';
+            svg += rc(run.s + d.x, row.y + d.y, 2, 1, c, owner && doc && owner.id === doc.id ? ' stroke="#8a5a1a" stroke-width="0.3"' : '');
+          });
+        } else {
+          const cur = doc && run.t === doc.id;
+          svg += rc(run.s, row.y, len, row.h, cur ? '#ffc367' : '#f6dcaa', cur ? ' stroke="#8a5a1a" stroke-width="0.4"' : '');
+          const q = world.room(run.t);
+          if (q && q.office) svg += txt(run.s + len / 2, row.y + row.h / 2 + 0.8, q.office, '#5c3d22');
+        }
+      }
+      svg += txt(0.5 + 0.5, row.y + row.h / 2 + 0.8, row.id, '#ffffff');
+    }
+    return `<div class="ed-where">
+      <svg viewBox="0 0 ${MAP.w} ${MAP.h}" data-act="zonemap" role="img" aria-label="${esc(tr('where'))}">${svg}</svg>
+      <div class="ed-legend"><span><i style="--c:#ffc367"></i>${esc(tr('legendMine'))}</span><span><i style="--c:#cdc9c0"></i>${esc(tr('legendFree'))}</span><span><i style="--c:${hall}"></i>${esc(tr('legendHall'))}</span><span><i style="--c:#3f8f5a"></i>${esc(tr('legendDesk'))}</span></div>
+    </div>`;
   }
-  function renderSpace() {
-    const here = space.sizesFor(ROOM);
-    return `
-      <p class="ed-hint">${esc(tr('spaceIntro'))}</p>
-      <div class="ed-sizes">${cat.sizes.map((z) => {
-        const ok = here.includes(z);
-        return `<button type="button" class="ed-size${doc.size === z.id ? ' on' : ''}${z.soon ? ' soon' : ''}" data-act="size" data-v="${z.id}" ${ok ? '' : 'disabled'}>
-          <span class="ed-size-plan">${sizePlan(z)}</span>
-          <span class="ed-size-txt">
-            <strong>${esc(nm(z))}</strong>
-            <small>${z.m2} m² · ${z.w} × ${z.h} m</small>
-            <small>${esc(fill('upTo', { p: z.residents, i: z.items }))}</small>
-            <small class="ed-size-note">${esc(TGL.t(z.note))}</small>
-          </span>
-          <b>${z.soon ? esc(tr('soon')) : ok ? money(z.price) + esc(tr('perMonth')) : esc(tr('notHere'))}</b>
-        </button>`;
-      }).join('')}</div>
-      <p class="ed-note">${esc(fill('priceNote', { p: cat.pricePerM2.toFixed(2) }))}</p>
-      ${renderWhere()}
-      <details class="ed-rules"><summary>${esc(tr('rulesTitle'))}</summary><ol>${tr('rules').map((r) => `<li>${esc(r)}</li>`).join('')}</ol></details>`;
+  // Qué hay en una casilla del plano.
+  function zoneHit(tx, ty) {
+    for (const row of zone.ROWS) {
+      if (ty < (row.up ? row.y - 3 : row.y - 3) || ty > row.y + row.h + 2) continue;
+      const inRow = ty >= row.y && ty < row.y + row.h;
+      for (const run of row.runs || []) {
+        if (tx < run.s || tx > run.e || !inRow) continue;
+        if (run.t === 'cowork') {
+          const n = zone.DESKS.findIndex((d) => tx - run.s >= d.x && tx - run.s < d.x + 2 && ty - row.y >= d.y && ty - row.y <= d.y + 1);
+          return { kind: 'cowork', desk: n, row: row.id, x: tx };
+        }
+        if (run.t !== 'free' && run.t !== 'hall') return { kind: 'office', id: run.t, row: row.id, x: tx };
+      }
+      return { kind: 'free', row: row.id, x: tx };
+    }
+    return null;
+  }
+  // Tocar el plano (o el edificio) en la casilla (tx, ty).
+  function pickZone(tx, ty) {
+    const hit = zoneHit(tx, ty);
+    if (!hit) return;
+    if (view === 'home') {
+      const desk = hit.kind === 'cowork' && hit.desk >= 0 ? saved.find((d) => d.kind === 'desk' && d.desk === hit.desk) : null;
+      const office = hit.kind === 'office' ? saved.find((d) => d.id === hit.id) : null;
+      if (desk || office) return editSpace(desk || office);
+      if (hit.kind === 'cowork' && hit.desk >= 0) return newDesk(hit.desk);
+      if (hit.kind === 'free') return newOffice(hit.row, hit.x - 4);
+      return;
+    }
+    if (doc.kind === 'desk') {
+      if (hit.kind !== 'cowork' || hit.desk < 0 || hit.desk === doc.desk) return;
+      if (!space.freeDesks(others(), doc).includes(hit.desk)) return flash(tr('noDesk'), true);
+      doc.desk = hit.desk;
+      return commit();
+    }
+    moveOffice(hit.row, hit.x - Math.floor(doc.w / 2));
+  }
+  // Lleva la oficina al lugar válido más cercano en esa fila.
+  function moveOffice(row, x) {
+    const ok = space.startsFor(others(), doc, row);
+    if (!ok.length) return flash(tr('noSpace'), true);
+    const next = ok.reduce((best, s) => (Math.abs(s - x) < Math.abs(best - x) ? s : best), ok[0]);
+    if (row === doc.row && next === doc.x) return;
+    if (row !== doc.row) doc.number = space.numberFor(others(), doc, row);
+    doc.row = row;
+    doc.x = next;
+    commit();
   }
 
-  // Plano de la planta libre: dónde queda la oficina, sus pasillos y lo que sigue libre.
-  function renderWhere() {
-    const F = world.floor, S = F.STRIP, z = cat.sizeOf(doc.size);
-    const ok = space.slots(doc), cur = space.fitSlot(doc, doc.slot), i = ok.indexOf(cur);
-    const plan = F.plan(z.w, S.x + cur);
-    const r = (x, y, w, h, c, extra) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${c}"${extra || ''}/>`;
-    let svg = r(0, 0, S.x + S.w + 1, 13, '#2f2925') + r(S.x, 10, S.w, 3, '#a8a295');
-    for (const [a, b] of plan.free) svg += r(a, 1, b - a + 1, 8, '#cdc9c0');
-    for (const hx of plan.halls) svg += r(hx, 1, F.RULES.hall, 9, '#a8a295');
-    svg += r(plan.a, 1, z.w, 8, '#ffc367', ' stroke="#8a5a1a" stroke-width="0.3"');
-    svg += r(plan.a + Math.floor(z.w / 2) - 1, 9, 2, 1, '#ffc367');
+  function renderSpace() {
+    return doc.kind === 'desk' ? renderDeskSpace() : renderOfficeSpace();
+  }
+  function renderOfficeSpace() {
+    const lim = space.limits(doc);
+    const ok = space.startsFor(others(), doc, doc.row), i = ok.indexOf(doc.x);
     return `
+      <p class="ed-hint">${esc(tr('spaceIntro'))}</p>
+      <h3 class="ed-h">${esc(tr('widthTitle'))}</h3>
+      <div class="ed-row ed-where-row">
+        <button type="button" class="ed-icon" data-act="width" data-v="-1" ${doc.w <= zone.RULES.minWidth ? 'disabled' : ''} aria-label="−">−</button>
+        <span><strong>${doc.w} m</strong> × 8 m = ${space.m2(doc)} m² · ${money(space.price(doc))}${esc(tr('perMonth'))}</span>
+        <button type="button" class="ed-icon" data-act="width" data-v="1" ${doc.w >= zone.RULES.maxWidth ? 'disabled' : ''} aria-label="+">+</button>
+      </div>
+      <div class="ed-row"><small class="ed-note">${esc(tr('presetHint'))}</small>
+        ${cat.sizes.filter((z) => !z.soon).map((z) => `<button type="button" class="ed-chip-text${doc.w === z.w ? ' on' : ''}" data-act="width" data-set="${z.w}">${esc(nm(z))} · ${z.w} m</button>`).join('')}
+      </div>
+      <p class="ed-hint">${esc(fill('capacity', { p: lim.maxResidents, i: lim.maxItems }))}</p>
+      <p class="ed-note">${esc(fill('priceNote', { p: cat.pricePerM2.toFixed(2) }))}</p>
       <h3 class="ed-h">${esc(tr('where'))}</h3>
-      <div class="ed-where">
-        <svg viewBox="0 0 ${S.x + S.w + 1} 13" data-act="slotmap" role="img" aria-label="${esc(tr('where'))}">${svg}</svg>
-        <div class="ed-row ed-where-row">
-          <button type="button" class="ed-icon" data-act="slot" data-v="-1" ${i <= 0 ? 'disabled' : ''} aria-label="◀">◀</button>
-          <span>${esc(fill('slotAt', { m: cur }))}</span>
-          <button type="button" class="ed-icon" data-act="slot" data-v="1" ${i >= ok.length - 1 ? 'disabled' : ''} aria-label="▶">▶</button>
-        </div>
-        <div class="ed-legend"><span><i style="--c:#ffc367"></i>${esc(tr('legendOffice'))}</span><span><i style="--c:#a8a295"></i>${esc(tr('legendHall'))}</span><span><i style="--c:#cdc9c0"></i>${esc(tr('legendFree'))}</span></div>
-        <p class="ed-hint">${esc(tr('whereHint'))}</p>
-      </div>`;
+      ${zoneMap()}
+      <div class="ed-row ed-where-row">
+        <button type="button" class="ed-icon" data-act="slot" data-v="-1" ${i <= 0 ? 'disabled' : ''} aria-label="◀">◀</button>
+        <span>${esc(fill('slotAt', { r: doc.row, m: doc.x }))}</span>
+        <button type="button" class="ed-icon" data-act="slot" data-v="1" ${i >= ok.length - 1 ? 'disabled' : ''} aria-label="▶">▶</button>
+      </div>
+      <div class="ed-row">${zone.ROWS.map((r) => `<button type="button" class="ed-chip-text${doc.row === r.id ? ' on' : ''}" data-act="row" data-v="${r.id}">${esc(tr('row' + r.id))}</button>`).join('')}</div>
+      <p class="ed-hint">${esc(tr('whereHint'))}</p>
+      <p class="ed-note">${esc(tr('floorSoon'))}</p>
+      <details class="ed-rules"><summary>${esc(tr('rulesTitle'))}</summary><ol>${tr('rules').map((r) => `<li>${esc(r)}</li>`).join('')}</ol></details>`;
+  }
+  function renderDeskSpace() {
+    return `
+      <p class="ed-hint">${esc(TGL.t(cat.desk.note))}</p>
+      <p class="ed-plan"><strong>${esc(fill('deskN', { n: doc.desk + 1 }))}</strong> · ${cat.desk.m2} m² · ${money(cat.desk.price)}${esc(tr('perMonth'))}</p>
+      ${zoneMap()}
+      <p class="ed-hint">${esc(tr('deskHint'))}</p>
+      <div class="ed-field"><span>${esc(tr('deskColor'))}</span>${colorControl('deskColor', doc.deskColor || cat.baseColor(cat.byType.desk), cat.palettes.item, { reset: true, isOriginal: !doc.deskColor })}</div>
+      <div class="ed-callout"><p>${esc(tr('upgradeNote'))}</p><button type="button" class="ed-btn" data-act="upgrade">${esc(tr('upgrade'))}</button></div>`;
   }
 
   function renderItems() {
@@ -537,12 +749,12 @@
         <small class="ed-note">${esc(tr('badUrl'))}</small></div>`;
   }
 
-  // Por qué no se puede agregar a nadie más, y qué tamaño lo permitiría.
+  // Por qué no se puede agregar a nadie más, y qué lo permitiría.
   function peopleFull() {
-    const z = cat.sizeOf(doc.size);
-    const up = space.sizesFor(ROOM).find((o) => o.residents > z.residents);
+    const n = space.limits(doc).maxResidents;
+    const up = doc.kind === 'desk' || doc.w < zone.RULES.maxWidth;
     return `<div class="ed-callout">
-      <p>${esc(fill('peopleFull', { s: nm(z), n: z.residents }))}${up ? ' ' + esc(fill('peopleUp', { s: nm(up), n: up.residents })) : ''}</p>
+      <p>${esc(doc.kind === 'desk' ? fill('peopleFullDesk', { n }) : fill('peopleFullOffice', { m: space.m2(doc), n }))}</p>
       ${up ? `<button type="button" class="ed-btn" data-tab="space">${esc(tr('seeSizes'))}</button>` : ''}
     </div>`;
   }
@@ -569,7 +781,7 @@
         ${colors('body', cat.people.body)}
         ${p.kind === 'agent' ? colors('eye', cat.people.eye) : colors('skin', cat.people.skin) + colors('hair', cat.people.hair)}
         <div class="ed-row">
-          <button type="button" class="ed-btn" data-act="prelocate" data-i="${i}">${esc(tr('relocate'))}</button>
+          ${doc.kind === 'desk' ? '' : `<button type="button" class="ed-btn" data-act="prelocate" data-i="${i}">${esc(tr('relocate'))}</button>`}
           <button type="button" class="ed-btn ed-danger" data-act="premove" data-i="${i}">${esc(tr('remove'))}</button>
         </div>
         </div>
@@ -588,21 +800,26 @@
   function renderFoot() {
     const foot = panel.querySelector('.ed-foot');
     if (!foot) return;
-    const pro = space.proUsage(doc), lim = space.limits(doc), z = cat.sizeOf(doc.size);
+    const status = `<p class="ed-status ${message && message.bad ? 'bad' : ''}">${esc(message ? message.text : dirty ? tr('unsaved') : tr('localNote'))}</p>`;
+    if (view === 'home') {
+      foot.innerHTML = `<div class="ed-foot-row">${status}${saved.length ? `<button type="button" class="ed-btn ed-danger ed-reset" data-act="deleteall">${esc(tr('deleteAll'))}</button>` : ''}</div>`;
+      return;
+    }
+    const pro = space.proUsage(doc), lim = space.limits(doc);
     const bar = (label, n, max) => `<div class="ed-cap"><span>${esc(label)} ${n}/${max}</span><i><b style="width:${Math.min(100, (n / max) * 100)}%"></b></i></div>`;
     foot.innerHTML = `
-      <p class="ed-plan"><strong>${esc(nm(z))}</strong> · ${z.m2} m² · ${money(z.price)}${esc(tr('perMonth'))}</p>
-      ${bar(tr('capItems'), doc.items.length, lim.maxItems)}
+      <p class="ed-plan"><strong>${esc(doc.kind === 'desk' ? fill('deskN', { n: doc.desk + 1 }) : fill('officeN', { n: doc.number }))}</strong> · ${space.m2(doc)} m² · ${money(space.price(doc))}${esc(tr('perMonth'))}</p>
+      ${doc.kind === 'desk' ? '' : bar(tr('capItems'), doc.items.length, lim.maxItems)}
       ${bar(tr('capPeople'), doc.residents.length, lim.maxResidents)}
       ${pro ? `<p class="ed-note"><span class="ed-pro">${tr('pro')}</span> ${esc(tr('proNote').replace('{n}', pro))}</p>` : ''}
       <div class="ed-foot-row">
-        <p class="ed-status ${message && message.bad ? 'bad' : ''}">${esc(message ? message.text : dirty ? tr('unsaved') : tr('localNote'))}</p>
+        ${status}
         <button type="button" class="ed-btn ed-danger ed-reset" data-act="reset">${esc(tr('reset'))}</button>
       </div>`;
     // El botón dice si lo que se ve ya está guardado.
     const sb = panel.querySelector('[data-act=save]');
     if (sb) {
-      const done = !dirty && !!saved;
+      const done = !dirty && saved.some((d) => d.id === doc.id);
       sb.textContent = done ? '✓ ' + tr('saved') : tr('save');
       sb.classList.toggle('ed-done', done);
     }
@@ -618,6 +835,23 @@
     const sel = selected && selected.kind === 'item' ? doc.items[selected.index] : null;
     switch (act) {
       case 'close': return closeEditor();
+      case 'home': return goHome();
+      case 'edit': return editSpace(saved.find((d) => d.id === el.dataset.id));
+      case 'newoffice': return newOffice();
+      case 'newdesk': return newDesk();
+      case 'deleteall':
+        if (!confirm(tr('deleteAllConfirm'))) return;
+        if (!space.save([])) return flash(tr('saveError'), true);
+        saved = [];
+        show();
+        return render();
+      case 'zonemap': {
+        const box = el.getBoundingClientRect();
+        return pickZone(Math.floor(((e.clientX - box.left) / box.width) * MAP.w), Math.floor(((e.clientY - box.top) / box.height) * MAP.h));
+      }
+      case 'width': return el.dataset.set ? setWidth(Number(el.dataset.set)) : setWidth(doc.w + Number(v), Number(v));
+      case 'row': return v === doc.row ? null : moveOffice(v, doc.x);
+      case 'upgrade': return upgrade();
       case 'undo': return undo();
       case 'redo': return redo();
       case 'save': return save();
@@ -626,18 +860,17 @@
       case 'import': return fileInput.click();
       case 'clear':
         if (!confirm(tr('clearConfirm'))) return;
-        doc = Object.assign(space.empty(ROOM), { size: doc.size }); // vaciar no cambia el tamaño
-        selected = tool = null;
-        return commit();
+        return resetSpace();
       case 'reset':
         if (!confirm(tr('resetConfirm'))) return;
-        return resetAll();
-      case 'restore':
+        return resetSpace();
+      case 'restore': {
         if (!confirm(tr('restoreConfirm'))) return;
-        space.clear(ROOM);
-        saved = null;
-        dirty = false;
-        return closeEditor(true);
+        const list = others();
+        if (!space.save(list)) return flash(tr('saveError'), true);
+        saved = list;
+        return goHome(true);
+      }
       case 'pick': {
         if (doc.items.length >= space.limits(doc).maxItems) return flash(tr('full'), true);
         const def = cat.byType[el.dataset.type];
@@ -646,22 +879,12 @@
         return render();
       }
       case 'variant': sel.variant = v; return commit();
-      case 'size': return setSize(v);
       case 'slot': {
-        // de a un módulo (4 m), o hasta el siguiente lugar permitido
-        const ok = space.slots(doc), cur = space.fitSlot(doc, doc.slot), dir = Number(v);
+        // de a 4 m, o hasta el siguiente lugar permitido de la fila
+        const ok = space.startsFor(others(), doc, doc.row), cur = doc.x, dir = Number(v);
         const next = dir > 0 ? ok.find((x) => x >= cur + 4) ?? ok.find((x) => x > cur) : [...ok].reverse().find((x) => x <= cur - 4) ?? [...ok].reverse().find((x) => x < cur);
         if (next == null) return;
-        doc.slot = next;
-        return commit();
-      }
-      case 'slotmap': {
-        const box = el.getBoundingClientRect(), F = world.floor;
-        const tile = ((e.clientX - box.left) / box.width) * (F.STRIP.x + F.STRIP.w + 1);
-        const want = Math.round(tile - F.STRIP.x - cat.sizeOf(doc.size).w / 2);
-        const next = space.fitSlot(doc, want);
-        if (next === space.fitSlot(doc, doc.slot)) return;
-        doc.slot = next;
+        doc.x = next;
         return commit();
       }
       case 'setcolor': setColor(el.dataset.path, v); return commit();
@@ -675,7 +898,11 @@
       case 'remove': doc.items.splice(selected.index, 1); selected = null; return commit();
       case 'template': {
         if (!confirm(tr('templateConfirm'))) return;
-        doc = space.sanitize(Object.assign({}, space.templates.find((t) => t.id === v).doc, { slot: doc.slot }), ROOM); // se queda donde estaba
+        // Las plantillas son para 16 m: si cabe en la misma fila, la oficina se ajusta a ese ancho.
+        const keep = { id: doc.id, kind: 'office', row: doc.row, x: doc.x, w: doc.w, number: doc.number };
+        const ok = space.startsFor(others(), doc, doc.row, 16);
+        if (ok.length) Object.assign(keep, { w: 16, x: ok.reduce((b, x) => (Math.abs(x - doc.x) < Math.abs(b - doc.x) ? x : b), ok[0]) });
+        doc = space.sanitize(Object.assign(clone(space.templates.find((t) => t.id === v).doc), keep));
         selected = tool = null;
         return commit();
       }
@@ -686,14 +913,18 @@
       case 'unlink': doc.content.links.splice(i, 1); return commit();
       case 'padd': {
         const kind = v;
-        tool = {
-          kind: 'resident',
-          data: {
-            kind, name: kind === 'agent' ? 'Agent' : 'Alex', title: '', bio: '', lines: [],
-            body: cat.people.body[doc.residents.length % cat.people.body.length],
-            eye: cat.people.eye[0], skin: cat.people.skin[1], hair: cat.people.hair[0], x: 0, y: 0,
-          },
+        const data = {
+          kind, name: kind === 'agent' ? 'Agent' : 'Alex', title: '', bio: '', lines: [],
+          body: cat.people.body[doc.residents.length % cat.people.body.length],
+          eye: cat.people.eye[0], skin: cat.people.skin[1], hair: cat.people.hair[0], x: 0, y: 0,
         };
+        // En un puesto cada uno tiene su lugar frente al escritorio; en una oficina se ubica.
+        if (doc.kind === 'desk') {
+          doc.residents.push(data);
+          openPeople.add(doc.residents.length - 1);
+          return commit();
+        }
+        tool = { kind: 'resident', data };
         return render();
       }
       case 'pkind': doc.residents[i].kind = v; return commit();
@@ -709,39 +940,60 @@
     }
   });
 
-  // Cambiar de tamaño: lo que quede fuera (o pase el límite) se quita, avisando antes.
-  function setSize(id) {
-    if (id === doc.size) return;
-    // Se mantiene el borde derecho de la oficina (si las normas lo permiten).
-    const keepRight = space.fitSlot(doc, doc.slot) + cat.sizeOf(doc.size).w - cat.sizeOf(id).w;
-    const next = space.sanitize(Object.assign(cleanDoc(), { size: id, slot: keepRight }), ROOM);
+  // Cambiar el ancho: se mantiene el borde derecho si las normas lo permiten (si no, el lugar
+  // válido más cercano). Lo que quede fuera, o pase el nuevo límite, se quita avisando antes.
+  // dir: con − y + se salta al siguiente ancho que quepa en algún lugar.
+  function setWidth(w, dir) {
+    w = Math.max(zone.RULES.minWidth, Math.min(zone.RULES.maxWidth, Math.round(w)));
+    if (w === doc.w) return;
+    // Primero en la misma fila (con − y +, el siguiente ancho que quepa); si no, en otra fila.
+    const want = w, near = (ok, x) => ok.reduce((b, s) => (Math.abs(s - x) < Math.abs(b - x) ? s : b), ok[0]);
+    let place = null;
+    for (let k = w; k >= zone.RULES.minWidth && k <= zone.RULES.maxWidth; k += dir || 1000) {
+      const ok = space.startsFor(others(), doc, doc.row, k);
+      if (ok.length) { place = { row: doc.row, x: near(ok, doc.x + doc.w - k) }; w = k; break; }
+      if (!dir) break;
+    }
+    if (!place) { w = want; place = space.fitPlace(others(), doc, doc.row, doc.x + doc.w - w, w); }
+    if (!place) return flash(fill('noWidth', { w }), true);
+    const next = space.sanitize(Object.assign(cleanDoc(), { w }, place));
     const lost = doc.items.length + doc.residents.length - next.items.length - next.residents.length;
     if (lost > 0 && !confirm(fill('shrinkConfirm', { n: lost }))) return;
-    doc.size = id;
-    doc.slot = next.slot;
-    doc.items = next.items;
-    doc.residents = next.residents;
+    if (place.row !== doc.row) doc.number = space.numberFor(others(), doc, place.row);
+    Object.assign(doc, { w, row: place.row, x: place.x, items: next.items, residents: next.residents });
     selected = tool = null;
     openPeople.clear();
     commit();
-    flash(fill('sizeChanged', { m: cat.sizeOf(id).m2 }));
+    flash(fill('sizeChanged', { m: space.m2(doc) }));
   }
 
-  // Borra todo (también lo guardado) y deja el editor abierto con una oficina en blanco.
-  function resetAll() {
-    space.clear(ROOM);
-    saved = null;
-    doc = space.empty(ROOM);
-    history = [JSON.stringify(doc)];
-    hIndex = 0;
-    dirty = false;
+  // Vaciar el espacio: se mantienen su tipo, su tamaño y su lugar.
+  function resetSpace() {
+    const keep = { id: doc.id, kind: doc.kind, w: doc.w, row: doc.row, x: doc.x, number: doc.number, desk: doc.desk };
+    doc = Object.assign(space.empty(doc.kind), keep);
     selected = tool = drag = null;
     openPeople.clear();
+    commit();
+    flash(tr('resetDone'));
+  }
+
+  // De puesto a oficina: se lleva la marca, la descripción, los links y la gente.
+  function upgrade() {
+    if (!confirm(tr('upgradeConfirm'))) return;
+    const d = space.empty('office');
+    if (!placeNew(others(), d)) return flash(tr('noSpace'), true);
+    Object.assign(d, { identity: doc.identity, content: doc.content });
+    d.residents = doc.residents.map((p, i) => Object.assign({}, p, { x: 1 + i * 2, y: 2 }));
+    upgradedFrom = doc.id; // el puesto se libera al guardar
+    doc = space.sanitize(d);
+    dirty = true;
     tab = 'space';
-    space.apply(ROOM, doc);
+    history = [JSON.stringify(doc)];
+    hIndex = 0;
+    show();
     render();
     refocus();
-    flash(tr('resetDone'));
+    flash(tr('upgradeDone'));
   }
 
   // Abrir y cerrar tarjetas de personas (el evento "toggle" no burbujea).
@@ -754,12 +1006,12 @@
   // Pone el bloque "?" en el primer lugar libre cerca de la entrada.
   function addInfo() {
     if (doc.items.length >= space.limits(doc).maxItems) return flash(tr('full'), true);
-    const door = world.doorEntries(ROOM)[0] || { x: 0, y: room.h - 1 };
+    const door = world.doorEntries(doc.id)[0] || { x: 0, y: room.h - 1 };
     const spots = [];
     for (let y = 0; y < room.h; y++) for (let x = 0; x < room.w; x++) spots.push({ x, y, d: Math.abs(x - door.x) + Math.abs(y - door.y) });
     spots.sort((a, b) => (a.d < 2) - (b.d < 2) || a.d - b.d);
     const item = { type: 'info' };
-    const spot = spots.find((p) => !space.canPlace(doc, ROOM, item, p.x, p.y));
+    const spot = spots.find((p) => !space.canPlace(doc, item, p.x, p.y));
     if (!spot) return flash(tr('noRoom'), true);
     doc.items.push({ type: 'info', x: spot.x, y: spot.y });
     selected = { kind: 'item', index: doc.items.length - 1 };
@@ -800,7 +1052,7 @@
     dirty = true;
     renderFoot();
     clearTimeout(typingTimer);
-    typingTimer = setTimeout(() => space.apply(ROOM, cleanDoc()), el.dataset.color ? 60 : 200);
+    typingTimer = setTimeout(show, el.dataset.color ? 60 : 200);
   }
   panel.addEventListener('input', onTextInput);
   panel.addEventListener('change', (e) => {
@@ -814,7 +1066,7 @@
     history = history.slice(0, hIndex + 1);
     history.push(JSON.stringify(doc));
     hIndex = history.length - 1;
-    space.apply(ROOM, cleanDoc());
+    show();
     const tools = panel.querySelector('.ed-tools');
     if (tools) {
       tools.querySelector('[data-act=undo]').disabled = hIndex <= 0;
@@ -834,7 +1086,7 @@
     const blob = new Blob([JSON.stringify(cleanDoc(), null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'oficina-' + (room.office || ROOM) + '.json';
+    a.download = (doc.kind === 'desk' ? 'puesto-' + (doc.desk + 1) : 'oficina-' + doc.number) + '.json';
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }
@@ -842,7 +1094,9 @@
     const f = fileInput.files[0];
     if (!f) return;
     f.text().then((txt) => {
-      doc = space.sanitize(JSON.parse(txt), ROOM);
+      // Se importa el contenido; el tipo, el tamaño y el lugar siguen siendo los de este espacio.
+      const keep = { id: doc.id, kind: doc.kind, w: doc.w, row: doc.row, x: doc.x, number: doc.number, desk: doc.desk };
+      doc = space.sanitize(Object.assign(JSON.parse(txt), keep));
       selected = tool = null;
       commit();
     }).catch(() => flash(tr('importError'), true)).finally(() => { fileInput.value = ''; });
@@ -855,10 +1109,17 @@
     return { x: Math.floor(wx / T) - room.x, y: Math.floor(wy / T) - room.y };
   };
   const inside = (t) => {
-    const a = space.area(doc, ROOM);
+    const a = space.area(doc);
     return t.x >= a.x0 && t.y >= 0 && t.x < a.x0 + a.w && t.y < room.h;
   };
   const active = () => isOpen && !previewing;
+  // Se arman objetos y personas sobre el edificio solo al editar una oficina; en lo demás,
+  // tocar el edificio es como tocar el plano (abrir un espacio, crear uno, cambiar de puesto).
+  const building = () => view === 'edit' && doc && doc.kind === 'office';
+  const absTile = (e) => {
+    const [wx, wy] = game.worldFromEvent(e);
+    return [Math.floor(wx / T), Math.floor(wy / T)];
+  };
 
   // Lo que hay en una casilla (personas primero, luego objetos de arriba hacia abajo).
   function hitTest(t) {
@@ -879,7 +1140,7 @@
       const item = { type: tool.type, x: t.x, y: t.y };
       if (tool.variant) item.variant = tool.variant;
       if (tool.color) item.color = tool.color;
-      const why = space.canPlace(doc, ROOM, item, t.x, t.y);
+      const why = space.canPlace(doc, item, t.x, t.y);
       if (why) return flash(tr(why), true);
       doc.items.push(item);
       if (doc.items.length >= space.limits(doc).maxItems) tool = null;
@@ -887,7 +1148,7 @@
     }
     if (tool.kind === 'resident') {
       const p = Object.assign({}, tool.data, { x: t.x, y: t.y });
-      const why = space.canPlace(doc, ROOM, p, t.x, t.y);
+      const why = space.canPlace(doc, p, t.x, t.y);
       if (why) return flash(tr(why), true);
       doc.residents.push(p);
       selected = { kind: 'resident', index: doc.residents.length - 1 };
@@ -901,7 +1162,7 @@
   }
 
   function moveTo(ref, x, y) {
-    const why = space.canPlace(doc, ROOM, ref, x, y, ref);
+    const why = space.canPlace(doc, ref, x, y, ref);
     if (why) { flash(tr(why), true); return false; }
     ref.x = x;
     ref.y = y;
@@ -917,6 +1178,7 @@
 
   canvas.addEventListener('pointermove', (e) => {
     if (!active()) return;
+    if (!building()) { stop(e); canvas.style.cursor = 'pointer'; return; }
     hover = tileAt(e);
     if (drag) {
       const nx = hover.x - drag.dx, ny = hover.y - drag.dy;
@@ -931,6 +1193,7 @@
   canvas.addEventListener('pointerdown', (e) => {
     if (!active()) return;
     stop(e);
+    if (!building()) return;
     const t = tileAt(e);
     hover = t;
     if (tool || !inside(t)) return;
@@ -944,6 +1207,7 @@
   canvas.addEventListener('pointerup', (e) => {
     if (!active()) return;
     stop(e);
+    if (!building()) return pickZone(...absTile(e));
     const t = tileAt(e);
     if (drag) {
       const d = drag;
@@ -979,8 +1243,8 @@
     if (mod && e.key.toLowerCase() === 's') { e.preventDefault(); return save(); }
     if (typing) return;
     if (e.key === 'Escape') {
-      if (tool || selected) { tool = selected = null; render(); } else closeEditor();
-    } else if ((e.key === 'Delete' || e.key === 'Backspace') && selected) {
+      if (tool || selected) { tool = selected = null; render(); } else if (view === 'edit') goHome(); else closeEditor();
+    } else if ((e.key === 'Delete' || e.key === 'Backspace') && selected && building()) {
       e.preventDefault();
       if (selected.kind === 'item') doc.items.splice(selected.index, 1);
       else doc.residents.splice(selected.index, 1);
@@ -1001,10 +1265,27 @@
 
   // ————————————————————————————————— Dibujo sobre la oficina
   function drawOverlay(ctx, t) {
-    const ox = room.x * T, oy = room.y * T;
     ctx.save();
+    // Mis espacios (y el que se edita) con un borde punteado.
+    const dashed = (x, y, w, h, color) => {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3, 2]);
+      ctx.lineDashOffset = -t * 6;
+      ctx.strokeRect(x * T + 0.5, y * T + 0.5, w * T - 1, h * T - 1);
+      ctx.setLineDash([]);
+    };
+    const cw = world.room('cowork');
+    const list = view === 'edit' && doc ? others().concat(doc) : saved;
+    for (const d of list) {
+      const cur = doc && d.id === doc.id;
+      if (d.kind === 'desk') { const k = zone.DESKS[d.desk]; dashed(cw.x + k.x, cw.y + k.y - 1, 2, 3, cur ? '#ffc367' : 'rgba(255,195,103,.6)'); }
+      else if (!cur) { const q = world.room(d.id); if (q) dashed(q.x, q.y, q.w, q.h, 'rgba(255,195,103,.6)'); }
+    }
+    if (!building()) { ctx.restore(); return; }
+    const ox = room.x * T, oy = room.y * T;
     // cuadrícula, solo en lo arrendado
-    const a = space.area(doc, ROOM), ax = ox + a.x0 * T;
+    const a = space.area(doc), ax = ox + a.x0 * T;
     ctx.fillStyle = 'rgba(77,140,255,.22)';
     for (let x = 0; x <= a.w; x++) ctx.fillRect(ax + x * T, oy, 0.5, room.h * T);
     for (let y = 0; y <= room.h; y++) ctx.fillRect(ax, oy + y * T, a.w * T, 0.5);
@@ -1016,7 +1297,7 @@
 
     const ghost = (thing, x, y) => {
       const f = space.footprint(thing);
-      const why = space.canPlace(doc, ROOM, thing, x, y, tool && tool.kind === 'move' ? thing : drag ? drag.ref : null);
+      const why = space.canPlace(doc, thing, x, y, tool && tool.kind === 'move' ? thing : drag ? drag.ref : null);
       ctx.fillStyle = why ? 'rgba(224,74,74,.3)' : 'rgba(52,199,89,.28)';
       ctx.fillRect(ox + x * T, oy + y * T, f.w * T, f.h * T);
       ctx.globalAlpha = 0.75;
