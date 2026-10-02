@@ -3,7 +3,8 @@
 //
 // {
 //   schema: 3, room: 'rent3',
-//   size: 's' | 'm' | 'l',                               // lo que se arrienda (catalog.sizes)
+//   size: 's' | 'm' | 'l' | 'xl',                        // lo que se arrienda (catalog.sizes)
+//   slot: n,                                              // dónde empieza en la planta libre (m desde la izquierda)
 //   identity: { name, tagline, primary, accent },        // letrero y colores de marca
 //   surfaces: { floor, floorColor, walls, wallColor },   // patrón del catálogo + color libre
 //   mode: 'day' | 'night',
@@ -22,6 +23,7 @@
     schema: SCHEMA,
     room: roomId,
     size: 's',
+    slot: null,
     identity: { name: '', tagline: '', primary: '#1d1f24', accent: '#ffc367' },
     surfaces: { floor: 'plain', floorColor: '#f1f1f3', walls: 'plain', wallColor: '#f7f7f9' },
     mode: 'day',
@@ -131,6 +133,14 @@
     const z = cat.sizeOf(doc.size);
     return { x0: 0, w: z.w, h: z.h, size: z };
   }
+  // Dónde puede ir la oficina en la planta libre según las normas del piso (world.floor),
+  // como metros desde el extremo izquierdo. Si se pide un lugar que no cumple, el más cercano.
+  const slots = (doc) => world.floor.starts(area(doc).w).map((x) => x - world.floor.STRIP.x);
+  function fitSlot(doc, want) {
+    const ok = slots(doc);
+    if (want == null || !isFinite(want)) return ok[ok.length - 1];
+    return ok.reduce((best, s) => (Math.abs(s - want) <= Math.abs(best - want) ? s : best), ok[0]);
+  }
   const entriesOf = (a) => [{ x: Math.floor(a.w / 2) - 1, y: a.h - 1 }, { x: Math.floor(a.w / 2), y: a.h - 1 }];
   const limits = (doc) => {
     const z = cat.sizeOf(doc.size);
@@ -208,6 +218,7 @@
     const doc = empty(roomId);
     if (!raw || typeof raw !== 'object') return doc;
     doc.size = cat.sizes.some((z) => z.id === raw.size && !z.soon) ? raw.size : 'l'; // sin tamaño = toda la sala
+    doc.slot = fitSlot(doc, raw.slot == null ? null : Number(raw.slot));
     const lim = limits(doc);
     const id = raw.identity || {};
     doc.identity = {
@@ -275,7 +286,7 @@
     }
 
     room.custom = doc;
-    world.setOffice(roomId, area(doc).w);
+    world.setOffice(roomId, area(doc).w, world.floor.STRIP.x + fitSlot(doc, doc.slot));
     const name = doc.identity.name || TGL.t(room._orig.name);
     room.name = { es: name, en: name };
     room.blurb = doc.identity.tagline ? { es: doc.identity.tagline, en: doc.identity.tagline } : room._orig.blurb;
@@ -345,7 +356,7 @@
     return n;
   }
 
-  TGL.space = { SCHEMA, empty, templates, sanitize, canPlace, footprint, apply, load, save, clear, proUsage, area, limits, sizesFor, entriesOf };
+  TGL.space = { SCHEMA, slots, fitSlot, empty, templates, sanitize, canPlace, footprint, apply, load, save, clear, proUsage, area, limits, sizesFor, entriesOf };
 
   // Al cargar la página, la oficina que alguien guardó en este navegador aparece en el edificio.
   for (const room of TGL.rooms.filter((q) => q.rent)) {

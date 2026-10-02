@@ -15,6 +15,14 @@
       priceNote: 'Precios de ejemplo: US$ {p} por m² al mes. Lo PRO son extras opcionales.',
       reset: '↺ Empezar de cero', resetConfirm: '¿Borrar todo y empezar de cero? Se pierde lo guardado en este navegador y no se puede deshacer.',
       resetDone: 'Listo: oficina en blanco. Empieza eligiendo el tamaño.',
+      where: 'Ubicación en el piso', whereHint: 'Toca el plano o usa las flechas. Solo aparecen los lugares que cumplen las normas.',
+      slotAt: 'Empieza a {m} m del extremo izquierdo', legendOffice: 'Tu oficina', legendHall: 'Pasillo (del edificio)', legendFree: 'Planta libre',
+      rulesTitle: 'Normas del piso',
+      rules: ['Los pasillos son del edificio: no se venden ni se cierran.',
+        'Toda oficina tiene su puerta sobre el pasillo principal.',
+        'Entre una oficina y el espacio libre siempre queda un pasillo de 2 m que cruza la fila: así se puede construir otra oficina al lado (o arriba y abajo, en pisos más grandes) y llegar a ella.',
+        'Al lado de una oficina quedan 0 m o al menos 8 m libres (una oficina S): no quedan retazos.',
+        'Una oficina mide como máximo 24 m de ancho. Para más espacio: otra oficina o el piso completo.'],
       shrinkConfirm: '{n} cosas quedan fuera del nuevo tamaño y se quitarán. ¿Seguir?', sizeChanged: 'Ahora tu oficina mide {m} m²',
       undo: 'Deshacer', redo: 'Rehacer', try: 'Probar', save: 'Guardar', saved: 'Guardado', unsaved: 'Cambios sin guardar',
       more: 'Más opciones', export: 'Exportar JSON', import: 'Importar JSON', clearRoom: 'Vaciar oficina',
@@ -54,6 +62,14 @@
       priceNote: 'Example prices: US$ {p} per m² per month. PRO items are optional extras.',
       reset: '↺ Start over', resetConfirm: 'Delete everything and start over? What is saved in this browser is lost and cannot be undone.',
       resetDone: 'Done: blank office. Start by choosing the size.',
+      where: 'Location on the floor', whereHint: 'Tap the plan or use the arrows. Only spots that follow the floor rules are offered.',
+      slotAt: 'Starts {m} m from the left end', legendOffice: 'Your office', legendHall: 'Hallway (building)', legendFree: 'Open floor',
+      rulesTitle: 'Floor rules',
+      rules: ['Hallways belong to the building: they are never sold or closed.',
+        'Every office has its door on the main hallway.',
+        'Between an office and free space there is always a 2 m hallway across the row, so another office can be built next to it (or above and below, on bigger floors) and reached.',
+        'Next to an office there are either 0 m or at least 8 m free (an S office): no useless leftovers.',
+        'An office is at most 24 m wide. For more space: another office or the whole floor.'],
       shrinkConfirm: '{n} things fall outside the new size and will be removed. Continue?', sizeChanged: 'Your office is now {m} m²',
       undo: 'Undo', redo: 'Redo', try: 'Try it', save: 'Save', saved: 'Saved', unsaved: 'Unsaved changes',
       more: 'More options', export: 'Export JSON', import: 'Import JSON', clearRoom: 'Empty the office',
@@ -139,13 +155,15 @@
   // ————————————————————————————————— Abrir y cerrar
   // Si el tamaño de la oficina cambia, sus muros se mueven y la cámara se reacomoda.
   let lastW = -1;
-  const refocus = () => { if (isOpen && !previewing && room.w !== lastW) requestAnimationFrame(focusRoom); };
+  let lastX = -1;
+  const refocus = () => { if (isOpen && !previewing && (room.w !== lastW || room.x !== lastX)) requestAnimationFrame(focusRoom); };
   const isMobile = () => window.matchMedia('(max-width: 700px)').matches;
   function focusRoom() {
     const mobile = isMobile();
     // La oficina y un poco de la planta libre de al lado, para ver cuánto espacio ocupa.
     const w = Math.max(room.w + 4, 20);
     lastW = room.w;
+    lastX = room.x;
     game.setFocus({
       x: room.x + room.w + 1 - w, y: room.y - 2, w, h: room.h + 2,
       padR: mobile ? 0 : panel.offsetWidth + 24,
@@ -425,7 +443,34 @@
           <b>${z.soon ? esc(tr('soon')) : ok ? money(z.price) + esc(tr('perMonth')) : esc(tr('notHere'))}</b>
         </button>`;
       }).join('')}</div>
-      <p class="ed-note">${esc(fill('priceNote', { p: cat.pricePerM2.toFixed(2) }))}</p>`;
+      <p class="ed-note">${esc(fill('priceNote', { p: cat.pricePerM2.toFixed(2) }))}</p>
+      ${renderWhere()}
+      <details class="ed-rules"><summary>${esc(tr('rulesTitle'))}</summary><ol>${tr('rules').map((r) => `<li>${esc(r)}</li>`).join('')}</ol></details>`;
+  }
+
+  // Plano de la planta libre: dónde queda la oficina, sus pasillos y lo que sigue libre.
+  function renderWhere() {
+    const F = world.floor, S = F.STRIP, z = cat.sizeOf(doc.size);
+    const ok = space.slots(doc), cur = space.fitSlot(doc, doc.slot), i = ok.indexOf(cur);
+    const plan = F.plan(z.w, S.x + cur);
+    const r = (x, y, w, h, c, extra) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${c}"${extra || ''}/>`;
+    let svg = r(0, 0, S.x + S.w + 1, 13, '#2f2925') + r(S.x, 10, S.w, 3, '#a8a295');
+    for (const [a, b] of plan.free) svg += r(a, 1, b - a + 1, 8, '#cdc9c0');
+    for (const hx of plan.halls) svg += r(hx, 1, F.RULES.hall, 9, '#a8a295');
+    svg += r(plan.a, 1, z.w, 8, '#ffc367', ' stroke="#8a5a1a" stroke-width="0.3"');
+    svg += r(plan.a + Math.floor(z.w / 2) - 1, 9, 2, 1, '#ffc367');
+    return `
+      <h3 class="ed-h">${esc(tr('where'))}</h3>
+      <div class="ed-where">
+        <svg viewBox="0 0 ${S.x + S.w + 1} 13" data-act="slotmap" role="img" aria-label="${esc(tr('where'))}">${svg}</svg>
+        <div class="ed-row ed-where-row">
+          <button type="button" class="ed-icon" data-act="slot" data-v="-1" ${i <= 0 ? 'disabled' : ''} aria-label="◀">◀</button>
+          <span>${esc(fill('slotAt', { m: cur }))}</span>
+          <button type="button" class="ed-icon" data-act="slot" data-v="1" ${i >= ok.length - 1 ? 'disabled' : ''} aria-label="▶">▶</button>
+        </div>
+        <div class="ed-legend"><span><i style="--c:#ffc367"></i>${esc(tr('legendOffice'))}</span><span><i style="--c:#a8a295"></i>${esc(tr('legendHall'))}</span><span><i style="--c:#cdc9c0"></i>${esc(tr('legendFree'))}</span></div>
+        <p class="ed-hint">${esc(tr('whereHint'))}</p>
+      </div>`;
   }
 
   function renderItems() {
@@ -587,6 +632,23 @@
       }
       case 'variant': sel.variant = v; return commit();
       case 'size': return setSize(v);
+      case 'slot': {
+        // de a un módulo (4 m), o hasta el siguiente lugar permitido
+        const ok = space.slots(doc), cur = space.fitSlot(doc, doc.slot), dir = Number(v);
+        const next = dir > 0 ? ok.find((x) => x >= cur + 4) ?? ok.find((x) => x > cur) : [...ok].reverse().find((x) => x <= cur - 4) ?? [...ok].reverse().find((x) => x < cur);
+        if (next == null) return;
+        doc.slot = next;
+        return commit();
+      }
+      case 'slotmap': {
+        const box = el.getBoundingClientRect(), F = world.floor;
+        const tile = ((e.clientX - box.left) / box.width) * (F.STRIP.x + F.STRIP.w + 1);
+        const want = Math.round(tile - F.STRIP.x - cat.sizeOf(doc.size).w / 2);
+        const next = space.fitSlot(doc, want);
+        if (next === space.fitSlot(doc, doc.slot)) return;
+        doc.slot = next;
+        return commit();
+      }
       case 'setcolor': setColor(el.dataset.path, v); return commit();
       case 'addinfo': return addInfo();
       case 'move': tool = { kind: 'move', ref: sel }; return render();
@@ -598,7 +660,7 @@
       case 'remove': doc.items.splice(selected.index, 1); selected = null; return commit();
       case 'template': {
         if (!confirm(tr('templateConfirm'))) return;
-        doc = space.sanitize(space.templates.find((t) => t.id === v).doc, ROOM);
+        doc = space.sanitize(Object.assign({}, space.templates.find((t) => t.id === v).doc, { slot: doc.slot }), ROOM); // se queda donde estaba
         selected = tool = null;
         return commit();
       }
@@ -635,10 +697,13 @@
   // Cambiar de tamaño: lo que quede fuera (o pase el límite) se quita, avisando antes.
   function setSize(id) {
     if (id === doc.size) return;
-    const next = space.sanitize(Object.assign(cleanDoc(), { size: id }), ROOM);
+    // Se mantiene el borde derecho de la oficina (si las normas lo permiten).
+    const keepRight = space.fitSlot(doc, doc.slot) + cat.sizeOf(doc.size).w - cat.sizeOf(id).w;
+    const next = space.sanitize(Object.assign(cleanDoc(), { size: id, slot: keepRight }), ROOM);
     const lost = doc.items.length + doc.residents.length - next.items.length - next.residents.length;
     if (lost > 0 && !confirm(fill('shrinkConfirm', { n: lost }))) return;
     doc.size = id;
+    doc.slot = next.slot;
     doc.items = next.items;
     doc.residents = next.residents;
     selected = tool = null;

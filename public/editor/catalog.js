@@ -140,6 +140,8 @@
       note: N('Equipo con sala de reuniones.', 'A team with a meeting area.') },
     { id: 'l', name: N('Oficina L', 'Office L'), w: 16, h: 8, modules: 4, items: 32, residents: 5,
       note: N('Oficina completa con zona de descanso.', 'A full office with a lounge area.') },
+    { id: 'xl', name: N('Oficina XL', 'Office XL'), w: 24, h: 8, modules: 6, items: 48, residents: 7,
+      note: N('El ancho máximo de una oficina: así siempre hay un pasillo a menos de 24 m.', 'The widest an office can be: so there is always a hallway within 24 m.') },
     { id: 'floor', name: N('Piso completo', 'Whole floor'), w: 48, h: 16, modules: 24, soon: true, items: 300, residents: 30,
       note: N('Sede propia: un piso entero con varias salas, ascensor y letrero en el lobby.',
         'Your own HQ: a whole floor with several rooms, elevator stop and a sign in the lobby.') },

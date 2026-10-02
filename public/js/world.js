@@ -630,7 +630,8 @@
       ctx.fillText(TGL.t(RENT_TEXT), cx, cy);
       ctx.font = '8px Silkscreen, monospace';
       ctx.fillStyle = q.open ? '#a39e93' : '#b3b3bb';
-      ctx.fillText(q.w * q.h + ' m²  ·  ' + (q.open ? TGL.t(OPEN_TEXT) : q.office), cx, cy + 16);
+      const m2 = rectsOf(q).reduce((n, rr) => n + rr[2] * rr[3], 0);
+      ctx.fillText(m2 + ' m²  ·  ' + (q.open ? TGL.t(OPEN_TEXT) : q.office), cx, cy + 16);
     }
   }
   const OPEN_TEXT = { es: 'planta libre · módulos de 4 × 8 m', en: 'open floor · 4 × 8 m modules' };
@@ -770,48 +771,99 @@
     }
   }
 
-  // ————————————————————————————————— Planta libre: construir la oficina del tamaño arrendado
-  // La oficina va pegada al extremo derecho del piso, con su puerta centrada hacia el pasillo;
-  // lo demás queda como planta libre, con sus propias puertas. w = 0: no hay oficina.
+  // ————————————————————————————————— Planta libre: normas del piso
+  // Los pasillos son del edificio: no se venden ni se cierran. Para que siempre se pueda
+  // construir otra oficina al lado (o en filas de arriba y abajo en pisos más grandes) y
+  // llegar a ella, toda oficina que no esté contra el muro del edificio deja a ese lado un
+  // pasillo de 2 m que atraviesa la fila y desemboca en el pasillo principal. Lo que queda
+  // libre al lado mide 0 o al menos una oficina S: no quedan retazos inservibles.
+  const RULES = { hall: 2, minFree: 8, maxWidth: 24 };
   const OPEN_DOORS = [5, 22, 42];
-  function setOffice(id, w) {
+
+  // Cómo queda la fila con una oficina de ancho w que empieza en a (o null si rompe las normas).
+  function stripPlan(w, a) {
+    const L = STRIP.x, R = STRIP.x + STRIP.w - 1, b = a + w - 1;
+    if (!w) return { free: [[L, R]], halls: [], walls: [] };
+    if (w > RULES.maxWidth || a < L || b > R) return null;
+    const plan = { a, b, free: [], halls: [], walls: [] };
+    if (a > L) {
+      const freeEnd = a - 2 - RULES.hall; // muro en a-1, pasillo antes
+      if (freeEnd - L + 1 < RULES.minFree) return null;
+      plan.walls.push(a - 1);
+      plan.halls.push(a - 1 - RULES.hall);
+      plan.free.push([L, freeEnd]);
+    }
+    if (b < R) {
+      const freeStart = b + 2 + RULES.hall;
+      if (R - freeStart + 1 < RULES.minFree) return null;
+      plan.walls.push(b + 1);
+      plan.halls.push(b + 2);
+      plan.free.push([freeStart, R]);
+    }
+    return plan;
+  }
+  // Dónde puede empezar una oficina de ancho w (x absoluta de su primera columna).
+  function officeStarts(w) {
+    const out = [];
+    for (let a = STRIP.x; a + w - 1 <= STRIP.x + STRIP.w - 1; a++) if (stripPlan(w, a)) out.push(a);
+    return out;
+  }
+
+  // Construye la fila: oficina (si w > 0) con sus muros, pasillos laterales y planta libre.
+  const BASE_HALLS = room('hall').rects.slice();
+  function setOffice(id, w, a) {
     if (!OPEN) return;
-    const off = room(id), open = room('open');
+    const starts = officeStarts(w);
+    if (w && !starts.includes(a)) a = starts[starts.length - 1];
+    const plan = stripPlan(w, a);
+    const off = room(id), open = room('open'), hall = room('hall');
     off.w = w;
-    off.x = STRIP.x + STRIP.w - w;
-    open.w = w ? off.x - 1 - STRIP.x : STRIP.w;
+    off.x = w ? a : STRIP.x + STRIP.w;
+    const Y0 = STRIP.y, Y1 = STRIP.y + STRIP.h; // filas de la oficina: Y0..Y1-1; muro inferior Y1..Y1+2
     for (let x = STRIP.x; x < STRIP.x + STRIP.w; x++) {
       set(x, 0, TOP); set(x, 1, FACE); set(x, 2, FACE);
-      for (let y = STRIP.y; y < STRIP.y + STRIP.h; y++) set(x, y, x >= off.x ? FLOOR.rent : FLOOR.open);
-      set(x, 11, TOP); set(x, 12, FACE); set(x, 13, FACE);
+      for (let y = Y0; y < Y1; y++) set(x, y, w && x >= a && x <= plan.b ? FLOOR.rent : FLOOR.open);
+      set(x, Y1, TOP); set(x, Y1 + 1, FACE); set(x, Y1 + 2, FACE);
     }
-    if (w) for (let y = 0; y < STRIP.y + STRIP.h; y++) set(off.x - 1, y, TOP); // muro divisorio
+    for (const wx of plan.walls) for (let y = 0; y < Y1; y++) set(wx, y, TOP);
+    for (const hx of plan.halls)
+      for (let x = hx; x < hx + RULES.hall; x++) for (let y = Y0; y < Y1 + 3; y++) set(x, y, FLOOR.hall);
+    hall.rects = BASE_HALLS.concat(plan.halls.map((hx) => [hx, Y0, RULES.hall, STRIP.h + 3]));
+    open.rects = plan.free.map(([s0, s1]) => [s0, Y0, s1 - s0 + 1, STRIP.h]);
+    const big = open.rects.slice().sort((p, q) => q[2] - p[2])[0] || [STRIP.x, Y0, 0, STRIP.h];
+    [open.x, open.y, open.w, open.h] = big;
 
+    // Puertas: la de la oficina, centrada; las de la planta libre donde quepan.
     DOORS = DOORS.filter((d) => !d.strip);
     const strip = [];
-    if (w) strip.push({ k: 'h', x: off.x + Math.floor(w / 2) - 1, y: 11, w: 2, from: id, to: 'hall', strip: true });
-    for (const dx of OPEN_DOORS) if (dx + 2 <= STRIP.x + open.w) strip.push({ k: 'h', x: dx, y: 11, w: 2, from: 'open', to: 'hall', strip: true });
+    if (w) strip.push({ k: 'h', x: a + Math.floor(w / 2) - 1, y: Y1, w: 2, from: id, to: 'hall', strip: true });
+    for (const dx of OPEN_DOORS)
+      if (plan.free.some(([s0, s1]) => dx >= s0 && dx + 1 <= s1)) strip.push({ k: 'h', x: dx, y: Y1, w: 2, from: 'open', to: 'hall', strip: true });
     strip.forEach(openDoor);
     DOORS.push(...strip);
 
-    // Ventanas, letreros y cuadros de este piso.
+    // Ventanas, letreros y cuadros, sin tapar puertas ni pasillos.
     for (let i = decor.length - 1; i >= 0; i--) if (decor[i].strip) decor.splice(i, 1);
     const add = (d) => decor.push(Object.assign(d, { strip: true }));
-    const openEnd = STRIP.x + open.w;
-    const plateX = STRIP.x + Math.floor(open.w / 2) - 3;
-    for (let gx = STRIP.x; gx + 4 <= openEnd; gx += 6) if (gx + 4 <= plateX || gx >= plateX + 6) add({ k: 'glass', x: gx, y: 1, w: 4 });
-    if (open.w >= 8) add({ k: 'plate', x: plateX, y: 1, w: 6, text: RENT_TEXT, bg: '#1d1f24', fg: '#ffc367' });
-    add({ k: 'painting', x: 9, y: 12, w: 2 });
-    add({ k: 'painting', x: 27, y: 12, w: 2 });
+    const gaps = strip.map((d) => [d.x, d.x + 1]).concat(plan.halls.map((hx) => [hx, hx + RULES.hall - 1]));
+    const clear = (x, dw) => !gaps.some(([g0, g1]) => x <= g1 + 1 && x + dw - 1 >= g0 - 1) && x >= STRIP.x && x + dw - 1 <= STRIP.x + STRIP.w - 1;
+    for (const [s0, s1] of plan.free) {
+      const len = s1 - s0 + 1, plateX = s0 + Math.floor(len / 2) - 3;
+      const plate = len >= 10;
+      if (plate) add({ k: 'plate', x: plateX, y: 1, w: 6, text: RENT_TEXT, bg: '#1d1f24', fg: '#ffc367' });
+      for (let gx = s0; gx + 3 <= s1; gx += 6) if (!plate || gx + 4 <= plateX || gx >= plateX + 6) add({ k: 'glass', x: gx, y: 1, w: 4 });
+    }
+    for (const px of [9, 27]) if (clear(px, 2)) add({ k: 'painting', x: px, y: Y1 + 1, w: 2 });
     if (w) {
       const side = Math.floor((w - 6) / 2);
-      add({ k: 'plate', room: id, x: off.x + side, y: 1, w: 6, text: RENT_TEXT, bg: '#1d1f24', fg: '#ffc367' });
+      add({ k: 'plate', room: id, x: a + side, y: 1, w: 6, text: RENT_TEXT, bg: '#1d1f24', fg: '#ffc367' });
       if (side >= 2) {
-        add({ k: 'glass', x: off.x, y: 1, w: Math.min(4, side) });
-        add({ k: 'glass', x: off.x + w - Math.min(4, side), y: 1, w: Math.min(4, side) });
+        add({ k: 'glass', x: a, y: 1, w: Math.min(4, side) });
+        add({ k: 'glass', x: a + w - Math.min(4, side), y: 1, w: Math.min(4, side) });
       }
       const door = strip[0];
-      add({ k: 'sign', x: Math.min(door.x + 2, STRIP.x + STRIP.w - 3), y: 12, w: 3, text: off.office, fg: '#ffc367' });
+      const sx = [door.x + 3, door.x - 4].find((x) => clear(x, 3));
+      if (sx != null) add({ k: 'sign', x: sx, y: Y1 + 1, w: 3, text: off.office, fg: '#ffc367' });
     }
 
     for (let i = 0; i < W * H; i++) solid[i] = isBlocked(grid[i]) ? 1 : 0;
@@ -821,7 +873,9 @@
 
   TGL.world = {
     W, H, grid, solid, objects, links, breakSpots, roomAt, drawWallAnims, drawOverlay, renderStatic,
-    T, room, refreshSolids, furnishRent, FLOOR_STYLES, WALL_STYLES, setOffice, OPEN,
+    T, room, refreshSolids, furnishRent, FLOOR_STYLES, WALL_STYLES, OPEN,
+    // Planta libre: normas, dónde cabe una oficina y construirla.
+    floor: { STRIP, RULES, plan: stripPlan, starts: officeStarts }, setOffice,
     // Para el editor: sacar y agregar objetos de una sala, y las casillas frente a sus puertas.
     removeTagged(tag) {
       for (let i = objects.length - 1; i >= 0; i--) if (objects[i].tag === tag) objects.splice(i, 1);

@@ -51,7 +51,7 @@ Qué incluye, pensado para que escale a un producto:
 - **El espacio es un documento JSON** con versión de esquema (`editor/space.js`): identidad,
   superficies, ambiente, objetos, personas y contenido. Es lo que guardaría el servidor.
 - **Lo que se vende es espacio** (`catalog.sizes`): 1 casilla = 1 m²; oficinas de módulos
-  de 4 × 8 m. Puesto en coworking (4 m², próximamente), S 64 m², M 96 m², L 128 m² y piso
+  de 4 × 8 m. Puesto en coworking (4 m², próximamente), S 64 m², M 96 m², L 128 m², XL 192 m² y piso
   completo (768 m², próximamente). El tamaño define cuántas personas y objetos caben.
   Precio de ejemplo: US$ 0,25 por m² al mes.
 - **Planta libre**: con el editor encendido, el piso de arriba ya no tiene las oficinas
@@ -59,6 +59,11 @@ Qué incluye, pensado para que escale a un producto:
   construye ahí con sus muros y su puerta, del tamaño exacto que se arrienda
   (`world.setOffice`); lo que sobra sigue siendo planta libre. Sin el editor, el piso se ve
   como antes.
+- **Normas del piso** (`world.floor`): los pasillos son del edificio y no se venden; toda
+  oficina tiene la puerta sobre el pasillo principal; entre una oficina y el espacio libre
+  queda siempre un pasillo de 2 m que cruza la fila; al lado de una oficina quedan 0 m o al
+  menos 8 m libres (sin retazos); ancho máximo 24 m (Oficina XL). El editor solo ofrece
+  ubicaciones que cumplen estas normas (`doc.slot`).
 - **Catálogo** (`editor/catalog.js`): objetos con tamaño, categoría, versiones y
   nivel `free` / `pro`; patrones de piso y pared; ambientes; límites del plan
   (30 objetos, 3 personas, 4 links). El editor muestra cuánto PRO usa cada espacio.

@@ -305,6 +305,15 @@ input[type=color] { width: 32px; height: 28px; padding: 0; border: 1px solid #d6
 .ed-size b { font-size: 12px; white-space: nowrap; }
 .ed-size.soon b, .ed-size:disabled b { font-family: Silkscreen, monospace; font-weight: 400; font-size: 9px; color: #6a4c93; }
 .ed-plan { margin: 0; font-size: 12px; }
+.ed-where { display: grid; gap: 6px; }
+.ed-where svg { width: 100%; height: auto; border-radius: 6px; cursor: pointer; display: block; }
+.ed-where-row { flex-wrap: nowrap; font-size: 12px; font-weight: 600; }
+.ed-where-row span { flex: 1; text-align: center; }
+.ed-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 11px; color: #6b6f78; }
+.ed-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: var(--c); margin-right: 4px; vertical-align: -1px; }
+.ed-rules { border: 1px solid #e3ded3; background: #fff; border-radius: 10px; padding: 8px 10px; font-size: 12px; }
+.ed-rules summary { cursor: pointer; font-weight: 700; }
+.ed-rules ol { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 5px; color: #3a3d45; line-height: 1.4; }
 
 .ed-foot { border-top: 1px solid #e3ded3; padding: 10px 14px 12px; display: grid; gap: 6px; background: #f1ede5; }
 .ed-cap { display: grid; grid-template-columns: 110px 1fr; align-items: center; gap: 8px; font-size: 11px; font-weight: 700; }
