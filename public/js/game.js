@@ -994,6 +994,14 @@
   }
   TGL.game = {
     worldFromEvent: (e) => worldFromEvent(e),
+    // Dónde está el jugador (casilla) y llevarlo a una casilla (el editor lo usa para "Ir").
+    playerTile: () => ({ x: Math.floor(player.px / T), y: Math.floor((player.py - 4) / T) }),
+    teleport(tx, ty, dir) {
+      player.px = tx * T + 8;
+      player.py = ty * T + 12;
+      player.path = null;
+      if (dir) player.dir = dir;
+    },
     setFrozen(v) {
       frozen = v;
       player.path = null;

@@ -1,6 +1,7 @@
 // Un "espacio" es el documento que describe lo que alguien arrienda: una oficina o un puesto
 // en el coworking. Es solo datos (JSON): lo que hoy se guarda en este navegador es exactamente
-// lo que mañana guardaría el servidor. Cada persona arrienda un espacio.
+// lo que mañana guardaría el servidor. Una cuenta puede arrendar varios; cada uno se
+// personaliza por separado, estando en él.
 //
 // {
 //   schema: 4, id, kind: 'office' | 'desk',
@@ -402,7 +403,7 @@
   }
 
   // ————————————————————————————————— Guardado local (por ahora)
-  // El espacio de este navegador (lista de 0 o 1), ya validado y ubicado.
+  // Los espacios de este navegador, ya validados y ubicados.
   function load() {
     let raw = null;
     try {
@@ -411,7 +412,7 @@
     } catch (e) {
       raw = null;
     }
-    const list = raw && Array.isArray(raw.spaces) ? raw.spaces.slice(0, 1).map(sanitize) : [];
+    const list = raw && Array.isArray(raw.spaces) ? raw.spaces.map(sanitize) : [];
     return settle(list);
   }
   // Devuelve true solo si quedó escrito (se relee para comprobarlo).

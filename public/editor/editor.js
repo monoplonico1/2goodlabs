@@ -8,7 +8,10 @@
 
   const L = {
     es: {
-      open: 'Mi espacio', create: 'Arrendar un espacio',
+      open: 'Mi espacio', create: 'Arrendar un espacio', customizeHere: 'Personalizar {n}',
+      mySpacesN: 'Mis espacios · {n}', go: 'Ir', account: 'Tu cuenta', emailLabel: 'Correo de tu cuenta',
+      emailHint: 'Todos tus espacios quedan bajo este correo. Por ahora se guarda solo en este navegador.',
+      badEmail: 'Ese correo no parece válido.', customizeTip: 'Para personalizar un espacio, entra en él: aparece el botón "Personalizar".',
       officeSize: 'Oficina {s}', brandColors: 'Colores de tu marca', wStep: 'Paso {n} de {t}', next: 'Siguiente →', prev: '← Atrás', finish: 'Terminar',
       w1Title: '¿Qué quieres arrendar?', w1Hint: 'Puedes cambiarlo después.',
       deskCard: 'Un puesto en el coworking', deskCardNote: 'Un escritorio fijo en la sala compartida: tu avatar, un agente y tu tarjeta con links.',
@@ -83,7 +86,10 @@
       saveError: 'No se pudo guardar: este navegador no permite guardar datos (¿modo privado?).',
     },
     en: {
-      open: 'My space', create: 'Rent a space',
+      open: 'My space', create: 'Rent a space', customizeHere: 'Customize {n}',
+      mySpacesN: 'My spaces · {n}', go: 'Go', account: 'Your account', emailLabel: 'Your account email',
+      emailHint: 'All your spaces live under this email. For now it is saved only in this browser.',
+      badEmail: 'That email does not look valid.', customizeTip: 'To customize a space, walk into it: a "Customize" button shows up.',
       officeSize: 'Office {s}', brandColors: 'Your brand colors', wStep: 'Step {n} of {t}', next: 'Next →', prev: '← Back', finish: 'Finish',
       w1Title: 'What do you want to rent?', w1Hint: 'You can change it later.',
       deskCard: 'A coworking desk', deskCardNote: 'A fixed desk in the shared room: your avatar, one agent and your card with links.',
@@ -187,6 +193,22 @@
   btn.className = 'panel ed-open';
   document.body.appendChild(btn);
 
+  // Personalizar el espacio en el que estoy, y la lista de mis espacios (con "Ir").
+  const here = document.createElement('button');
+  here.type = 'button';
+  here.className = 'panel ed-here';
+  here.hidden = true;
+  document.body.appendChild(here);
+  const mineBtn = document.createElement('button');
+  mineBtn.type = 'button';
+  mineBtn.className = 'panel ed-mine-btn';
+  mineBtn.hidden = true;
+  document.body.appendChild(mineBtn);
+  const minePanel = document.createElement('div');
+  minePanel.className = 'panel ed-mine';
+  minePanel.hidden = true;
+  document.body.appendChild(minePanel);
+
   const panel = document.createElement('aside');
   panel.id = 'editor';
   panel.className = 'ed-panel';
@@ -206,10 +228,76 @@
   document.body.appendChild(fileInput);
 
   function labelButtons() {
-    btn.innerHTML = '✎ ' + esc(tr(saved.length ? 'open' : 'create')) + ' <span class="ed-badge">' + tr('beta') + '</span>';
+    btn.innerHTML = '+ ' + esc(tr('create')) + ' <span class="ed-badge">' + tr('beta') + '</span>';
+    mineBtn.textContent = fill('mySpacesN', { n: saved.length });
+    mineBtn.hidden = isOpen || !saved.length;
+    if (!saved.length) minePanel.hidden = true;
     backPill.textContent = tr('back');
+    updateHere();
   }
-  labelButtons();
+
+  // ————————————————————————————————— Dónde estoy
+  // Se personaliza solo el espacio en el que está el jugador: su oficina o junto a su puesto.
+  const account = (() => { try { return JSON.parse(localStorage.getItem('tgl-account') || '{}'); } catch (e) { return {}; } })();
+  const isEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v || '');
+  function spaceAtPlayer() {
+    const p = game.playerTile(), q = world.roomAt(p.x, p.y);
+    const office = q && saved.find((d) => d.kind === 'office' && d.id === q.id);
+    if (office) return office;
+    const cw = world.room('cowork');
+    return saved.find((d) => {
+      if (d.kind !== 'desk') return false;
+      const k = zone.DESKS[d.desk], dx = cw.x + k.x, dy = cw.y + k.y;
+      return p.x >= dx - 1 && p.x <= dx + 2 && p.y >= dy && p.y <= dy + 2;
+    }) || null;
+  }
+  let hereId = null;
+  function updateHere() {
+    const d = isOpen ? null : spaceAtPlayer();
+    const id = d ? d.id : null;
+    here.hidden = !d;
+    if (d && (id !== hereId || here.dataset.lang !== TGL.lang)) here.innerHTML = '✎ ' + esc(fill('customizeHere', { n: spaceName(d) }));
+    here.dataset.lang = TGL.lang;
+    hereId = id;
+  }
+  setInterval(updateHere, 250);
+  here.addEventListener('click', () => {
+    const d = spaceAtPlayer();
+    if (!d) return;
+    openPanel();
+    editSpace(d);
+  });
+
+  // Ir a un espacio: el jugador aparece en la entrada, por dentro.
+  function goTo(d) {
+    if (d.kind === 'desk') {
+      const cw = world.room('cowork'), k = zone.DESKS[d.desk];
+      game.teleport(cw.x + k.x, cw.y + k.y + 2, 'up');
+    } else {
+      const q = world.room(d.id);
+      game.teleport(q.x + Math.floor(q.w / 2) - 1, q.y + q.h - 1, 'up');
+    }
+    game.setFocus(null);
+    updateHere();
+  }
+  function renderMine() {
+    const total = saved.reduce((n, d) => n + space.price(d), 0);
+    minePanel.innerHTML = `
+      <div class="ed-mine-head"><strong>${esc(tr('mySpaces'))}</strong><small>${esc(fill('total', { n: saved.length, p: money(total) }))}</small></div>
+      ${saved.map((d) => `<div class="ed-mine-row"><i style="--c:${d.identity.primary}"></i><span><strong>${esc(spaceName(d))}</strong><small>${esc(d.kind === 'desk' ? 'Coworking · ' + fill('deskN', { n: d.desk + 1 }) : fill('officeN', { n: d.number }) + ' · ' + space.m2(d) + ' m²')}</small></span><button type="button" class="ed-btn" data-go="${d.id}">${esc(tr('go'))}</button></div>`).join('')}
+      <p class="ed-note">${esc(tr('customizeTip'))}</p>
+      ${account.email ? `<p class="ed-note">${esc(tr('account'))}: <strong>${esc(account.email)}</strong></p>` : ''}`;
+  }
+  mineBtn.addEventListener('click', () => {
+    minePanel.hidden = !minePanel.hidden;
+    if (!minePanel.hidden) renderMine();
+  });
+  minePanel.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-go]');
+    if (!b) return;
+    minePanel.hidden = true;
+    goTo(saved.find((d) => d.id === b.dataset.go));
+  });
 
   // ————————————————————————————————— Abrir y cerrar
   // Dos momentos: arrendar (un paso a paso: qué, tamaño, dónde, confirmar) y personalizar
@@ -218,7 +306,6 @@
   const others = () => saved.filter((d) => d.id !== doc.id);
   const othersAfterSave = () => saved.filter((d) => d.id !== doc.id && d.id !== upgradedFrom);
   const spaceName = (d) => d.identity.name || (d.kind === 'desk' ? fill('deskN', { n: d.desk + 1 }) : fill('officeN', { n: d.number }));
-  const mine = () => saved[0] || null;
 
   // Muestra en el edificio lo guardado o, mientras se arrienda o edita, el borrador.
   function show() {
@@ -253,14 +340,15 @@
     document.body.classList.add('editing');
     panel.hidden = false;
     btn.hidden = true;
+    minePanel.hidden = true;
+    labelButtons();
     game.setFrozen(true);
     game.overlays.add(drawOverlay);
   }
-  // El botón: si ya arriendo algo, lo personalizo; si no, empieza el paso a paso.
+  // El botón de arriba siempre es para arrendar un espacio nuevo.
   function openEditor() {
     openPanel();
-    if (mine()) editSpace(mine());
-    else startWizard('new');
+    startWizard('new');
   }
 
   function closeEditor(force) {
@@ -290,7 +378,7 @@
   function startWizard(mode) {
     view = 'wizard';
     tool = selected = drag = null;
-    const back = mode === 'new' ? null : clone(doc || mine());
+    const back = mode === 'new' ? null : clone(doc);
     wiz = { mode, kind: mode === 'upgrade' ? 'office' : back ? back.kind : null, back };
     wiz.step = mode === 'new' ? 'kind' : stepsOf()[0];
     doc = back ? clone(back) : null;
@@ -365,11 +453,20 @@
       const spot = spots.find((p) => !space.canPlace(next, { type: 'info' }, p.x, p.y));
       if (spot) next.items.push({ type: 'info', x: spot.x, y: spot.y });
     }
-    if (!space.save([next])) return flash(tr('saveError'), true);
-    saved = [next];
+    const email = panel.querySelector('[data-email]');
+    if (email && email.value && !isEmail(email.value)) return flash(tr('badEmail'), true);
+    if (email && email.value) {
+      account.email = email.value.trim();
+      try { localStorage.setItem('tgl-account', JSON.stringify(account)); } catch (e) { /* sin guardado */ }
+    }
+    const list = saved.filter((d) => d.id !== next.id && (!wiz.back || d.id !== wiz.back.id)).concat(next);
+    if (!space.save(list)) return flash(tr('saveError'), true);
+    saved = list;
     const isNew = wiz.mode === 'new';
     wiz = null;
     editSpace(next);
+    goTo(next); // se personaliza estando ahí
+    requestAnimationFrame(focusRoom);
     if (isNew) flash(tr('rented'));
   }
 
@@ -622,6 +719,7 @@
         ${row('sumWhere', desk ? 'Coworking · ' + fill('deskN', { n: doc.desk + 1 }) : fill('officeN', { n: doc.number }) + ' · ' + fill('rowLabel', { r: doc.row }))}
         ${row('sumPrice', fill('perMonthLong', { p: money(space.price(doc)) }))}
       </div>
+      ${wiz.mode === 'new' ? field(tr('emailLabel'), `<input type="email" data-email value="${esc(account.email || '')}" placeholder="tu@correo.com" autocomplete="email">`) + `<p class="ed-note">${esc(tr('emailHint'))}</p>` : ''}
       <p class="ed-hint">${esc(tr('w4Hint'))}</p>`;
   }
   function sizePlan(w) {
@@ -964,8 +1062,9 @@
         return resetSpace();
       case 'restore': {
         if (!confirm(tr('restoreConfirm'))) return;
-        if (!space.save([])) return flash(tr('saveError'), true);
-        saved = [];
+        const list = others();
+        if (!space.save(list)) return flash(tr('saveError'), true);
+        saved = list;
         doc = null;
         return closeEditor(true);
       }
@@ -1391,4 +1490,5 @@
     }
     ctx.restore();
   }
+  labelButtons();
 })();

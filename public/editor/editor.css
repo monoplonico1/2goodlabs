@@ -31,6 +31,55 @@
   z-index: 8;
 }
 
+/* Personalizar el espacio donde estoy; lista de mis espacios. */
+.ed-here {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--gap) + var(--safe-b, 0px) + 64px);
+  transform: translateX(-50%);
+  padding: 10px 16px;
+  font-weight: 800;
+  font-size: 14px;
+  background: #ffc367;
+  color: #1d1f24;
+  border-color: #1d1f24;
+  z-index: 7;
+  white-space: nowrap;
+  max-width: calc(100vw - 2 * var(--gap));
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ed-mine-btn {
+  position: fixed;
+  top: calc(var(--gap) + 96px);
+  right: var(--gap);
+  padding: 7px 12px;
+  font-weight: 700;
+  font-size: 12px;
+}
+.ed-mine {
+  position: fixed;
+  top: calc(var(--gap) + 134px);
+  right: var(--gap);
+  width: 300px;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+  background: #f7f5f0;
+  color: #1d1f24;
+  z-index: 8;
+}
+.ed-mine-head { display: grid; gap: 2px; }
+.ed-mine-head small { color: #6b6f78; font-size: 12px; }
+.ed-mine-row { display: grid; grid-template-columns: 12px 1fr auto; align-items: center; gap: 8px; padding: 8px; background: #fff; border: 1px solid #e3ded3; border-radius: 8px; }
+.ed-mine-row i { width: 12px; height: 12px; border-radius: 3px; background: var(--c); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2); }
+.ed-mine-row span { display: grid; min-width: 0; }
+.ed-mine-row strong { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ed-mine-row small { font-size: 11px; color: #6b6f78; }
+body.editing .ed-here, body.editing .ed-mine-btn, body.editing .ed-mine { display: none !important; }
+
 /* Mientras se edita, el resto de la interfaz del juego se esconde. */
 body.editing .status,
 body.editing .map-dock,
@@ -392,6 +441,9 @@ input[type=color] { width: 32px; height: 28px; padding: 0; border: 1px solid #d6
 /* En el celular el panel es una hoja inferior y la oficina queda arriba. */
 @media (max-width: 700px) {
   .ed-open { top: auto; bottom: calc(var(--gap) + var(--safe-b) + 54px); right: auto; left: var(--gap); }
+  .ed-mine-btn { top: auto; right: auto; bottom: calc(var(--gap) + var(--safe-b) + 96px); left: var(--gap); }
+  .ed-mine { top: auto; bottom: calc(var(--gap) + var(--safe-b) + 134px); right: auto; left: var(--gap); width: calc(100vw - 2 * var(--gap)); }
+  .ed-here { bottom: auto; top: calc(var(--gap) + 64px); }
   .ed-panel { top: auto; left: 0; right: 0; bottom: 0; width: auto; height: 52vh; border-radius: 14px 14px 0 0; }
   .ed-grid { grid-template-columns: repeat(4, 1fr); }
   .ed-back { top: auto; bottom: calc(var(--gap) + var(--safe-b)); }
