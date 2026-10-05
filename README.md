@@ -63,11 +63,10 @@ Qué incluye, pensado para que escale a un producto:
   (oficina o puesto), tamaño y lugar, identidad, superficies, ambiente, objetos, personas y
   contenido. Es lo que guardaría el servidor. Los guardados de versiones anteriores se migran.
 - **Zona de arriendo** (`world.zone`): con el editor encendido, el piso de arriba del
-  edificio (donde estaban las oficinas 101–103) es la zona de arriendo: el coworking a la
-  izquierda y dos tramos de planta libre entre los pasillos verticales, donde las oficinas se
-  construyen con muros, puerta, letrero y número (1xx). Hay un interruptor `GROW` en
-  `js/world.js` que hace crecer el edificio (una fila arriba con un pasillo en el medio y una
-  línea de tres filas a la izquierda con un corredor hasta el lobby); está apagado por ahora.
+  edificio (donde están las oficinas 101–103 para el público) es la zona de arriendo: el
+  coworking (15 m, 10 puestos) a la izquierda y planta libre corrida de 36 m, donde caben
+  oficinas S, M, L y XL. Ahí los pasillos verticales llegan solo hasta el pasillo
+  horizontal. Un pasillo recorre todo el lado izquierdo del edificio, de arriba al lobby.
 - **Lo que se vende es espacio**: 1 casilla = 1 m². Una oficina mide de 8 a 24 m de ancho
   por 8 de fondo (atajos S 8, M 12, L 16, XL 24) y en ella caben ⌈0,9 × ancho⌉ personas y
   2 × ancho objetos. Un puesto en el coworking (4 m²) es para una persona y un agente, y se

@@ -719,7 +719,9 @@
   function wizSize() {
     const fit = officeWidths();
     const presets = cat.sizes.filter((z) => !z.soon);
-    const widths = [...new Set(presets.map((z) => z.w).concat(fit))].sort((a, b) => a - b);
+    // anchos exactos solo si casi ningún tamaño de siempre cabe
+    const extra = presets.filter((z) => fit.includes(z.w)).length < 2 ? fit : [];
+    const widths = [...new Set(presets.map((z) => z.w).concat(extra))].sort((a, b) => a - b);
     return `
       <p class="ed-hint">${esc(tr('w2Hint'))}</p>
       ${widths.map((w) => {

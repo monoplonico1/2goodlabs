@@ -412,16 +412,21 @@
     } catch (e) {
       raw = null;
     }
-    // Las x se guardan con el corrimiento del edificio de ese momento (ox).
+    // Lo guardado con edificios anteriores se pasa al de ahora: primero se quita el corrimiento
+    // de cuando creció (ox) y después, si es de antes del pasillo izquierdo (geo < 2), cada x se
+    // corre como se corrieron las salas (el Board creció 4 y el pasillo suma 3) y los puestos
+    // del coworking pasan de 4 a 5 por fila.
     const savedOx = raw ? (raw.ox != null ? raw.ox : raw.schema >= 5 ? 24 : 0) : 0;
-    const shift = zone.OX - savedOx;
-    const list = raw && Array.isArray(raw.spaces) ? raw.spaces.map((d) => sanitize(shift && Number.isFinite(d.x) ? Object.assign({}, d, { x: d.x + shift }) : d)) : [];
+    const old = !raw || !(raw.geo >= 2);
+    const fixX = (x) => { x -= savedOx; return old ? (x >= 12 ? x + 7 : x + 3) : x; };
+    const fix = (d) => Object.assign({}, d, Number.isFinite(d.x) ? { x: fixX(d.x) } : {}, old && Number.isInteger(d.desk) ? { desk: d.desk >= 4 ? d.desk + 1 : d.desk } : {});
+    const list = raw && Array.isArray(raw.spaces) ? raw.spaces.map((d) => sanitize(fix(d))) : [];
     return settle(list);
   }
   // Devuelve true solo si quedó escrito (se relee para comprobarlo).
   function save(list) {
     try {
-      const txt = JSON.stringify({ schema: SCHEMA, ox: zone.OX, spaces: list });
+      const txt = JSON.stringify({ schema: SCHEMA, ox: zone.OX, geo: 2, spaces: list });
       localStorage.setItem(KEY, txt);
       return localStorage.getItem(KEY) === txt;
     } catch (e) {

@@ -1,27 +1,28 @@
 // El edificio: plano de tiles, muebles, colisiones y la capa estática ya pintada.
 //
-//  x:  0          12  15             31  34              51       60
-//  0   ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
-//  1-2 │ cara      │░░│  cara        │░░│  cara          │   cielo
-//  3-10│ Of. 101   │░░│  Of. 102     │░░│  Of. 103       │   y ciudad
-//  11  ▀▀▀▀▀  ▀▀▀▀▀│░░│▀▀▀▀▀▀  ▀▀▀▀▀▀│░░│▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀│
-//  12-13 cara del pasillo
-//  14-15 ░░░░░░░░░░░░░░░ pasillo horizontal ░░░░░░░░░░░░░░░│ ═baranda═
-//  16  ▀▀▀▀▀▀▀▀▀▀▀▀│░░│▀▀▀▀▀▀▀▀▀▀▀▀▀▀│░░│▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀│
-//  17-18 caras     │░░│              │░░│                │
-//  19-30 Board     ⇆░░⇆  Zumi        ⇆░░⇆  Pickpals       ⇆ Terraza
-//  31  ▀▀▀▀▀  ▀▀▀▀▀│░░│▀▀▀▀▀▀  ▀▀▀▀▀▀│░░│▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀│
+//  x:  0 1-2 3  4           18 19 22  23        37 38 41 42        57 58      67
+//  0   ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+//  1-2 │░░│ cara        │░░│  cara          │░░│  cara            │   cielo
+//  3-10│░░│ Of. 101     │░░│  Of. 102       │░░│  Of. 103         │   y ciudad
+//  11  │░░│▀▀▀▀▀  ▀▀▀▀▀▀│░░│▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀│░░│▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀│
+//  12-13  (pasillo izq.)  cara del pasillo
+//  14-15 ░░░░░░░░░░░░░░░░░░░ pasillo horizontal ░░░░░░░░░░░░░░░░░░░░│ ═baranda═
+//  16  │░░│▀▀▀▀▀▀▀▀▀▀▀▀▀│░░│▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀│░░│▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀│
+//  17-18 │░░│ caras     │░░│                │░░│                  │
+//  19-30 │░░│ Board     ⇆░░⇆  Zumi          ⇆░░⇆  Pickpals         ⇆ Terraza
+//  31  │░░│▀▀▀▀▀  ▀▀▀▀▀▀│░░│▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀│░░│▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀│
 //  32-33 cara del lobby (los pasillos verticales desembocan aquí)
-//  34-42                 Lobby                            ⇆
-//  43  ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀═════════
+//  34-42                     Lobby                                  ⇆
+//  43  ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀═════════
+//
+//  El pasillo de la izquierda recorre todo el piso, de arriba al lobby.
 //
 //  Las salas y los pasillos se definen en data.js (TGL.rooms). Los muebles de cada sala
 //  se ubican relativos a la esquina de la sala, así una sala se puede mover sin tocarlos.
 
 (function () {
   const T = TGL.T, r = TGL.rect, art = TGL.art;
-  const W0 = 61, H0 = 44;
-  let W = W0, H = H0;
+  const W = 68, H = 44;
   const TOP = 1, FACE = 2, SKY = 3, RAIL = 4;
   const FLOOR = { lobby: 10, board: 11, zumi: 12, pickpals: 13, terrace: 14, hall: 15, rent: 16, open: 17, cowork: 18 };
   const isFloor = (v) => v >= 10;
@@ -30,26 +31,21 @@
   const floorOf = (q) => (q.rent ? FLOOR.rent : q.open ? FLOOR.open : q.cowork ? FLOOR.cowork : FLOOR[q.id]);
   const TERRACE = room('terrace');
 
-  // Con el editor de oficinas encendido (js/features.js) el edificio crece hacia arriba: la
-  // zona de arriendo tiene dos filas de oficinas (A arriba, B abajo) con un pasillo entre
-  // ellas, un coworking y planta libre. Las oficinas se construyen ahí con el editor, del
-  // tamaño y en el lugar que cada uno arriende, siguiendo las normas del piso (más abajo).
+  // Con el editor de oficinas encendido (js/features.js) el piso de arriba es la zona de
+  // arriendo: un coworking y planta libre corrida, donde las oficinas se construyen con el
+  // editor, del tamaño y en el lugar que cada uno arriende, siguiendo las normas del piso.
+  // Ahí los pasillos verticales llegan solo hasta el pasillo horizontal.
   const OPEN = !!(TGL.featureOn && TGL.featureOn('editor'));
-  // GROW: el edificio crece (una fila arriba y una línea a la izquierda). Apagado por ahora:
-  // la zona de arriendo es solo el piso de arriba original, con el coworking.
-  const GROW = false;
-  const OY = OPEN && GROW ? 16 : 0; // filas nuevas arriba
-  const OX = OPEN && GROW ? 24 : 0; // columnas nuevas a la izquierda (una línea de oficinas y su pasillo)
   if (OPEN) {
     for (const id of ['rent1', 'rent2', 'rent3']) TGL.rooms.splice(TGL.rooms.indexOf(room(id)), 1);
-    if (GROW) room('hall').rects = [[1, 14, 50, 2], [13, 14, 2, 20], [32, 14, 2, 20]];
+    room('hall').rects = [[1, 14, 57, 2], [1, 3, 2, 31], [20, 14, 2, 20], [39, 14, 2, 20]];
     TGL.rooms.push({
       id: 'open', open: true, rects: [],
       name: { es: 'Planta libre · Se arrienda', en: 'Open floor · For rent' },
       blurb: { es: 'Espacio libre del piso. Aquí se construyen las oficinas, del tamaño que cada uno arriende.', en: 'Free floor space. Offices are built here, as big as each tenant rents.' },
       color: '#c9c9ce',
     }, {
-      id: 'cowork', cowork: true, x: 1, y: 3, w: 11, h: 8,
+      id: 'cowork', cowork: true, x: 4, y: 3, w: 15, h: 8,
       name: { es: 'Coworking', en: 'Coworking' },
       blurb: { es: 'Puestos para creadores que trabajan con IA.', en: 'Desks for people who build with AI.' },
       infoTitle: 'Coworking',
@@ -62,24 +58,24 @@
   // 'v' atraviesa un muro vertical (se pasa de lado). from/to: sala de cada lado.
   let DOORS = [
     // Salas → lobby
-    { k: 'h', x: 5, y: 31, w: 2, from: 'board', to: 'lobby' },
-    { k: 'h', x: 22, y: 31, w: 2, from: 'zumi', to: 'lobby' },
-    { k: 'h', x: 42, y: 31, w: 2, from: 'pickpals', to: 'lobby' },
+    { k: 'h', x: 10, y: 31, w: 2, from: 'board', to: 'lobby' },
+    { k: 'h', x: 29, y: 31, w: 2, from: 'zumi', to: 'lobby' },
+    { k: 'h', x: 49, y: 31, w: 2, from: 'pickpals', to: 'lobby' },
     // Oficinas en arriendo → pasillo
-    { k: 'h', x: 5, y: 11, w: 2, from: 'rent1', to: 'hall', strip: true },
-    { k: 'h', x: 22, y: 11, w: 2, from: 'rent2', to: 'hall', strip: true },
-    { k: 'h', x: 42, y: 11, w: 2, from: 'rent3', to: 'hall', strip: true },
+    { k: 'h', x: 10, y: 11, w: 2, from: 'rent1', to: 'hall', strip: true },
+    { k: 'h', x: 29, y: 11, w: 2, from: 'rent2', to: 'hall', strip: true },
+    { k: 'h', x: 49, y: 11, w: 2, from: 'rent3', to: 'hall', strip: true },
     // Pasillos verticales → salas
-    { k: 'v', x: 12, y: 24, h: 2, to: 'hall' },
-    { k: 'v', x: 15, y: 26, h: 2, to: 'hall' },
-    { k: 'v', x: 31, y: 25, h: 2, to: 'hall' },
-    { k: 'v', x: 34, y: 23, h: 2, to: 'hall' },
+    { k: 'v', x: 19, y: 24, h: 2, to: 'hall' },
+    { k: 'v', x: 22, y: 26, h: 2, to: 'hall' },
+    { k: 'v', x: 38, y: 25, h: 2, to: 'hall' },
+    { k: 'v', x: 41, y: 23, h: 2, to: 'hall' },
     // Pickpals y lobby → terraza (corredizas)
-    { k: 'v', x: 51, y: 24, h: 2, to: 'terrace', glass: true },
-    { k: 'v', x: 51, y: 37, h: 2, to: 'terrace', glass: true },
+    { k: 'v', x: 58, y: 24, h: 2, to: 'terrace', glass: true },
+    { k: 'v', x: 58, y: 37, h: 2, to: 'terrace', glass: true },
   ];
 
-  let grid = new Array(W * H).fill(TOP);
+  const grid = new Array(W * H).fill(TOP);
   const at = (x, y) => (x < 0 || y < 0 || x >= W || y >= H ? TOP : grid[y * W + x]);
   const set = (x, y, v) => { grid[y * W + x] = v; };
   const isWall = (v) => v === TOP || v === FACE;
@@ -107,7 +103,7 @@
   DOORS.forEach(openDoor);
 
   // Terraza: sin muros. Arriba se ve el cielo y alrededor hay baranda de vidrio.
-  let SKY_H = TERRACE.y - 1;
+  const SKY_H = TERRACE.y - 1;
   for (let x = TERRACE.x; x < W; x++) {
     for (let y = 0; y < SKY_H; y++) set(x, y, SKY);
     set(x, SKY_H, RAIL);
@@ -148,20 +144,21 @@
   inRoom('board', (put, desk, info) => {
     put(art.whitePlant(1), 0, 0, 1, 1);
     put(art.imacDesk(), 1, 2, 2, 1, { anim: art.imacScreen });
-    put(art.imacDesk(), 7, 2, 2, 1, { anim: art.imacScreen });
-    put(art.whitePlant(2), 10, 0, 1, 1);
+    put(art.imacDesk(), 11, 2, 2, 1, { anim: art.imacScreen });
+    put(art.whitePlant(2), 14, 0, 1, 1);
     put(art.displayStand(), 0, 5, 2, 1, { anim: art.displayChart });
-    put(art.oakTable(4, 3), 3, 5, 4, 3, { anim: art.oakTableScreens(4, 3) });
-    put(art.whiteChair('down'), 4, 4, 1, 1);
-    put(art.whiteChair('down'), 5, 4, 1, 1);
-    put(art.whiteChair('down'), 2, 6, 1, 1);
-    put(art.whiteChair('down'), 7, 6, 1, 1);
-    put(art.whiteChair('up'), 4, 8, 1, 1);
-    put(art.whiteChair('up'), 5, 8, 1, 1);
+    put(art.oakTable(4, 3), 5, 5, 4, 3, { anim: art.oakTableScreens(4, 3) });
+    put(art.whiteChair('down'), 6, 4, 1, 1);
+    put(art.whiteChair('down'), 7, 4, 1, 1);
+    put(art.whiteChair('down'), 4, 6, 1, 1);
+    put(art.whiteChair('down'), 9, 6, 1, 1);
+    put(art.whiteChair('up'), 6, 8, 1, 1);
+    put(art.whiteChair('up'), 7, 8, 1, 1);
+    put(art.whiteShelf(2), 12, 5, 2, 1);
     put(art.sofa(3, '#c9c9ce'), 0, 10, 3, 1);
-    put(art.whiteShelf(2), 8, 10, 2, 1);
-    put(art.whitePlant(3), 10, 11, 1, 1);
-    info(6, 10);
+    put(art.whiteShelf(2), 12, 10, 2, 1);
+    put(art.whitePlant(3), 14, 11, 1, 1);
+    info(9, 10);
   });
 
   // Zumi: el equipo comparte la sala con mascotas
@@ -257,53 +254,32 @@
   ].map((s) => ({ x: TERRACE.x + s.x, y: TERRACE.y + s.y, dir: s.dir }));
 
   // Lobby (coordenadas absolutas: es la planta baja completa)
-  put(art.fridge(), 1, 34, 1, 1);
-  put(art.coffeeCounter(3), 2, 34, 3, 1);
-  put(art.waterCooler(), 8, 34, 1, 1);
-  put(art.printer(), 11, 34, 1, 1);
-  put(art.waterCooler(), 20, 34, 1, 1);
-  put(art.plant(9), 27, 34, 1, 1);
-  put(art.plant(10), 40, 34, 1, 1);
-  put(art.waterCooler(), 47, 34, 1, 1);
-  put(art.plant(11), 50, 34, 1, 1);
-  put(art.kiosk(), 25, 41, 2, 1, { interact: { type: 'directory' } });
-  put(art.mailbox(), 28, 41, 1, 1, { anim: art.mailboxAnim, interact: { type: 'contact' } });
-  put(art.sofa(3, '#6a4c93'), 2, 41, 3, 1);
-  put(art.sofa(3, '#6a4c93'), 7, 41, 3, 1);
-  put(art.sofa(3, '#6a4c93'), 39, 41, 3, 1);
-  put(art.sofa(3, '#6a4c93'), 44, 41, 3, 1);
+  put(art.fridge(), 4, 34, 1, 1);
+  put(art.coffeeCounter(3), 5, 34, 3, 1);
+  put(art.waterCooler(), 13, 34, 1, 1);
+  put(art.printer(), 16, 34, 1, 1);
+  put(art.waterCooler(), 27, 34, 1, 1);
+  put(art.plant(9), 34, 34, 1, 1);
+  put(art.plant(10), 47, 34, 1, 1);
+  put(art.waterCooler(), 54, 34, 1, 1);
+  put(art.plant(11), 57, 34, 1, 1);
+  put(art.kiosk(), 32, 41, 2, 1, { interact: { type: 'directory' } });
+  put(art.mailbox(), 35, 41, 1, 1, { anim: art.mailboxAnim, interact: { type: 'contact' } });
+  put(art.sofa(3, '#6a4c93'), 5, 41, 3, 1);
+  put(art.sofa(3, '#6a4c93'), 10, 41, 3, 1);
+  put(art.sofa(3, '#6a4c93'), 46, 41, 3, 1);
+  put(art.sofa(3, '#6a4c93'), 51, 41, 3, 1);
   put(art.plant(12), 1, 42, 1, 1);
-  put(art.plant(13), 50, 42, 1, 1);
-  put(art.plant(14), 12, 42, 1, 1);
-  put(art.plant(15), 36, 42, 1, 1);
+  put(art.plant(13), 57, 42, 1, 1);
+  put(art.plant(14), 19, 42, 1, 1);
+  put(art.plant(15), 43, 42, 1, 1);
 
   // Pasillos: plantas en los cruces y al final de los pasillos verticales.
-  put(art.plant(19), 1, 14, 1, 1);
-  put(art.plant(20), 50, 14, 1, 1);
+  put(art.plant(19), 3, 15, 1, 1);
+  put(art.plant(20), 57, 14, 1, 1);
   if (!OPEN) {
-    put(art.waterCooler(), 13, 3, 1, 1);
-    put(art.plant(21), 33, 3, 1, 1);
-  }
-
-  // El edificio crece OY filas hacia arriba y OX columnas hacia la izquierda: todo lo
-  // construido se corre (OX, OY).
-  if (OPEN && GROW) {
-    const old = grid;
-    H = H0 + OY;
-    W = W0 + OX;
-    grid = new Array(W * H);
-    for (let y = 0; y < H; y++)
-      for (let x = 0; x < W; x++)
-        grid[y * W + x] = y >= OY && x >= OX ? old[(y - OY) * W0 + x - OX] : x >= TERRACE.x + OX ? SKY : TOP;
-    for (const q of TGL.rooms) {
-      if (q.rects) q.rects = q.rects.map(([a, b, c, d]) => [a + OX, b + OY, c, d]);
-      if (q.y != null) q.y += OY;
-      if (q.x != null) q.x += OX;
-    }
-    for (const d of DOORS) { d.y += OY; d.x += OX; }
-    for (const o of objects) { o.y += OY * T; o.sortY += OY * T; o.x += OX * T; }
-    for (const sp of breakSpots) { sp.y += OY; sp.x += OX; }
-    SKY_H += OY;
+    put(art.waterCooler(), 20, 3, 1, 1);
+    put(art.plant(21), 40, 3, 1, 1);
   }
 
   // ————————————————————————————————— Colisiones
@@ -475,43 +451,42 @@
   const RENT_TEXT = { es: 'SE ARRIENDA', en: 'FOR RENT' };
   const STRIP_DECOR = [
     // Oficinas en arriendo
-    { k: 'glass', x: 1, y: 1, w: 3 }, { k: 'plate', room: 'rent1', x: 4, y: 1, w: 5, text: RENT_TEXT, bg: '#1d1f24', fg: '#ffc367' },
-    { k: 'glass', x: 9, y: 1, w: 3 },
-    { k: 'glass', x: 16, y: 1, w: 4 }, { k: 'plate', room: 'rent2', x: 21, y: 1, w: 5, text: RENT_TEXT, bg: '#1d1f24', fg: '#ffc367' },
-    { k: 'glass', x: 27, y: 1, w: 4 },
-    { k: 'glass', x: 35, y: 1, w: 4 }, { k: 'plate', room: 'rent3', x: 40, y: 1, w: 6, text: RENT_TEXT, bg: '#1d1f24', fg: '#ffc367' },
-    { k: 'glass', x: 47, y: 1, w: 4 },
+    { k: 'glass', x: 4, y: 1, w: 4 }, { k: 'plate', room: 'rent1', x: 9, y: 1, w: 5, text: RENT_TEXT, bg: '#1d1f24', fg: '#ffc367' },
+    { k: 'glass', x: 15, y: 1, w: 4 },
+    { k: 'glass', x: 23, y: 1, w: 4 }, { k: 'plate', room: 'rent2', x: 28, y: 1, w: 5, text: RENT_TEXT, bg: '#1d1f24', fg: '#ffc367' },
+    { k: 'glass', x: 34, y: 1, w: 4 },
+    { k: 'glass', x: 42, y: 1, w: 4 }, { k: 'plate', room: 'rent3', x: 47, y: 1, w: 6, text: RENT_TEXT, bg: '#1d1f24', fg: '#ffc367' },
+    { k: 'glass', x: 54, y: 1, w: 4 },
     // Pasillo: número de cada oficina junto a su puerta
-    { k: 'sign', x: 7, y: 12, w: 3, text: '101', fg: '#ffc367' },
-    { k: 'sign', x: 24, y: 12, w: 3, text: '102', fg: '#ffc367' },
-    { k: 'painting', x: 27, y: 12, w: 2 },
-    { k: 'painting', x: 36, y: 12, w: 2 },
-    { k: 'sign', x: 44, y: 12, w: 3, text: '103', fg: '#ffc367' },
-    { k: 'clock', x: 48, y: 12, w: 1 },
+    { k: 'sign', x: 13, y: 12, w: 3, text: '101', fg: '#ffc367' },
+    { k: 'sign', x: 31, y: 12, w: 3, text: '102', fg: '#ffc367' },
+    { k: 'painting', x: 34, y: 12, w: 2 },
+    { k: 'painting', x: 43, y: 12, w: 2 },
+    { k: 'sign', x: 51, y: 12, w: 3, text: '103', fg: '#ffc367' },
+    { k: 'clock', x: 55, y: 12, w: 1 },
   ].map((d) => Object.assign(d, { strip: true }));
   const decor = [
     ...(OPEN ? [] : STRIP_DECOR),
     // Board
-    { k: 'glass', x: 1, y: 17, w: 3 }, { k: 'wallDisplay', x: 4, y: 17, w: 4 }, { k: 'glass', x: 8, y: 17, w: 3 },
+    { k: 'glass', x: 4, y: 17, w: 4 }, { k: 'wallDisplay', x: 9, y: 17, w: 5 }, { k: 'glass', x: 15, y: 17, w: 4 },
     // Zumi
-    { k: 'window', x: 17, y: 17, w: 2 },
-    { k: 'plate', x: 21, y: 17, w: 3, text: 'zumi', bg: '#2c4a35', fg: '#ffc367', url: 'https://zumiapp.co', link: '#2c6b3f' },
-    { k: 'pawPoster', x: 25, y: 17, w: 1 }, { k: 'petPhoto', x: 26, y: 17, w: 2 },
+    { k: 'window', x: 24, y: 17, w: 2 },
+    { k: 'plate', x: 28, y: 17, w: 3, text: 'zumi', bg: '#2c4a35', fg: '#ffc367', url: 'https://zumiapp.co', link: '#2c6b3f' },
+    { k: 'pawPoster', x: 32, y: 17, w: 1 }, { k: 'petPhoto', x: 33, y: 17, w: 2 },
     // Pickpals
-    { k: 'tv', x: 36, y: 17, w: 2, sport: 'tennis' },
-    { k: 'plate', x: 39, y: 17, w: 3, text: 'pickpals', bg: '#1b2a4a', fg: '#9cff57', url: 'https://pickpals.co', link: '#2f5fc4' },
-    { k: 'tv', x: 43, y: 17, w: 2, sport: 'basket' },
-    { k: 'scoreboard', x: 45, y: 17, w: 5 },
+    { k: 'tv', x: 43, y: 17, w: 2, sport: 'tennis' },
+    { k: 'plate', x: 46, y: 17, w: 3, text: 'pickpals', bg: '#1b2a4a', fg: '#9cff57', url: 'https://pickpals.co', link: '#2f5fc4' },
+    { k: 'tv', x: 50, y: 17, w: 2, sport: 'basket' },
+    { k: 'scoreboard', x: 52, y: 17, w: 5 },
     // Lobby
-    { k: 'sign', x: 7, y: 32, w: 3, text: 'BOARD', fg: '#ffc367' },
-    { k: 'painting', x: 16, y: 32, w: 2 },
-    { k: 'sign', x: 24, y: 32, w: 3, text: 'ZUMI', fg: '#86d19a', url: 'https://zumiapp.co', link: '#2c6b3f' },
-    { k: 'clock', x: 30, y: 32, w: 1 },
-    { k: 'painting', x: 36, y: 32, w: 2 },
-    { k: 'sign', x: 44, y: 32, w: 3, text: 'PICKPALS', fg: '#9cc0ff', url: 'https://pickpals.co', link: '#2f5fc4' },
-    { k: 'elevator', x: 48, y: 32, w: 2 },
+    { k: 'sign', x: 12, y: 32, w: 3, text: 'BOARD', fg: '#ffc367' },
+    { k: 'painting', x: 23, y: 32, w: 2 },
+    { k: 'sign', x: 31, y: 32, w: 3, text: 'ZUMI', fg: '#86d19a', url: 'https://zumiapp.co', link: '#2c6b3f' },
+    { k: 'clock', x: 37, y: 32, w: 1 },
+    { k: 'painting', x: 43, y: 32, w: 2 },
+    { k: 'sign', x: 51, y: 32, w: 3, text: 'PICKPALS', fg: '#9cc0ff', url: 'https://pickpals.co', link: '#2f5fc4' },
+    { k: 'elevator', x: 55, y: 32, w: 2 },
   ];
-  if (OPEN) for (const d of decor) { d.y += OY; d.x += OX; }
 
   // Zonas clicables del mundo (los links bajo los letreros). Se llenan al pintar.
   const links = [];
@@ -595,7 +570,7 @@
   }
 
   function drawRug(ctx) {
-    const x = (18 + OX) * T, y = (36 + OY) * T, w = 19 * T, h = 4 * T;
+    const x = 25 * T, y = 36 * T, w = 19 * T, h = 4 * T;
     r(ctx, x + 2, y + 2, w, h, 'rgba(0,0,0,.2)');
     r(ctx, x, y, w, h, '#ffc367');
     r(ctx, x + 2, y + 2, w - 4, h - 4, '#1d1f24');
@@ -825,34 +800,23 @@
   // fila; en la fila B ese pasillo sube hasta el pasillo del medio, así siempre se llega a la
   // fila A. Junto a una oficina quedan 0 m o al menos 8 m libres: no hay retazos.
   const RULES = { hall: 2, minFree: 8, minWidth: 8, maxWidth: 24 };
-  // Filas (y, alto) con sus tramos entre muros del edificio ('wall') y pasillos ('hall').
-  // Filas (y, alto) con sus tramos entre muros del edificio ('wall') y pasillos ('hall').
-  // A y B son el piso de arriba del edificio original; C, D y E, la línea de la izquierda.
-  // num: número de la primera oficina de la fila.
-  const X = OX;
-  const ROWS = GROW ? [
-    { id: 'A', num: 201, y: 3, h: 8, hallY: 14, up: false, bays: [{ L: X + 1, R: X + 50, l: 'wall', r: 'wall' }] },
-    { id: 'B', num: 101, y: 19, h: 8, hallY: 30, up: true, bays: [{ L: X + 1, R: X + 12, l: 'wall', r: 'hall' }, { L: X + 15, R: X + 31, l: 'hall', r: 'hall' }, { L: X + 34, R: X + 50, l: 'hall', r: 'wall' }] },
-    { id: 'C', num: 301, y: 3, h: 8, hallY: 14, up: false, bays: [{ L: 1, R: 20, l: 'wall', r: 'wall' }] },
-    { id: 'D', num: 401, y: 19, h: 8, hallY: 30, up: true, bays: [{ L: 1, R: 20, l: 'wall', r: 'wall' }] },
-    { id: 'E', num: 501, y: 35, h: 8, hallY: 46, up: true, bays: [{ L: 1, R: 20, l: 'wall', r: 'wall' }] },
-  ] : [
-    { id: 'B', num: 101, y: 3, h: 8, hallY: 14, up: false, bays: [{ L: 1, R: 12, l: 'wall', r: 'hall' }, { L: 15, R: 31, l: 'hall', r: 'hall' }, { L: 34, R: 50, l: 'hall', r: 'wall' }] },
+  // Fila (y, alto) con sus tramos entre muros del edificio ('wall') y pasillos ('hall'). Una
+  // sola por ahora: el piso de arriba, de punta a punta (a su izquierda va el pasillo que
+  // recorre todo el piso). num: número de la primera oficina de la fila.
+  const ROWS = [
+    { id: 'B', num: 101, y: 3, h: 8, hallY: 14, up: false, bays: [{ L: 3, R: 57, l: 'hall', r: 'wall' }] },
   ];
-  // Lo que la zona reconstruye (x, y, ancho, alto) y sus pasillos fijos. Con el edificio
-  // crecido: el del medio y el principal (que cruzan hasta la línea izquierda), los verticales
-  // del edificio, y en la línea izquierda un corredor que baja hasta el lobby y el pasillo de
-  // la fila E. Sin crecer: el pasillo principal y los dos verticales, que suben hasta arriba.
-  const RESET = GROW ? [[1, 0, X + 50, 30], [1, 30, X - 1, 23]] : [[1, 0, 50, 14]];
-  const BASE_HALLS = GROW
-    ? [[1, 14, X + 50, 2], [1, 30, X + 50, 2], [X + 13, 16, 2, 34], [X + 32, 16, 2, 34], [X - 2, 16, 2, 37], [1, 46, X - 1, 2]]
-    : [[1, 14, 50, 2], [13, 3, 2, 31], [32, 3, 2, 31]];
-  const PICS = GROW ? [[X + 8, 28], [X + 26, 28], [X + 42, 28], [X + 6, 12], [X + 24, 12], [X + 44, 12], [6, 44], [14, 44]] : [[8, 12], [26, 12], [42, 12]];
+  // Lo que la zona reconstruye (x, y, ancho, alto) y sus pasillos fijos: el horizontal, el de
+  // la izquierda y los dos verticales (que en la zona de arriendo llegan solo hasta el
+  // pasillo horizontal).
+  const RESET = [[1, 0, 57, 14]];
+  const BASE_HALLS = [[1, 14, 57, 2], [1, 3, 2, 31], [20, 14, 2, 20], [39, 14, 2, 20]];
+  const PICS = [[16, 12], [34, 12], [46, 12]];
   const inReset = (x, y) => RESET.some(([rx, ry, rw, rh]) => x >= rx && x < rx + rw && y >= ry && y < ry + rh);
-  const ZONE_X0 = 1, ZONE_X1 = X + 50;
-  const COWORK = { id: 'cowork', row: 'B', a: X + 1, w: 11, fixed: true };
+  const ZONE_X0 = 1, ZONE_X1 = 57;
+  const COWORK = { id: 'cowork', row: 'B', a: 4, w: 15, fixed: true };
   // Puestos del coworking (relativos a la sala): escritorio de 2 × 1 y, delante, dos personas.
-  const DESKS = [0, 3, 6, 9].flatMap((x) => [{ x, y: 1 }]).concat([0, 3, 6, 9].map((x) => ({ x, y: 4 })));
+  const DESKS = [0, 3, 6, 9, 12].map((x) => ({ x, y: 1 })).concat([0, 3, 6, 9, 12].map((x) => ({ x, y: 4 })));
 
   // Columnas de un hueco de n casillas entre dos bordes ('wall' | 'hall' | 'office').
   function fillGap(n, left, right) {
@@ -936,7 +900,6 @@
     // 1. Todo muro. 2. Pasillos fijos. 3. Filas.
     for (const [rx, ry, rw, rh] of RESET) for (let y = ry; y < ry + rh; y++) for (let x = rx; x < rx + rw; x++) set(x, y, TOP);
     for (const [rx, ry, rw, rh] of BASE_HALLS) for (let y = ry; y < ry + rh; y++) for (let x = rx; x < rx + rw; x++) set(x, y, FLOOR.hall);
-    if (GROW) for (let y = 51; y < 53; y++) set(X, y, FLOOR.lobby); // del corredor al lobby
     const hallRects = BASE_HALLS.slice(), freeRects = [];
     for (const row of ROWS) {
       const cols = plan[row.id], runs = [];
@@ -1039,10 +1002,10 @@
     const q = room('cowork');
     DESKS.forEach((d, n) => freeDesk(n));
     put(art.plant(22), q.x, q.y + 7, 1, 1, { tag: 'cowork' });
-    put(art.coffeeCounter(3), q.x + 7, q.y + 7, 3, 1, { tag: 'cowork' });
-    put(art.waterCooler(), q.x + 10, q.y + 7, 1, 1, { tag: 'cowork' });
+    put(art.coffeeCounter(3), q.x + 10, q.y + 7, 3, 1, { tag: 'cowork' });
+    put(art.waterCooler(), q.x + 14, q.y + 7, 1, 1, { tag: 'cowork' });
     put(art.qblock(), q.x + 2, q.y + 7, 1, 1, { tag: 'cowork', anim: art.qblockAnim, interact: { type: 'info', room: 'cowork' } });
-    put(art.whitePlant(23), q.x + 10, q.y, 1, 1, { tag: 'cowork' });
+    put(art.whitePlant(23), q.x + 14, q.y, 1, 1, { tag: 'cowork' });
     buildZone([]);
   }
 
@@ -1050,7 +1013,7 @@
     W, H, grid, solid, objects, links, breakSpots, roomAt, drawWallAnims, drawOverlay, renderStatic,
     T, room, refreshSolids, furnishRent, FLOOR_STYLES, WALL_STYLES, OPEN,
     // Zona de arriendo: normas, filas, dónde cabe una oficina y construirla.
-    zone: { GROW, OX, RULES, ROWS, DESKS, COWORK, plan: floorPlan, starts, build: buildZone, freeDesk, get leases() { return leases; } },
+    zone: { OX: 0, RULES, ROWS, DESKS, COWORK, plan: floorPlan, starts, build: buildZone, freeDesk, get leases() { return leases; } },
     // Para el editor: sacar y agregar objetos de una sala, y las casillas frente a sus puertas.
     removeTagged(tag) {
       for (let i = objects.length - 1; i >= 0; i--) if (objects[i].tag === tag) objects.splice(i, 1);
@@ -1071,6 +1034,6 @@
       return tx < 0 || ty < 0 || tx >= W || ty >= H || solid[ty * W + tx] === 1;
     },
     // Se aparece frente al ascensor del lobby.
-    spawn: { x: (49 + OX) * T + 8, y: (34 + OY) * T + 12 },
+    spawn: { x: 56 * T + 8, y: 34 * T + 12 },
   };
 })();

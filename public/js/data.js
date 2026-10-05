@@ -47,7 +47,7 @@ TGL.rooms = [
       en: '2GoodLabs is a product lab. It is led by Cesar and Ricardo, two design and user experience experts, and AI is their main tool: every agent in this office stands for work they do with it. Today they are working on their own products: Zumi and Pickpals.',
     },
     infoLinks: ['https://zumiapp.co', 'https://pickpals.co'],
-    x: 1, y: 19, w: 11, h: 12,
+    x: 4, y: 19, w: 15, h: 12,
     color: '#ffc367',
   },
   {
@@ -64,7 +64,7 @@ TGL.rooms = [
     link: 'https://zumiapp.co',
     appStore: 'https://apps.apple.com/us/app/zumi-pet-health-care/id6767697574',
     infoLinks: ['https://zumiapp.co', 'https://apps.apple.com/us/app/zumi-pet-health-care/id6767697574'],
-    x: 16, y: 19, w: 15, h: 12,
+    x: 23, y: 19, w: 15, h: 12,
     color: '#5fae74',
   },
   {
@@ -79,29 +79,29 @@ TGL.rooms = [
       en: 'Pickpals is for playing sports predictions with your friends. Built by Kernel (development), Lienzo (design) and Hype (marketing); Stats finds, validates and records the sports data that powers the app.',
     },
     link: 'https://pickpals.co',
-    x: 35, y: 19, w: 16, h: 12,
+    x: 42, y: 19, w: 16, h: 12,
     color: '#4f86f0',
   },
   {
     id: 'terrace',
     name: { es: 'Terraza', en: 'Terrace' },
     blurb: { es: 'Aire libre, café y buenas ideas.', en: 'Fresh air, coffee and good ideas.' },
-    x: 52, y: 19, w: 8, h: 24,
+    x: 59, y: 19, w: 8, h: 24,
     color: '#f2a65a',
   },
   {
     id: 'lobby',
     name: 'Lobby',
     blurb: { es: 'Recepción de 2GoodLabs.', en: 'Welcome to 2GoodLabs.' },
-    x: 1, y: 34, w: 50, h: 9,
+    x: 1, y: 34, w: 57, h: 9,
     color: '#b8b0a2',
   },
   {
-    // Pasillos que separan las oficinas: uno horizontal y dos verticales hasta el lobby.
+    // Pasillos: uno horizontal, uno a la izquierda de todo el piso y dos verticales hasta el lobby.
     id: 'hall',
     name: { es: 'Pasillo', en: 'Hallway' },
     blurb: { es: 'Pasillos del edificio.', en: 'Building hallways.' },
-    rects: [[1, 14, 50, 2], [13, 3, 2, 31], [32, 3, 2, 31]],
+    rects: [[1, 14, 57, 2], [1, 3, 2, 31], [20, 3, 2, 31], [39, 3, 2, 31]],
     quiet: true,
     color: '#a8a295',
   },
@@ -110,21 +110,21 @@ TGL.rooms = [
     id: 'rent1', rent: true, office: '101',
     name: { es: 'Oficina 101 · Disponible', en: 'Office 101 · For rent' },
     blurb: RENT_BLURB,
-    x: 1, y: 3, w: 11, h: 8,
+    x: 4, y: 3, w: 15, h: 8,
     color: '#c9c9ce',
   },
   {
     id: 'rent2', rent: true, office: '102',
     name: { es: 'Oficina 102 · Disponible', en: 'Office 102 · For rent' },
     blurb: RENT_BLURB,
-    x: 16, y: 3, w: 15, h: 8,
+    x: 23, y: 3, w: 15, h: 8,
     color: '#c9c9ce',
   },
   {
     id: 'rent3', rent: true, office: '103',
     name: { es: 'Oficina 103 · Disponible', en: 'Office 103 · For rent' },
     blurb: RENT_BLURB,
-    x: 35, y: 3, w: 16, h: 8,
+    x: 42, y: 3, w: 16, h: 8,
     color: '#c9c9ce',
   },
 ];
@@ -152,7 +152,7 @@ TGL.team = [
   },
   {
     id: 'ricardo', name: 'Ricardo', kind: 'human', role: 'founder', room: 'board',
-    x: 8.25, row: 1, dir: 'down', breakAt: 50,
+    x: 12.25, row: 1, dir: 'down', breakAt: 50,
     look: { skin: '#d49a6a', hair: '#4a2e1c', hairStyle: 'side', beard: '#3b2416', body: '#8a3b3b', legs: '#262b36' },
     bio: {
       es: 'Co-fundador de 2GoodLabs. Diseñador de producto y experiencia de usuario: decide qué construimos y cómo se siente usarlo, y trabaja con IA todos los días.',
