@@ -388,10 +388,32 @@
     requestAnimationFrame(focusRoom);
   }
   // Borrador de oficina de ancho w en el primer lugar libre (o el más chico que quepa).
+  // Punto de referencia para ubicar el borrador: si es nueva, donde está el jugador; si se
+  // cambia el tamaño de una que ya existe, donde está la oficina.
+  function anchor(d) {
+    if (d.x != null && wiz.mode !== 'new') { const r = zone.ROWS.find((q) => q.id === d.row); return { x: d.x + d.w / 2, y: r.y + r.h / 2 }; }
+    const p = game.playerTile();
+    return { x: p.x, y: p.y };
+  }
+  // Distancia de un punto a una fila (a su tramo más cercano).
+  function rowDist(r, pt) {
+    const dy = pt.y < r.y ? r.y - pt.y : pt.y >= r.y + r.h ? pt.y - (r.y + r.h - 1) : 0;
+    const dx = Math.min(...r.bays.map((b) => (pt.x < b.L ? b.L - pt.x : pt.x > b.R ? pt.x - b.R : 0)));
+    return dx + dy * 2;
+  }
+  // El lugar válido más cercano al punto: primero la fila más cercana, después las demás.
+  function nearestPlace(list, d, w, pt) {
+    const rows = zone.ROWS.slice().sort((a, b) => rowDist(a, pt) - rowDist(b, pt));
+    for (const r of rows) {
+      const ok = space.startsFor(list, d, r.id, w), want = pt.x - w / 2;
+      if (ok.length) return { row: r.id, x: ok.reduce((best, s) => (Math.abs(s - want) < Math.abs(best - want) ? s : best), ok[0]) };
+    }
+    return null;
+  }
   function draftOffice(identity, w) {
     const d = doc && doc.kind === 'office' ? doc : Object.assign(space.empty('office'), wiz.back && wiz.mode === 'change' ? { id: wiz.back.id } : {});
     const list = saved.filter((o) => !wiz.back || o.id !== wiz.back.id);
-    const place = space.fitPlace(list, d, d.x != null ? d.row : 'A', d.x, w);
+    const place = nearestPlace(list, d, w, anchor(d));
     if (!place) return false;
     const rowBefore = d.x != null ? d.row : null;
     Object.assign(d, place, { w });
@@ -405,7 +427,10 @@
     const free = space.freeDesks(list);
     if (!free.length) return false;
     const d = Object.assign(space.empty('desk'), wiz.back && wiz.back.kind === 'desk' ? { id: wiz.back.id } : {});
-    d.desk = free[0];
+    // el puesto libre más cercano al jugador
+    const p = game.playerTile(), cw = world.room('cowork');
+    const dist = (n) => Math.abs(cw.x + zone.DESKS[n].x + 1 - p.x) + Math.abs(cw.y + zone.DESKS[n].y + 1 - p.y);
+    d.desk = free.reduce((best, n) => (dist(n) < dist(best) ? n : best), free[0]);
     d.residents = [{ kind: 'human', name: tr('you'), title: '', bio: '', lines: [], x: 0, y: 0, body: cat.people.body[0], eye: cat.people.eye[0], skin: cat.people.skin[1], hair: cat.people.hair[0] }];
     doc = d;
     return true;
