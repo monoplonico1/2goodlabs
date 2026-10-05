@@ -321,7 +321,7 @@
   const refocus = () => { if (isOpen && !previewing && focusKey() !== lastFocus) requestAnimationFrame(focusRoom); };
   function focusRoom() {
     const mobile = isMobile();
-    let f = { x: 0, y: 0, w: 52, h: 32 };
+    let f = { x: 0, y: 0, w: MAP.w, h: MAP.h };
     if (room && !wholeZone()) {
       const w = Math.max(room.w + 4, 20);
       f = { x: Math.max(0, room.x + Math.floor(room.w / 2) - Math.floor(w / 2)), y: room.y - 2, w, h: room.h + 2 };
@@ -797,13 +797,15 @@
   // ————————————————————————————————— Plano de la zona de arriendo
   // Dibuja lo que el edificio tiene construido ahora (filas, pasillos, oficinas, coworking).
   // Se puede tocar: en la lista, para crear o abrir; editando, para mover la oficina o el puesto.
-  const MAP = { w: 52, h: 32 };
+  // Tamaño del plano: toda la zona de arriendo (con la línea de la izquierda).
+  const MAP = { w: zone.ROWS[0].bays[0].R + 2, h: Math.max(...zone.ROWS.map((r) => r.hallY)) + 2 };
   function zoneMap() {
     const rc = (x, y, w, h, c, extra) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${c}"${extra || ''}/>`;
     const txt = (x, y, t, c) => `<text x="${x}" y="${y}" fill="${c}" font-size="2.2" text-anchor="middle" font-family="Silkscreen, monospace">${esc(t)}</text>`;
     const hall = '#a8a295';
     const mine = new Set(saved.map((d) => d.id).concat(doc ? [doc.id] : []));
-    let svg = rc(0, 0, MAP.w, 30, '#2f2925') + rc(1, 30, 50, 2, hall) + rc(1, 14, 50, 2, hall) + rc(13, 16, 2, 16, hall) + rc(32, 16, 2, 16, hall);
+    let svg = rc(0, 0, MAP.w, MAP.h, '#2f2925');
+    for (const [x, y, w, h] of world.room('hall').rects) if (y < MAP.h) svg += rc(x, y, w, Math.min(h, MAP.h - y), hall);
     for (const row of zone.ROWS) {
       for (const run of row.runs || []) {
         const len = run.e - run.s + 1;
@@ -823,7 +825,7 @@
           if (q && q.office) svg += txt(run.s + len / 2, row.y + row.h / 2 + 0.8, q.office, '#5c3d22');
         }
       }
-      svg += txt(0.5 + 0.5, row.y + row.h / 2 + 0.8, row.id, '#ffffff');
+      svg += txt(row.bays[0].L - 0.5, row.y + row.h / 2 + 0.8, row.id, '#ffffff');
     }
     return `<div class="ed-where">
       <svg viewBox="0 0 ${MAP.w} ${MAP.h}" data-act="zonemap" role="img" aria-label="${esc(tr('where'))}">${svg}</svg>

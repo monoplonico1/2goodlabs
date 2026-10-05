@@ -20,8 +20,8 @@
 
 (function () {
   const T = TGL.T, r = TGL.rect, art = TGL.art;
-  const W = 61, H0 = 44;
-  let H = H0;
+  const W0 = 61, H0 = 44;
+  let W = W0, H = H0;
   const TOP = 1, FACE = 2, SKY = 3, RAIL = 4;
   const FLOOR = { lobby: 10, board: 11, zumi: 12, pickpals: 13, terrace: 14, hall: 15, rent: 16, open: 17, cowork: 18 };
   const isFloor = (v) => v >= 10;
@@ -36,6 +36,7 @@
   // tamaño y en el lugar que cada uno arriende, siguiendo las normas del piso (más abajo).
   const OPEN = !!(TGL.featureOn && TGL.featureOn('editor'));
   const OY = OPEN ? 16 : 0; // filas nuevas arriba
+  const OX = OPEN ? 24 : 0; // columnas nuevas a la izquierda (una línea de oficinas y su pasillo)
   if (OPEN) {
     for (const id of ['rent1', 'rent2', 'rent3']) TGL.rooms.splice(TGL.rooms.indexOf(room(id)), 1);
     room('hall').rects = [[1, 14, 50, 2], [13, 14, 2, 20], [32, 14, 2, 20]];
@@ -281,20 +282,24 @@
     put(art.plant(21), 33, 3, 1, 1);
   }
 
-  // El edificio crece OY filas hacia arriba: todo lo construido baja OY filas.
+  // El edificio crece OY filas hacia arriba y OX columnas hacia la izquierda: todo lo
+  // construido se corre (OX, OY).
   if (OPEN) {
     const old = grid;
     H = H0 + OY;
+    W = W0 + OX;
     grid = new Array(W * H);
     for (let y = 0; y < H; y++)
-      for (let x = 0; x < W; x++) grid[y * W + x] = y < OY ? (x >= TERRACE.x ? SKY : TOP) : old[(y - OY) * W + x];
+      for (let x = 0; x < W; x++)
+        grid[y * W + x] = y >= OY && x >= OX ? old[(y - OY) * W0 + x - OX] : x >= TERRACE.x + OX ? SKY : TOP;
     for (const q of TGL.rooms) {
-      if (q.rects) q.rects = q.rects.map(([a, b, c, d]) => [a, b + OY, c, d]);
+      if (q.rects) q.rects = q.rects.map(([a, b, c, d]) => [a + OX, b + OY, c, d]);
       if (q.y != null) q.y += OY;
+      if (q.x != null) q.x += OX;
     }
-    for (const d of DOORS) d.y += OY;
-    for (const o of objects) { o.y += OY * T; o.sortY += OY * T; }
-    for (const sp of breakSpots) sp.y += OY;
+    for (const d of DOORS) { d.y += OY; d.x += OX; }
+    for (const o of objects) { o.y += OY * T; o.sortY += OY * T; o.x += OX * T; }
+    for (const sp of breakSpots) { sp.y += OY; sp.x += OX; }
     SKY_H += OY;
   }
 
@@ -503,7 +508,7 @@
     { k: 'sign', x: 44, y: 32, w: 3, text: 'PICKPALS', fg: '#9cc0ff', url: 'https://pickpals.co', link: '#2f5fc4' },
     { k: 'elevator', x: 48, y: 32, w: 2 },
   ];
-  if (OPEN) for (const d of decor) d.y += OY;
+  if (OPEN) for (const d of decor) { d.y += OY; d.x += OX; }
 
   // Zonas clicables del mundo (los links bajo los letreros). Se llenan al pintar.
   const links = [];
@@ -587,7 +592,7 @@
   }
 
   function drawRug(ctx) {
-    const x = 18 * T, y = (36 + OY) * T, w = 19 * T, h = 4 * T;
+    const x = (18 + OX) * T, y = (36 + OY) * T, w = 19 * T, h = 4 * T;
     r(ctx, x + 2, y + 2, w, h, 'rgba(0,0,0,.2)');
     r(ctx, x, y, w, h, '#ffc367');
     r(ctx, x + 2, y + 2, w - 4, h - 4, '#1d1f24');
@@ -818,12 +823,26 @@
   // fila A. Junto a una oficina quedan 0 m o al menos 8 m libres: no hay retazos.
   const RULES = { hall: 2, minFree: 8, minWidth: 8, maxWidth: 24 };
   // Filas (y, alto) con sus tramos entre muros del edificio ('wall') y pasillos ('hall').
+  // Filas (y, alto) con sus tramos entre muros del edificio ('wall') y pasillos ('hall').
+  // A y B son el piso de arriba del edificio original; C, D y E, la línea de la izquierda.
+  // num: número de la primera oficina de la fila.
+  const X = OX;
   const ROWS = [
-    { id: 'A', y: 3, h: 8, hallY: 14, up: false, bays: [{ L: 1, R: 50, l: 'wall', r: 'wall' }] },
-    { id: 'B', y: 19, h: 8, hallY: 30, up: true, bays: [{ L: 1, R: 12, l: 'wall', r: 'hall' }, { L: 15, R: 31, l: 'hall', r: 'hall' }, { L: 34, R: 50, l: 'hall', r: 'wall' }] },
-  ];
-  const ZONE_X0 = 1, ZONE_X1 = 50, ZONE_Y1 = 30; // filas 0..29; el pasillo principal está en 30
-  const COWORK = { id: 'cowork', row: 'B', a: 1, w: 11, fixed: true };
+    { id: 'A', num: 201, y: 3, h: 8, hallY: 14, up: false, bays: [{ L: X + 1, R: X + 50, l: 'wall', r: 'wall' }] },
+    { id: 'B', num: 101, y: 19, h: 8, hallY: 30, up: true, bays: [{ L: X + 1, R: X + 12, l: 'wall', r: 'hall' }, { L: X + 15, R: X + 31, l: 'hall', r: 'hall' }, { L: X + 34, R: X + 50, l: 'hall', r: 'wall' }] },
+  ].concat(X ? [
+    { id: 'C', num: 301, y: 3, h: 8, hallY: 14, up: false, bays: [{ L: 1, R: 20, l: 'wall', r: 'wall' }] },
+    { id: 'D', num: 401, y: 19, h: 8, hallY: 30, up: true, bays: [{ L: 1, R: 20, l: 'wall', r: 'wall' }] },
+    { id: 'E', num: 501, y: 35, h: 8, hallY: 46, up: true, bays: [{ L: 1, R: 20, l: 'wall', r: 'wall' }] },
+  ] : []);
+  // Lo que la zona reconstruye (x, y, ancho, alto) y sus pasillos fijos: el del medio y el
+  // principal (que cruzan hasta la línea izquierda), los verticales del edificio, y en la
+  // línea izquierda un corredor que baja hasta el lobby y el pasillo de la fila E.
+  const RESET = [[1, 0, X + 50, 30]].concat(X ? [[1, 30, X - 1, 23]] : []);
+  const BASE_HALLS = [[1, 14, X + 50, 2], [1, 30, X + 50, 2], [X + 13, 16, 2, 34], [X + 32, 16, 2, 34]].concat(X ? [[X - 2, 16, 2, 37], [1, 46, X - 1, 2]] : []);
+  const inReset = (x, y) => RESET.some(([rx, ry, rw, rh]) => x >= rx && x < rx + rw && y >= ry && y < ry + rh);
+  const ZONE_X0 = 1, ZONE_X1 = X + 50;
+  const COWORK = { id: 'cowork', row: 'B', a: X + 1, w: 11, fixed: true };
   // Puestos del coworking (relativos a la sala): escritorio de 2 × 1 y, delante, dos personas.
   const DESKS = [0, 3, 6, 9].flatMap((x) => [{ x, y: 1 }]).concat([0, 3, 6, 9].map((x) => ({ x, y: 4 })));
 
@@ -906,11 +925,11 @@
       if (q.lease) { q.office = o.number; if (!q.custom) q.name = { es: 'Oficina ' + o.number, en: 'Office ' + o.number }; }
     }
 
-    // 1. Todo muro. 2. Pasillo del medio y pasillos verticales del edificio. 3. Filas.
-    for (let y = 0; y < ZONE_Y1; y++) for (let x = ZONE_X0; x <= ZONE_X1; x++) set(x, y, TOP);
-    for (let x = ZONE_X0; x <= ZONE_X1; x++) for (let y = 14; y < 16; y++) set(x, y, FLOOR.hall);
-    for (const hx of [13, 32]) for (let x = hx; x < hx + 2; x++) for (let y = 16; y < ZONE_Y1; y++) set(x, y, FLOOR.hall);
-    const hallRects = [[1, 30, 50, 2], [1, 14, 50, 2], [13, 16, 2, 34], [32, 16, 2, 34]], freeRects = [];
+    // 1. Todo muro. 2. Pasillos fijos. 3. Filas.
+    for (const [rx, ry, rw, rh] of RESET) for (let y = ry; y < ry + rh; y++) for (let x = rx; x < rx + rw; x++) set(x, y, TOP);
+    for (const [rx, ry, rw, rh] of BASE_HALLS) for (let y = ry; y < ry + rh; y++) for (let x = rx; x < rx + rw; x++) set(x, y, FLOOR.hall);
+    if (X) for (let y = 51; y < 53; y++) set(X, y, FLOOR.lobby); // del corredor al lobby
+    const hallRects = BASE_HALLS.slice(), freeRects = [];
     for (const row of ROWS) {
       const cols = plan[row.id], runs = [];
       for (let x = ZONE_X0; x <= ZONE_X1; x++) {
@@ -931,15 +950,15 @@
       }
       row.runs = runs;
     }
-    room('hall').rects = hallRects.concat(room('hall').rects.filter((rc) => rc[1] > ZONE_Y1 + 1 && !(rc[0] === 13 || rc[0] === 32)));
+    room('hall').rects = hallRects;
     room('open').rects = freeRects;
 
     // 4. Caras de muro: las dos filas sobre cualquier piso.
     for (let x = ZONE_X0; x <= ZONE_X1; x++)
-      for (let y = 1; y <= ZONE_Y1; y++)
-        if (isFloor(at(x, y)) && at(x, y - 1) === TOP) {
+      for (let y = 1; y < H; y++)
+        if (inReset(x, y - 1) && isFloor(at(x, y)) && at(x, y - 1) === TOP) {
           set(x, y - 1, FACE);
-          if (at(x, y - 2) === TOP) set(x, y - 2, FACE);
+          if (inReset(x, y - 2) && at(x, y - 2) === TOP) set(x, y - 2, FACE);
         }
 
     // 5. Puertas: cada oficina, centrada; la planta libre, una cada ~16 m.
@@ -991,7 +1010,8 @@
       if (sx != null && o.number) add({ k: 'sign', x: sx, y: row.hallY - 2, w: 3, text: String(o.number), fg: '#ffc367' });
       if (sx != null) gaps.push([sx, sx + 2]);
     }
-    for (const [px, py] of [[8, 28], [26, 28], [42, 28], [6, 12], [24, 12], [44, 12]]) if (clear(px, 2)) add({ k: 'painting', x: px, y: py, w: 2 });
+    const pics = [[8, 28], [26, 28], [42, 28], [6, 12], [24, 12], [44, 12]].map(([px, py]) => [px + X, py]).concat(X ? [[6, 44], [14, 44]] : []);
+    for (const [px, py] of pics) if (clear(px, 2)) add({ k: 'painting', x: px, y: py, w: 2 });
 
     for (let i = 0; i < W * H; i++) solid[i] = isBlocked(grid[i]) ? 1 : 0;
     objects.forEach(markSolid);
@@ -1044,6 +1064,6 @@
       return tx < 0 || ty < 0 || tx >= W || ty >= H || solid[ty * W + tx] === 1;
     },
     // Se aparece frente al ascensor del lobby.
-    spawn: { x: 49 * T + 8, y: (34 + OY) * T + 12 },
+    spawn: { x: (49 + OX) * T + 8, y: (34 + OY) * T + 12 },
   };
 })();

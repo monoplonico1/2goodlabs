@@ -17,7 +17,7 @@
 // }
 
 (function () {
-  const SCHEMA = 4;
+  const SCHEMA = 5; // 5: el edificio creció a la izquierda (las x de antes se corren)
   const cat = TGL.catalog;
   const world = TGL.world;
   const zone = world.zone;
@@ -163,7 +163,7 @@
   }
   // Número de oficina: 1xx abajo (fila B), 2xx arriba (fila A).
   function numberFor(list, doc, row) {
-    const base = row === 'A' ? 201 : 101;
+    const base = zone.ROWS.find((r) => r.id === row).num;
     const used = list.filter((d) => d.id !== doc.id && d.kind === 'office').map((d) => d.number);
     let n = base;
     while (used.includes(n)) n++;
@@ -412,7 +412,8 @@
     } catch (e) {
       raw = null;
     }
-    const list = raw && Array.isArray(raw.spaces) ? raw.spaces.map(sanitize) : [];
+    const shift = raw && raw.schema < 5 ? world.zone.ROWS[0].bays[0].L - 1 : 0;
+    const list = raw && Array.isArray(raw.spaces) ? raw.spaces.map((d) => sanitize(shift && Number.isFinite(d.x) ? Object.assign({}, d, { x: d.x + shift }) : d)) : [];
     return settle(list);
   }
   // Devuelve true solo si quedó escrito (se relee para comprobarlo).

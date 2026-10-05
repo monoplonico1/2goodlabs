@@ -63,7 +63,9 @@ Qué incluye, pensado para que escale a un producto:
   (oficina o puesto), tamaño y lugar, identidad, superficies, ambiente, objetos, personas y
   contenido. Es lo que guardaría el servidor. Los guardados de versiones anteriores se migran.
 - **Zona de arriendo** (`world.zone`): con el editor encendido el edificio crece 16 filas
-  hacia arriba y el piso de arriba ya no tiene las oficinas 101–103. Hay dos filas de 8 m de
+  hacia arriba y 24 columnas hacia la izquierda, y el piso de arriba ya no tiene las
+  oficinas 101–103. A la izquierda hay una línea de tres filas más (C, D y E; oficinas 3xx,
+  4xx y 5xx, de 20 m de ancho) con un corredor que baja hasta el lobby. Hay dos filas de 8 m de
   fondo (A arriba, B abajo) con un pasillo entre ellas; los pasillos verticales del edificio
   suben hasta ese pasillo. La fila A es una planta libre de 50 m; la fila B tiene el coworking
   y dos tramos entre pasillos. Cada oficina se construye con muros, puerta, letrero y número
