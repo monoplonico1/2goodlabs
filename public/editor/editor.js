@@ -12,7 +12,7 @@
       mySpacesN: 'Mis espacios · {n}', go: 'Ir', account: 'Tu cuenta', emailLabel: 'Correo de tu cuenta',
       emailHint: 'Todos tus espacios quedan bajo este correo. Por ahora se guarda solo en este navegador.',
       badEmail: 'Ese correo no parece válido.', customizeTip: 'Para personalizar un espacio, entra en él: aparece el botón "Personalizar".',
-      officeSize: 'Oficina {s}', brandColors: 'Colores de tu marca', wStep: 'Paso {n} de {t}', next: 'Siguiente →', prev: '← Atrás', finish: 'Terminar',
+      officeSize: 'Oficina {s}', noFitNow: 'No cabe en ningún lugar libre ahora', brandColors: 'Colores de tu marca', wStep: 'Paso {n} de {t}', next: 'Siguiente →', prev: '← Atrás', finish: 'Terminar',
       w1Title: '¿Qué quieres arrendar?', w1Hint: 'Puedes cambiarlo después.',
       deskCard: 'Un puesto en el coworking', deskCardNote: 'Un escritorio fijo en la sala compartida: tu avatar, un agente y tu tarjeta con links.',
       officeCard: 'Una oficina propia', officeCardNote: 'Una sala con tus muros, tu letrero, tus muebles y tu equipo.',
@@ -51,7 +51,7 @@
       rulesTitle: 'Normas del piso',
       rules: ['Los pasillos son del edificio: no se venden ni se cierran.',
         'Toda oficina tiene su puerta sobre el pasillo de abajo de su fila.',
-        'Entre una oficina y el espacio libre (u otra oficina) siempre hay un pasillo de 2 m que cruza la fila. En la fila B ese pasillo sube hasta el pasillo del medio: así siempre se llega a la fila A.',
+        'Entre una oficina y el espacio libre (u otra oficina) siempre hay un pasillo de 2 m que cruza la fila hasta el pasillo: así siempre se puede llegar a la oficina de al lado.',
         'Al lado de una oficina quedan 0 m o al menos 8 m libres (una oficina S): no quedan retazos.',
         'Una oficina mide de 8 a 24 m de ancho y 8 de fondo. Para más espacio: otra oficina o el piso completo.'],
       shrinkConfirm: '{n} cosas quedan fuera del nuevo tamaño y se quitarán. ¿Seguir?', sizeChanged: 'Ahora tu oficina mide {m} m²',
@@ -90,7 +90,7 @@
       mySpacesN: 'My spaces · {n}', go: 'Go', account: 'Your account', emailLabel: 'Your account email',
       emailHint: 'All your spaces live under this email. For now it is saved only in this browser.',
       badEmail: 'That email does not look valid.', customizeTip: 'To customize a space, walk into it: a "Customize" button shows up.',
-      officeSize: 'Office {s}', brandColors: 'Your brand colors', wStep: 'Step {n} of {t}', next: 'Next →', prev: '← Back', finish: 'Finish',
+      officeSize: 'Office {s}', noFitNow: 'Does not fit in any free spot right now', brandColors: 'Your brand colors', wStep: 'Step {n} of {t}', next: 'Next →', prev: '← Back', finish: 'Finish',
       w1Title: 'What do you want to rent?', w1Hint: 'You can change it later.',
       deskCard: 'A coworking desk', deskCardNote: 'A fixed desk in the shared room: your avatar, one agent and your card with links.',
       officeCard: 'Your own office', officeCardNote: 'A room with your walls, your sign, your furniture and your team.',
@@ -129,7 +129,7 @@
       rulesTitle: 'Floor rules',
       rules: ['Hallways belong to the building: they are never sold or closed.',
         'Every office has its door on the hallway below its row.',
-        'Between an office and free space (or another office) there is always a 2 m hallway across the row. In row B it runs up to the middle hallway, so row A can always be reached.',
+        'Between an office and free space (or another office) there is always a 2 m hallway across the row to the main hallway, so the office next door can always be reached.',
         'Next to an office there are either 0 m or at least 8 m free (an S office): no useless leftovers.',
         'An office is 8 to 24 m wide and 8 m deep. For more space: another office or the whole floor.'],
       shrinkConfirm: '{n} things fall outside the new size and will be removed. Continue?', sizeChanged: 'Your office is now {m} m²',
@@ -447,7 +447,8 @@
   function chooseKind(kind) {
     wiz.kind = kind;
     doc = null;
-    const ok = kind === 'desk' ? draftDesk() : draftOffice(null, 8);
+    // una oficina empieza con el ancho más chico que quepa en algún lugar
+    const ok = kind === 'desk' ? draftDesk() : officeWidths().some((w) => draftOffice(null, w));
     if (!ok) return flash(tr(kind === 'desk' ? 'noDesk' : 'noSpace'), true);
     wizGo(1);
   }
@@ -707,16 +708,26 @@
       ${card('office', 'officeCard', 'officeCardNote', fill('from', { p: money(Math.round(8 * 8 * cat.pricePerM2)) }))}
       <p class="ed-hint">${esc(tr('w1Hint'))}</p>`;
   }
+  // Anchos que caben en algún lugar libre ahora mismo.
+  function officeWidths() {
+    const list = saved.filter((o) => !wiz.back || o.id !== wiz.back.id), d = Object.assign(space.empty('office'), { id: doc && doc.id });
+    const out = [];
+    for (let w = zone.RULES.minWidth; w <= zone.RULES.maxWidth; w++) if (space.fitPlace(list, d, zone.ROWS[0].id, null, w)) out.push(w);
+    return out;
+  }
+  // Los tamaños de siempre (S, M, L, XL) y, además, los anchos exactos que caben en el piso.
   function wizSize() {
-    const list = saved.filter((o) => !wiz.back || o.id !== wiz.back.id);
+    const fit = officeWidths();
+    const presets = cat.sizes.filter((z) => !z.soon);
+    const widths = [...new Set(presets.map((z) => z.w).concat(fit))].sort((a, b) => a - b);
     return `
       <p class="ed-hint">${esc(tr('w2Hint'))}</p>
-      ${cat.sizes.filter((z) => !z.soon).map((z) => {
-        const d = { w: z.w, kind: 'office' }, fits = !!space.fitPlace(list, Object.assign(space.empty('office'), { id: doc && doc.id }), 'A', null, z.w);
-        return `<button type="button" class="ed-choice${doc && doc.w === z.w ? ' on' : ''}" data-act="wsize" data-v="${z.w}" ${fits ? '' : 'disabled'}>
-          <span class="ed-size-plan">${sizePlan(z.w)}</span>
-          <span><strong>${esc(fill('officeSize', { s: nm(z) }))}</strong><small>${z.w} × 8 m · ${z.w * 8} m²</small><small>${esc(fill('people', { n: space.limits(d).maxResidents }))}</small></span>
-          <b>${money(Math.round(z.w * 8 * cat.pricePerM2))}${esc(tr('perMonth'))}</b>
+      ${widths.map((w) => {
+        const z = presets.find((o) => o.w === w), d = { w, kind: 'office' }, fits = fit.includes(w);
+        return `<button type="button" class="ed-choice${doc && doc.w === w ? ' on' : ''}" data-act="wsize" data-v="${w}" ${fits ? '' : 'disabled'}>
+          <span class="ed-size-plan">${sizePlan(w)}</span>
+          <span><strong>${esc(z ? fill('officeSize', { s: nm(z) }) : fill('officeSize', { s: w + ' m' }))}</strong><small>${w} × 8 m · ${w * 8} m²</small><small>${esc(fits ? fill('people', { n: space.limits(d).maxResidents }) : tr('noFitNow'))}</small></span>
+          <b>${money(Math.round(w * 8 * cat.pricePerM2))}${esc(tr('perMonth'))}</b>
         </button>`;
       }).join('')}
       <p class="ed-note">${esc(tr('floorSoon'))}</p>`;
@@ -823,7 +834,7 @@
   // Dibuja lo que el edificio tiene construido ahora (filas, pasillos, oficinas, coworking).
   // Se puede tocar: en la lista, para crear o abrir; editando, para mover la oficina o el puesto.
   // Tamaño del plano: toda la zona de arriendo (con la línea de la izquierda).
-  const MAP = { w: zone.ROWS[0].bays[0].R + 2, h: Math.max(...zone.ROWS.map((r) => r.hallY)) + 2 };
+  const MAP = { w: Math.max(...zone.ROWS.flatMap((r) => r.bays.map((b) => b.R))) + 2, h: Math.max(...zone.ROWS.map((r) => r.hallY)) + 2 };
   function zoneMap() {
     const rc = (x, y, w, h, c, extra) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${c}"${extra || ''}/>`;
     const txt = (x, y, t, c) => `<text x="${x}" y="${y}" fill="${c}" font-size="2.2" text-anchor="middle" font-family="Silkscreen, monospace">${esc(t)}</text>`;

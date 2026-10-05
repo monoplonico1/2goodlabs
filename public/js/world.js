@@ -35,11 +35,14 @@
   // ellas, un coworking y planta libre. Las oficinas se construyen ahí con el editor, del
   // tamaño y en el lugar que cada uno arriende, siguiendo las normas del piso (más abajo).
   const OPEN = !!(TGL.featureOn && TGL.featureOn('editor'));
-  const OY = OPEN ? 16 : 0; // filas nuevas arriba
-  const OX = OPEN ? 24 : 0; // columnas nuevas a la izquierda (una línea de oficinas y su pasillo)
+  // GROW: el edificio crece (una fila arriba y una línea a la izquierda). Apagado por ahora:
+  // la zona de arriendo es solo el piso de arriba original, con el coworking.
+  const GROW = false;
+  const OY = OPEN && GROW ? 16 : 0; // filas nuevas arriba
+  const OX = OPEN && GROW ? 24 : 0; // columnas nuevas a la izquierda (una línea de oficinas y su pasillo)
   if (OPEN) {
     for (const id of ['rent1', 'rent2', 'rent3']) TGL.rooms.splice(TGL.rooms.indexOf(room(id)), 1);
-    room('hall').rects = [[1, 14, 50, 2], [13, 14, 2, 20], [32, 14, 2, 20]];
+    if (GROW) room('hall').rects = [[1, 14, 50, 2], [13, 14, 2, 20], [32, 14, 2, 20]];
     TGL.rooms.push({
       id: 'open', open: true, rects: [],
       name: { es: 'Planta libre · Se arrienda', en: 'Open floor · For rent' },
@@ -284,7 +287,7 @@
 
   // El edificio crece OY filas hacia arriba y OX columnas hacia la izquierda: todo lo
   // construido se corre (OX, OY).
-  if (OPEN) {
+  if (OPEN && GROW) {
     const old = grid;
     H = H0 + OY;
     W = W0 + OX;
@@ -827,19 +830,24 @@
   // A y B son el piso de arriba del edificio original; C, D y E, la línea de la izquierda.
   // num: número de la primera oficina de la fila.
   const X = OX;
-  const ROWS = [
+  const ROWS = GROW ? [
     { id: 'A', num: 201, y: 3, h: 8, hallY: 14, up: false, bays: [{ L: X + 1, R: X + 50, l: 'wall', r: 'wall' }] },
     { id: 'B', num: 101, y: 19, h: 8, hallY: 30, up: true, bays: [{ L: X + 1, R: X + 12, l: 'wall', r: 'hall' }, { L: X + 15, R: X + 31, l: 'hall', r: 'hall' }, { L: X + 34, R: X + 50, l: 'hall', r: 'wall' }] },
-  ].concat(X ? [
     { id: 'C', num: 301, y: 3, h: 8, hallY: 14, up: false, bays: [{ L: 1, R: 20, l: 'wall', r: 'wall' }] },
     { id: 'D', num: 401, y: 19, h: 8, hallY: 30, up: true, bays: [{ L: 1, R: 20, l: 'wall', r: 'wall' }] },
     { id: 'E', num: 501, y: 35, h: 8, hallY: 46, up: true, bays: [{ L: 1, R: 20, l: 'wall', r: 'wall' }] },
-  ] : []);
-  // Lo que la zona reconstruye (x, y, ancho, alto) y sus pasillos fijos: el del medio y el
-  // principal (que cruzan hasta la línea izquierda), los verticales del edificio, y en la
-  // línea izquierda un corredor que baja hasta el lobby y el pasillo de la fila E.
-  const RESET = [[1, 0, X + 50, 30]].concat(X ? [[1, 30, X - 1, 23]] : []);
-  const BASE_HALLS = [[1, 14, X + 50, 2], [1, 30, X + 50, 2], [X + 13, 16, 2, 34], [X + 32, 16, 2, 34]].concat(X ? [[X - 2, 16, 2, 37], [1, 46, X - 1, 2]] : []);
+  ] : [
+    { id: 'B', num: 101, y: 3, h: 8, hallY: 14, up: false, bays: [{ L: 1, R: 12, l: 'wall', r: 'hall' }, { L: 15, R: 31, l: 'hall', r: 'hall' }, { L: 34, R: 50, l: 'hall', r: 'wall' }] },
+  ];
+  // Lo que la zona reconstruye (x, y, ancho, alto) y sus pasillos fijos. Con el edificio
+  // crecido: el del medio y el principal (que cruzan hasta la línea izquierda), los verticales
+  // del edificio, y en la línea izquierda un corredor que baja hasta el lobby y el pasillo de
+  // la fila E. Sin crecer: el pasillo principal y los dos verticales, que suben hasta arriba.
+  const RESET = GROW ? [[1, 0, X + 50, 30], [1, 30, X - 1, 23]] : [[1, 0, 50, 14]];
+  const BASE_HALLS = GROW
+    ? [[1, 14, X + 50, 2], [1, 30, X + 50, 2], [X + 13, 16, 2, 34], [X + 32, 16, 2, 34], [X - 2, 16, 2, 37], [1, 46, X - 1, 2]]
+    : [[1, 14, 50, 2], [13, 3, 2, 31], [32, 3, 2, 31]];
+  const PICS = GROW ? [[X + 8, 28], [X + 26, 28], [X + 42, 28], [X + 6, 12], [X + 24, 12], [X + 44, 12], [6, 44], [14, 44]] : [[8, 12], [26, 12], [42, 12]];
   const inReset = (x, y) => RESET.some(([rx, ry, rw, rh]) => x >= rx && x < rx + rw && y >= ry && y < ry + rh);
   const ZONE_X0 = 1, ZONE_X1 = X + 50;
   const COWORK = { id: 'cowork', row: 'B', a: X + 1, w: 11, fixed: true };
@@ -928,7 +936,7 @@
     // 1. Todo muro. 2. Pasillos fijos. 3. Filas.
     for (const [rx, ry, rw, rh] of RESET) for (let y = ry; y < ry + rh; y++) for (let x = rx; x < rx + rw; x++) set(x, y, TOP);
     for (const [rx, ry, rw, rh] of BASE_HALLS) for (let y = ry; y < ry + rh; y++) for (let x = rx; x < rx + rw; x++) set(x, y, FLOOR.hall);
-    if (X) for (let y = 51; y < 53; y++) set(X, y, FLOOR.lobby); // del corredor al lobby
+    if (GROW) for (let y = 51; y < 53; y++) set(X, y, FLOOR.lobby); // del corredor al lobby
     const hallRects = BASE_HALLS.slice(), freeRects = [];
     for (const row of ROWS) {
       const cols = plan[row.id], runs = [];
@@ -1010,8 +1018,7 @@
       if (sx != null && o.number) add({ k: 'sign', x: sx, y: row.hallY - 2, w: 3, text: String(o.number), fg: '#ffc367' });
       if (sx != null) gaps.push([sx, sx + 2]);
     }
-    const pics = [[8, 28], [26, 28], [42, 28], [6, 12], [24, 12], [44, 12]].map(([px, py]) => [px + X, py]).concat(X ? [[6, 44], [14, 44]] : []);
-    for (const [px, py] of pics) if (clear(px, 2)) add({ k: 'painting', x: px, y: py, w: 2 });
+    for (const [px, py] of PICS) if (clear(px, 2)) add({ k: 'painting', x: px, y: py, w: 2 });
 
     for (let i = 0; i < W * H; i++) solid[i] = isBlocked(grid[i]) ? 1 : 0;
     objects.forEach(markSolid);
@@ -1043,7 +1050,7 @@
     W, H, grid, solid, objects, links, breakSpots, roomAt, drawWallAnims, drawOverlay, renderStatic,
     T, room, refreshSolids, furnishRent, FLOOR_STYLES, WALL_STYLES, OPEN,
     // Zona de arriendo: normas, filas, dónde cabe una oficina y construirla.
-    zone: { RULES, ROWS, DESKS, COWORK, plan: floorPlan, starts, build: buildZone, freeDesk, get leases() { return leases; } },
+    zone: { GROW, OX, RULES, ROWS, DESKS, COWORK, plan: floorPlan, starts, build: buildZone, freeDesk, get leases() { return leases; } },
     // Para el editor: sacar y agregar objetos de una sala, y las casillas frente a sus puertas.
     removeTagged(tag) {
       for (let i = objects.length - 1; i >= 0; i--) if (objects[i].tag === tag) objects.splice(i, 1);

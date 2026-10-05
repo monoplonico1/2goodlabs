@@ -30,7 +30,7 @@
     schema: SCHEMA,
     id: newId(kind || 'office'),
     kind: kind || 'office',
-    w: 8, row: 'A', x: null, number: null, desk: null, deskColor: null,
+    w: 8, row: zone.ROWS[0].id, x: null, number: null, desk: null, deskColor: null,
     identity: { name: '', tagline: '', primary: '#1d1f24', accent: '#ffc367' },
     surfaces: { floor: 'plain', floorColor: '#f1f1f3', walls: 'plain', wallColor: '#f7f7f9' },
     mode: 'day',
@@ -152,7 +152,7 @@
   const startsFor = (list, doc, row, w) => zone.starts(leasesOf(list), row, w == null ? doc.w : w, doc.id);
   // El lugar válido más cercano al pedido: primero en la misma fila, si no en la otra.
   function fitPlace(list, doc, row, x, w) {
-    const rows = [row].concat(zone.ROWS.map((r) => r.id).filter((r) => r !== row));
+    const rows = zone.ROWS.map((r) => r.id).sort((a, b) => (b === row) - (a === row));
     for (const rw of rows) {
       const ok = startsFor(list, doc, rw, w);
       if (!ok.length) continue;
@@ -248,7 +248,7 @@
       const preset = cat.sizes.find((z) => z.id === raw.size);
       const w = Number.isFinite(raw.w) ? Math.round(raw.w) : preset ? preset.w : 16;
       doc.w = Math.max(zone.RULES.minWidth, Math.min(zone.RULES.maxWidth, w));
-      doc.row = zone.ROWS.some((r) => r.id === raw.row) ? raw.row : 'A';
+      doc.row = zone.ROWS.some((r) => r.id === raw.row) ? raw.row : zone.ROWS[0].id;
       doc.x = Number.isFinite(raw.x) ? Math.round(raw.x) : Number.isFinite(raw.slot) ? 1 + Math.round(raw.slot) : null;
       doc.number = Number.isInteger(raw.number) ? raw.number : null;
     }
@@ -412,14 +412,16 @@
     } catch (e) {
       raw = null;
     }
-    const shift = raw && raw.schema < 5 ? world.zone.ROWS[0].bays[0].L - 1 : 0;
+    // Las x se guardan con el corrimiento del edificio de ese momento (ox).
+    const savedOx = raw ? (raw.ox != null ? raw.ox : raw.schema >= 5 ? 24 : 0) : 0;
+    const shift = zone.OX - savedOx;
     const list = raw && Array.isArray(raw.spaces) ? raw.spaces.map((d) => sanitize(shift && Number.isFinite(d.x) ? Object.assign({}, d, { x: d.x + shift }) : d)) : [];
     return settle(list);
   }
   // Devuelve true solo si quedó escrito (se relee para comprobarlo).
   function save(list) {
     try {
-      const txt = JSON.stringify({ schema: SCHEMA, spaces: list });
+      const txt = JSON.stringify({ schema: SCHEMA, ox: zone.OX, spaces: list });
       localStorage.setItem(KEY, txt);
       return localStorage.getItem(KEY) === txt;
     } catch (e) {
