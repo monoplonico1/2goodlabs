@@ -20,7 +20,15 @@ export default {
 
     if (url.pathname === '/api/contact') return contact(request, env);
 
-    return env.ASSETS.fetch(request);
+    // Las páginas (HTML) se revisan siempre con el servidor: así una versión nueva se ve con
+    // solo recargar. Los .js y .css llevan ?v= con el contenido, así que pueden guardarse.
+    const res = await env.ASSETS.fetch(request);
+    if ((res.headers.get('Content-Type') || '').includes('text/html')) {
+      const out = new Response(res.body, res);
+      out.headers.set('Cache-Control', 'no-cache');
+      return out;
+    }
+    return res;
   },
 };
 
