@@ -18,7 +18,7 @@
       officeCard: 'Una oficina propia', officeCardNote: 'Una sala con tus muros, tu letrero, tus muebles y tu equipo.',
       from: 'desde {p}/mes', free: 'GRATIS', freeNote: 'Gratis durante el lanzamiento: tu primera oficina y tu primer puesto.',
       needsPayOffice: 'Tu oficina gratis ya está en uso. Para tener otra, muy pronto podrás pagar.',
-      needsPayDesk: 'Tu puesto gratis ya está en uso. Para tener otro, muy pronto podrás pagar.', rentFree: 'Arrendar gratis', payable: 'De pago · muy pronto',
+      needsPayDesk: 'Tu puesto gratis ya está en uso. Para tener otro, muy pronto podrás pagar.', rentFree: 'Arrendar gratis', emailPlaceholder: 'tu@correo.com', payable: 'De pago · muy pronto',
       w2Title: '¿De qué tamaño?', w2Hint: 'Todas tienen 8 m de fondo. Pagas por metro cuadrado: con más metros caben más personas y más objetos.',
       people: '{n} personas o agentes',
       w3Title: '¿Dónde?', w3Office: 'Ya la ubicamos en un lugar libre. Toca el plano (o el edificio) para moverla, o usa las flechas. Solo te dejamos elegir lugares con pasillo.',
@@ -98,7 +98,7 @@
       officeCard: 'Your own office', officeCardNote: 'A room with your walls, your sign, your furniture and your team.',
       from: 'from {p}/mo', free: 'FREE', freeNote: 'Free during launch: your first office and your first desk.',
       needsPayOffice: 'Your free office is already in use. To get another one, payments are coming very soon.',
-      needsPayDesk: 'Your free desk is already in use. To get another one, payments are coming very soon.', rentFree: 'Rent for free', payable: 'Paid · coming soon',
+      needsPayDesk: 'Your free desk is already in use. To get another one, payments are coming very soon.', rentFree: 'Rent for free', emailPlaceholder: 'you@company.com', payable: 'Paid · coming soon',
       w2Title: 'How big?', w2Hint: 'All are 8 m deep. You pay per square meter: more meters fit more people and more objects.',
       people: '{n} people or agents',
       w3Title: 'Where?', w3Office: 'We already put it in a free spot. Tap the plan (or the building) to move it, or use the arrows. Only spots with a hallway are allowed.',
@@ -768,7 +768,7 @@
         <div class="ed-sum-row"><span>${esc(tr('sumPrice'))}</span><strong>${priceTag(doc, fill('perMonthLong', { p: money(space.price(doc)) }))}</strong></div>
       </div>
       ${canHave(doc) ? '' : `<p class="ed-status bad">${esc(tr(doc.kind === 'desk' ? 'needsPayDesk' : 'needsPayOffice'))}</p>`}
-      ${wiz.mode === 'new' ? field(tr('emailLabel'), `<input type="email" data-email value="${esc(account.email || '')}" placeholder="tu@correo.com" autocomplete="email">`) + `<p class="ed-note">${esc(tr('emailHint'))}</p>` : ''}
+      ${wiz.mode === 'new' ? field(tr('emailLabel'), `<input type="email" data-email value="${esc(account.email || '')}" placeholder="${esc(tr('emailPlaceholder'))}" autocomplete="email">`) + `<p class="ed-note">${esc(tr('emailHint'))}</p>` : ''}
       <p class="ed-hint">${esc(tr('w4Hint'))}</p>`;
   }
   function sizePlan(w) {
