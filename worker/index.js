@@ -1,9 +1,11 @@
 // Worker de Cloudflare: sirve public/ y además
 //   1. redirige www.2goodlabs.com al dominio principal (2goodlabs.com), si se conecta;
 //   2. recibe el formulario de contacto (POST /api/contact) y lo envía por correo
-//      con Email Routing de Cloudflare (binding CONTACT_EMAIL, ver wrangler.jsonc).
+//      con Email Routing de Cloudflare (binding CONTACT_EMAIL, ver wrangler.jsonc);
+//   3. atiende la API del edificio compartido (/api/building, /api/hold, … ver api.js).
 
 import { EmailMessage } from 'cloudflare:email';
+import { api } from './api.js';
 
 const PRIMARY = '2goodlabs.com';
 const REDIRECT_HOSTS = ['www.2goodlabs.com'];
@@ -19,6 +21,7 @@ export default {
     }
 
     if (url.pathname === '/api/contact') return contact(request, env);
+    if (url.pathname.startsWith('/api/')) return api(request, env, url.pathname.slice(5));
 
     // Las páginas (HTML) se revisan siempre con el servidor: así una versión nueva se ve con
     // solo recargar. Los .js y .css llevan ?v= con el contenido, así que pueden guardarse.

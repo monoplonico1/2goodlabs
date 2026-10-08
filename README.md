@@ -102,6 +102,9 @@ formulario de contacto.
 src/index.html      plantilla de la página (editar aquí, no en public/*.html)
 build.js            genera public/index.html (es), public/en/index.html, sitemap y robots
 worker/index.js     redirección www → 2goodlabs.com y POST /api/contact
+worker/api.js       API del edificio compartido (reservas, publicar) sobre Supabase
+supabase/migrations base de datos (tablas, permisos, vencimiento de reservas)
+tests/              node --test tests/*.test.*
 public/
   js/data.js        ← textos (es/en), salas y equipo. Lo único que hay que tocar para cambiar contenido
   js/i18n.js        textos de la interfaz y cambio de idioma
@@ -111,6 +114,7 @@ public/
   js/world.js       plano del piso, colisiones y capa estática
   js/game.js        bucle, movimiento, cámara, minimapa e interacción
   js/features.js    interruptores de módulos en desarrollo
+  js/rules.js       normas del piso, catálogo como datos y validación (navegador y Worker)
   editor/           editor de oficinas (beta): catálogo, documento del espacio e interfaz
   og.png, logo.png  imagen para compartir y logo para buscadores
 ```
@@ -178,6 +182,22 @@ El formulario (en la vista simple y en el buzón rojo del lobby) envía un corre
 Los mensajes llegan con *Reply-To* de quien escribió, así que basta con responder.
 Hay un campo trampa oculto contra bots; si llega spam, el siguiente paso es
 [Turnstile](https://developers.cloudflare.com/turnstile/).
+
+## Edificio compartido (backend, en construcción)
+
+Cualquiera puede reservar un lugar y armar su espacio; la reserva dura 20 minutos (se puede
+alargar 10 una vez) y los demás la ven como "reservado". Para publicar hay que registrarse
+con un código que llega al correo. Lo que se publica queda en el edificio para todos.
+
+- **Supabase**: cuentas (anónimas para reservar; correo con código o Google para publicar)
+  y base de datos. La estructura está en `supabase/migrations/`: se aplica una vez pegándola
+  en el SQL Editor. Las reservas vencidas se borran solas cada minuto (pg_cron).
+- **Worker** (`worker/api.js`): decide con `public/js/rules.js`, las mismas normas del
+  editor, y guarda con la llave `service_role`, que va como secreto
+  `SUPABASE_SERVICE_ROLE_KEY` en Cloudflare (nunca en el repositorio). Si dos personas piden
+  el mismo lugar a la vez, la base acepta solo a una (versión por piso).
+- **Pruebas**: `node --test tests/*.test.*`. Las de la API corren contra un Postgres local
+  con la migración aplicada si se define `PGTEST` (ver `tests/api.test.mjs`).
 
 ## SEO
 

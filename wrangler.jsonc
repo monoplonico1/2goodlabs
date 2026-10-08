@@ -19,7 +19,12 @@
   "send_email": [{ "name": "CONTACT_EMAIL" }],
   // Conserva las variables creadas en el panel de Cloudflare (como CONTACT_TO) en cada deploy.
   "keep_vars": true,
+  // API del edificio (worker/api.js). La URL y la llave anon de Supabase son públicas; la
+  // llave service_role es un secreto: SUPABASE_SERVICE_ROLE_KEY, solo en el panel de
+  // Cloudflare (Worker → Settings → Variables and Secrets). Igual TURNSTILE_SECRET.
   "vars": {
-    "CONTACT_FROM": "contacto@2goodlabs.com"
+    "CONTACT_FROM": "contacto@2goodlabs.com",
+    "SUPABASE_URL": "https://dltseetbrbvnyzsdebtp.supabase.co",
+    "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRsdHNlZXRicmJ2bnl6c2RlYnRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0NTA4NTQsImV4cCI6MjEwNzAyNjg1NH0.3WuhkY6HIDgvi3mjB-yoANP_gfZSPVkRx5DJAZenZHc"
   }
 }
