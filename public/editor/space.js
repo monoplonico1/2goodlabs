@@ -23,21 +23,10 @@
   const zone = world.zone;
   const KEY = 'tgl-myspace';
   const OLD_KEYS = ['tgl-spaces', 'tgl-space:rent3']; // pruebas anteriores: se descartan
-  const DEPTH = 8;
-
-  const newId = (kind) => (kind === 'desk' ? 'd-' : 'o-') + Math.random().toString(36).slice(2, 8);
-  const empty = (kind) => ({
-    schema: SCHEMA,
-    id: newId(kind || 'office'),
-    kind: kind || 'office',
-    w: 8, row: zone.ROWS[0].id, x: null, number: null, desk: null, deskColor: null,
-    identity: { name: '', tagline: '', primary: '#1d1f24', accent: '#ffc367' },
-    surfaces: { floor: 'plain', floorColor: '#f1f1f3', walls: 'plain', wallColor: '#f7f7f9' },
-    mode: 'day',
-    items: [],
-    residents: [],
-    content: { about: '', links: [] },
-  });
+  // Normas, límites y validación: js/rules.js, el mismo archivo que usa el servidor.
+  const R = TGL.rules;
+  const { newId, empty, sanitize, canPlace, footprint, proUsage, area, limits, entriesOf, m2, price } = R;
+  const { leasesOf, startsFor, fitPlace, numberFor, freeDesks } = R;
 
   // ————————————————————————————————— Plantillas (pensadas para 16×8; lo que no cabe se descarta)
   const templates = [
@@ -108,198 +97,7 @@
     },
   ];
 
-  // ————————————————————————————————— Validación
-  const clampText = (v, n) => String(v == null ? '' : v).slice(0, n);
-  const isColor = (v) => /^#[0-9a-f]{6}$/i.test(v || '');
-  const isUrl = (v) => /^https?:\/\/[^\s]+\.[^\s]+$/i.test(v || '');
-  const pick = (list, id, fallback) => (list.some((o) => o.id === id) ? id : fallback);
-
-  // Superficies de la versión 1 (un id = patrón y color fijos) a patrón + color.
-  const OLD_FLOORS = { white: ['plain', '#f1f1f3'], concrete: ['speckle', '#d9d9de'], oak: ['planks', '#cfa06a'], mint: ['checker', '#a9d3b3'], navy: ['speckle', '#2f3e5e'] };
-  const OLD_WALLS = { white: '#f7f7f9', cream: '#efe4d0', mint: '#e2eedc', sky: '#dde6f3', graphite: '#3a3d45' };
-  function surfacesOf(s, identity) {
-    let floor = s.floor, floorColor = s.floorColor, walls = s.walls, wallColor = s.wallColor;
-    if (OLD_FLOORS[floor]) [floor, floorColor] = isColor(floorColor) ? [OLD_FLOORS[floor][0], floorColor] : OLD_FLOORS[floor];
-    if (OLD_WALLS[walls] || walls === 'brand') {
-      if (!isColor(wallColor)) wallColor = walls === 'brand' ? identity.primary : OLD_WALLS[walls];
-      walls = 'plain';
-    }
-    floor = pick(cat.floors, floor, 'plain');
-    walls = pick(cat.walls, walls, 'plain');
-    return {
-      floor, walls,
-      floorColor: isColor(floorColor) ? floorColor.toLowerCase() : cat.floors.find((f) => f.id === floor).color,
-      wallColor: isColor(wallColor) ? wallColor.toLowerCase() : cat.walls.find((f) => f.id === walls).color,
-    };
-  }
-
-  // ————————————————————————————————— Tamaño y lugar
-  // La oficina mide lo que se arrienda y el edificio construye sus muros a esa medida
-  // (world.zone). Coordenadas relativas a su esquina; la puerta va centrada abajo.
-  const area = (doc) => (doc.kind === 'desk' ? { x0: 0, w: 2, h: 2 } : { x0: 0, w: doc.w, h: DEPTH });
-  const entriesOf = (a) => [{ x: Math.floor(a.w / 2) - 1, y: a.h - 1 }, { x: Math.floor(a.w / 2), y: a.h - 1 }];
-  const m2 = (doc) => (doc.kind === 'desk' ? cat.desk.m2 : doc.w * DEPTH);
-  const price = (doc) => (doc.kind === 'desk' ? cat.desk.price : Math.round(m2(doc) * cat.pricePerM2));
-  // Más metros, más gente y más objetos.
-  const limits = (doc) => (doc.kind === 'desk'
-    ? { maxItems: 0, maxResidents: cat.desk.residents, maxLinks: cat.plan.maxLinks }
-    : { maxItems: doc.w * 2, maxResidents: Math.ceil(doc.w * 0.9), maxLinks: cat.plan.maxLinks });
-  const sizesFor = () => cat.sizes.filter((z) => !z.soon);
-
-  // Oficinas como las entiende el edificio.
-  const leasesOf = (list) => list.filter((d) => d.kind === 'office' && d.x != null).map((d) => ({ id: d.id, row: d.row, a: d.x, w: d.w, number: d.number }));
-  // Lugares válidos para una oficina de ancho w en una fila, con las demás donde están.
-  const startsFor = (list, doc, row, w) => zone.starts(leasesOf(list), row, w == null ? doc.w : w, doc.id);
-  // El lugar válido más cercano al pedido: primero en la misma fila, si no en la otra.
-  function fitPlace(list, doc, row, x, w) {
-    const rows = zone.ROWS.map((r) => r.id).sort((a, b) => (b === row) - (a === row));
-    for (const rw of rows) {
-      const ok = startsFor(list, doc, rw, w);
-      if (!ok.length) continue;
-      const want = x == null ? ok[0] : x;
-      return { row: rw, x: ok.reduce((best, s) => (Math.abs(s - want) < Math.abs(best - want) ? s : best), ok[0]) };
-    }
-    return null;
-  }
-  // Número de oficina: 1xx abajo (fila B), 2xx arriba (fila A).
-  function numberFor(list, doc, row) {
-    const base = zone.ROWS.find((r) => r.id === row).num;
-    const used = list.filter((d) => d.id !== doc.id && d.kind === 'office').map((d) => d.number);
-    let n = base;
-    while (used.includes(n)) n++;
-    return n;
-  }
-  const freeDesks = (list, doc) => zone.DESKS.map((d, i) => i).filter((i) => !list.some((o) => o.kind === 'desk' && o.id !== (doc && doc.id) && o.desk === i));
-
-  // Dimensiones y si bloquea el paso, para cualquier cosa que ocupe casillas.
-  function footprint(thing) {
-    if (thing.kind === 'agent' || thing.kind === 'human') return { w: 1, h: 1, solid: true };
-    const def = cat.byType[thing.type];
-    return { w: def.w, h: def.h, solid: def.solid !== false };
-  }
-
-  // Casillas ocupadas por cosas sólidas (excepto la que se está moviendo).
-  function occupancy(doc, room, skip) {
-    const occ = new Uint8Array(room.w * room.h);
-    const mark = (thing) => {
-      if (thing === skip) return;
-      const f = footprint(thing);
-      if (!f.solid) return;
-      for (let y = thing.y; y < thing.y + f.h; y++)
-        for (let x = thing.x; x < thing.x + f.w; x++) if (x >= 0 && y >= 0 && x < room.w && y < room.h) occ[y * room.w + x] = 1;
-    };
-    doc.items.forEach(mark);
-    doc.residents.forEach(mark);
-    return occ;
-  }
-
-  // ¿Se puede poner "thing" en (x, y)? Devuelve null si sí, o el motivo si no.
-  function canPlace(doc, thing, x, y, skip) {
-    const room = area(doc);
-    const f = footprint(thing);
-    if (x < 0 || y < 0 || x + f.w > room.w || y + f.h > room.h) return 'bounds';
-    const occ = occupancy(doc, room, skip);
-    const entries = entriesOf(room);
-    for (let yy = y; yy < y + f.h; yy++)
-      for (let xx = x; xx < x + f.w; xx++) {
-        if (f.solid && occ[yy * room.w + xx]) return 'overlap';
-        if (f.solid && entries.some((e) => e.x === xx && e.y === yy)) return 'door';
-      }
-    if (!f.solid) return null;
-    // Con la pieza puesta, todo lo importante tiene que poder alcanzarse caminando desde la puerta.
-    for (let yy = y; yy < y + f.h; yy++) for (let xx = x; xx < x + f.w; xx++) occ[yy * room.w + xx] = 1;
-    const reach = new Uint8Array(room.w * room.h), q = [];
-    for (const e of entries) if (!occ[e.y * room.w + e.x]) { reach[e.y * room.w + e.x] = 1; q.push(e); }
-    while (q.length) {
-      const c = q.pop();
-      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-        const nx = c.x + dx, ny = c.y + dy, i = ny * room.w + nx;
-        if (nx < 0 || ny < 0 || nx >= room.w || ny >= room.h || reach[i] || occ[i]) continue;
-        reach[i] = 1;
-        q.push({ x: nx, y: ny });
-      }
-    }
-    const reachable = (t, tx, ty) => {
-      const ff = footprint(t);
-      for (let yy = ty - 1; yy <= ty + ff.h; yy++)
-        for (let xx = tx - 1; xx <= tx + ff.w; xx++)
-          if (xx >= 0 && yy >= 0 && xx < room.w && yy < room.h && reach[yy * room.w + xx]) return true;
-      return false;
-    };
-    const important = doc.residents.concat(doc.items.filter((it) => cat.byType[it.type].info));
-    for (const t of important) {
-      const tx = t === skip ? x : t.x, ty = t === skip ? y : t.y;
-      if (!reachable(t, tx, ty)) return 'blocked';
-    }
-    if ((thing.kind || cat.byType[thing.type].info) && !reachable(thing, x, y)) return 'blocked';
-    return null;
-  }
-
-  // Limpia un documento que viene de afuera (guardado, importado o plantilla).
-  function sanitize(raw) {
-    const doc = empty(raw && raw.kind === 'desk' ? 'desk' : 'office');
-    if (!raw || typeof raw !== 'object') return doc;
-    if (/^[od]-[a-z0-9]{1,12}$/.test(raw.id || '')) doc.id = raw.id;
-    if (doc.kind === 'desk') {
-      doc.desk = Number.isInteger(raw.desk) && raw.desk >= 0 && raw.desk < zone.DESKS.length ? raw.desk : null;
-      doc.deskColor = isColor(raw.deskColor) ? raw.deskColor.toLowerCase() : null;
-    } else {
-      // Ancho en metros; los espacios de antes traían un tamaño (s/m/l/xl) y un "slot".
-      const preset = cat.sizes.find((z) => z.id === raw.size);
-      const w = Number.isFinite(raw.w) ? Math.round(raw.w) : preset ? preset.w : 16;
-      doc.w = Math.max(zone.RULES.minWidth, Math.min(zone.RULES.maxWidth, w));
-      doc.row = zone.ROWS.some((r) => r.id === raw.row) ? raw.row : zone.ROWS[0].id;
-      doc.x = Number.isFinite(raw.x) ? Math.round(raw.x) : Number.isFinite(raw.slot) ? 1 + Math.round(raw.slot) : null;
-      doc.number = Number.isInteger(raw.number) ? raw.number : null;
-    }
-    const lim = limits(doc);
-    const id = raw.identity || {};
-    doc.identity = {
-      name: clampText(id.name, 24),
-      tagline: clampText(id.tagline, 60),
-      primary: isColor(id.primary) ? id.primary : doc.identity.primary,
-      accent: isColor(id.accent) ? id.accent : doc.identity.accent,
-    };
-    doc.surfaces = surfacesOf(raw.surfaces || {}, doc.identity);
-    doc.mode = pick(cat.modes, raw.mode, 'day');
-    const c = raw.content || {};
-    doc.content = {
-      about: clampText(c.about, 280),
-      links: (Array.isArray(c.links) ? c.links : [])
-        .filter((l) => l && isUrl(l.url))
-        .slice(0, cat.plan.maxLinks)
-        .map((l) => ({ label: clampText(l.label, 30), url: clampText(l.url, 300) })),
-    };
-    // Objetos y personas se agregan uno a uno con las mismas reglas del editor.
-    for (const it of Array.isArray(raw.items) ? raw.items : []) {
-      const def = it && cat.byType[it.type];
-      if (!def || doc.items.length >= lim.maxItems) continue;
-      const item = { type: it.type, x: it.x | 0, y: it.y | 0 };
-      if (def.variants) item.variant = def.variants.includes(it.variant) ? it.variant : def.variants[0];
-      // Color libre; en la versión 1 el color de sillas y sofás venía en "variant".
-      const color = isColor(it.color) ? it.color : def.paint && isColor(it.variant) ? it.variant : null;
-      if (color && cat.colorable(def)) item.color = color.toLowerCase();
-      if (!canPlace(doc, item, item.x, item.y)) doc.items.push(item);
-    }
-    for (const p of Array.isArray(raw.residents) ? raw.residents : []) {
-      if (!p || doc.residents.length >= lim.maxResidents) continue;
-      const res = {
-        kind: p.kind === 'human' ? 'human' : 'agent',
-        name: clampText(p.name, 18) || '—',
-        title: clampText(p.title, 30),
-        bio: clampText(p.bio, 160),
-        lines: (Array.isArray(p.lines) ? p.lines : []).map((l) => clampText(l, 40)).filter(Boolean).slice(0, 3),
-        x: p.x | 0,
-        y: p.y | 0,
-        body: isColor(p.body) ? p.body : cat.people.body[0],
-        eye: isColor(p.eye) ? p.eye : cat.people.eye[0],
-        skin: isColor(p.skin) ? p.skin : cat.people.skin[0],
-        hair: isColor(p.hair) ? p.hair : cat.people.hair[0],
-      };
-      if (doc.kind === 'desk' || !canPlace(doc, res, res.x, res.y)) doc.residents.push(res);
-    }
-    return doc;
-  }
+  const sizesFor = () => R.SIZES.filter((z) => !z.soon);
 
   // ————————————————————————————————— Ubicar una lista de espacios (validar y acomodar)
   // Cada oficina queda donde pidió si cumple las normas con las anteriores; si no, en el lugar
@@ -432,16 +230,6 @@
     } catch (e) {
       return false;
     }
-  }
-
-  // Cuánto de lo que usa el espacio es PRO (lo que en la versión de pago se cobraría).
-  function proUsage(doc) {
-    if (doc.kind === 'desk') return 0;
-    let n = doc.items.filter((it) => cat.byType[it.type].tier === 'pro').length;
-    if (cat.floors.find((f) => f.id === doc.surfaces.floor).tier === 'pro') n++;
-    if (cat.walls.find((f) => f.id === doc.surfaces.walls).tier === 'pro') n++;
-    if (cat.modes.find((f) => f.id === doc.mode).tier === 'pro') n++;
-    return n;
   }
 
   TGL.space = {

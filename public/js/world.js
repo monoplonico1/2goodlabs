@@ -794,18 +794,9 @@
   }
 
   // ————————————————————————————————— Zona de arriendo: normas del piso
-  // Los pasillos son del edificio: no se venden ni se cierran. Toda oficina tiene la puerta
-  // sobre el pasillo de abajo de su fila. Entre una oficina y cualquier otra cosa que no sea
-  // un muro del edificio (otra oficina o planta libre) queda un pasillo de 2 m que cruza la
-  // fila; en la fila B ese pasillo sube hasta el pasillo del medio, así siempre se llega a la
-  // fila A. Junto a una oficina quedan 0 m o al menos 8 m libres: no hay retazos.
-  const RULES = { hall: 2, minFree: 8, minWidth: 8, maxWidth: 24 };
-  // Fila (y, alto) con sus tramos entre muros del edificio ('wall') y pasillos ('hall'). Una
-  // sola por ahora: el piso de arriba, de punta a punta (a su izquierda va el pasillo que
-  // recorre todo el piso). num: número de la primera oficina de la fila.
-  const ROWS = [
-    { id: 'B', num: 101, y: 3, h: 8, hallY: 14, up: false, bays: [{ L: 3, R: 57, l: 'hall', r: 'wall' }] },
-  ];
+  // Las normas (filas, pasillos, anchos, coworking y puestos) están en js/rules.js, que
+  // también usa el servidor: lo que se ve y lo que se valida es lo mismo.
+  const { RULES, ROWS, COWORK, DESKS, floorPlan, starts } = TGL.rules;
   // Lo que la zona reconstruye (x, y, ancho, alto) y sus pasillos fijos: el horizontal, el de
   // la izquierda y los dos verticales (que en la zona de arriendo llegan solo hasta el
   // pasillo horizontal).
@@ -814,65 +805,6 @@
   const PICS = [[16, 12], [34, 12], [46, 12]];
   const inReset = (x, y) => RESET.some(([rx, ry, rw, rh]) => x >= rx && x < rx + rw && y >= ry && y < ry + rh);
   const ZONE_X0 = 1, ZONE_X1 = 57;
-  const COWORK = { id: 'cowork', row: 'B', a: 4, w: 15, fixed: true };
-  // Puestos del coworking (relativos a la sala): escritorio de 2 × 1 y, delante, dos personas.
-  const DESKS = [0, 3, 6, 9, 12].map((x) => ({ x, y: 1 })).concat([0, 3, 6, 9, 12].map((x) => ({ x, y: 4 })));
-
-  // Columnas de un hueco de n casillas entre dos bordes ('wall' | 'hall' | 'office').
-  function fillGap(n, left, right) {
-    const off = (k) => k === 'office';
-    const free = (k) => Array(Math.max(0, k)).fill('free');
-    if (!off(left) && !off(right)) return free(n);
-    if (off(left) && off(right)) {
-      if (n === 4) return ['wall', 'hall', 'hall', 'wall']; // pasillo compartido
-      if (n >= 6 + RULES.minFree) return ['wall', 'hall', 'hall', ...free(n - 6), 'hall', 'hall', 'wall'];
-      return null;
-    }
-    const edge = off(left) ? right : left;
-    let cols;
-    if (n === (edge === 'wall' ? 0 : 1)) cols = Array(n).fill('wall'); // pegada al muro o al pasillo
-    else if (n >= 3 + RULES.minFree) cols = ['wall', 'hall', 'hall', ...free(n - 3)];
-    else return null;
-    return off(left) ? cols : cols.reverse();
-  }
-  // Plano de todo el piso para estas oficinas: por fila, el tipo de cada columna
-  // ('free' | 'hall' | 'wall' | id de la oficina). null si algo rompe las normas.
-  function floorPlan(leases) {
-    const plan = {};
-    for (const o of leases) {
-      const row = ROWS.find((q) => q.id === o.row);
-      if (!row || !row.bays.some((b) => o.a >= b.L && o.a + o.w - 1 <= b.R)) return null;
-    }
-    for (const row of ROWS) {
-      const cols = {};
-      for (const bay of row.bays) {
-        const list = leases.filter((o) => o.row === row.id && o.a >= bay.L && o.a <= bay.R).sort((p, q) => p.a - q.a);
-        let cur = bay.L, left = bay.l;
-        const put = (arr) => { arr.forEach((t, i) => { cols[cur + i] = t; }); cur += arr.length; };
-        for (const o of list) {
-          if (o.a < cur) return null;
-          const g = fillGap(o.a - cur, left, 'office');
-          if (!g) return null;
-          put(g);
-          put(Array(o.w).fill(o.id));
-          left = 'office';
-        }
-        const g = fillGap(bay.R - cur + 1, left, bay.r);
-        if (!g) return null;
-        put(g);
-      }
-      plan[row.id] = cols;
-    }
-    return plan;
-  }
-  // Dónde puede empezar (x) una oficina de ancho w en una fila, con las demás donde están.
-  function starts(leases, rowId, w, skipId) {
-    const others = [COWORK].concat(leases.filter((o) => o.id !== skipId && o.id !== COWORK.id)), out = [];
-    if (w < RULES.minWidth || w > RULES.maxWidth) return out;
-    for (const bay of ROWS.find((q) => q.id === rowId).bays)
-      for (let a = bay.L; a + w - 1 <= bay.R; a++) if (floorPlan(others.concat({ id: '?', row: rowId, a, w }))) out.push(a);
-    return out;
-  }
 
   // Construye la zona de arriendo con estas oficinas (además del coworking). Crea o quita las
   // salas de cada oficina; su contenido lo pone el editor (editor/space.js).

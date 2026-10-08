@@ -81,26 +81,18 @@
 
   ];
 
-  // Superficies: un patrón (dibujo) + un color libre. Los patrones viven en js/world.js.
-  const floors = [
-    { id: 'plain', name: N('Liso', 'Plain'), tier: 'free', color: '#f1f1f3' },
-    { id: 'speckle', name: N('Concreto / alfombra', 'Concrete / carpet'), tier: 'free', color: '#d9d9de' },
-    { id: 'planks', name: N('Tablones', 'Planks'), tier: 'free', color: '#cfa06a' },
-    { id: 'checker', name: N('Ajedrez', 'Checker'), tier: 'free', color: '#a9d3b3' },
-    { id: 'tiles', name: N('Baldosas', 'Tiles'), tier: 'free', color: '#e8e2d6' },
-    { id: 'herringbone', name: N('Espiga', 'Herringbone'), tier: 'pro', color: '#b98552' },
-    { id: 'neon', name: N('Rejilla neón', 'Neon grid'), tier: 'pro', color: '#16131f' },
-  ];
-  const walls = [
-    { id: 'plain', name: N('Lisa', 'Plain'), tier: 'free', color: '#f7f7f9' },
-    { id: 'stripes', name: N('Rayas', 'Stripes'), tier: 'free', color: '#dde6f3' },
-    { id: 'wainscot', name: N('Zócalo de madera', 'Wainscot'), tier: 'free', color: '#efe4d0' },
-    { id: 'brick', name: N('Ladrillo', 'Brick'), tier: 'pro', color: '#b5654a' },
-  ];
-  const modes = [
-    { id: 'day', name: N('Día', 'Day'), tier: 'free' },
-    { id: 'night', name: N('Noche con neón', 'Neon night'), tier: 'pro' },
-  ];
+  // Superficies: un patrón (dibujo) + un color libre. Los patrones viven en js/world.js;
+  // los ids, el nivel (free / pro) y el color de fábrica, en js/rules.js.
+  const R = TGL.rules;
+  const named = (list, names) => list.map((o) => Object.assign({ name: names[o.id] }, o));
+  const floors = named(R.FLOORS, {
+    plain: N('Liso', 'Plain'), speckle: N('Concreto / alfombra', 'Concrete / carpet'), planks: N('Tablones', 'Planks'),
+    checker: N('Ajedrez', 'Checker'), tiles: N('Baldosas', 'Tiles'), herringbone: N('Espiga', 'Herringbone'), neon: N('Rejilla neón', 'Neon grid'),
+  });
+  const walls = named(R.WALLS, {
+    plain: N('Lisa', 'Plain'), stripes: N('Rayas', 'Stripes'), wainscot: N('Zócalo de madera', 'Wainscot'), brick: N('Ladrillo', 'Brick'),
+  });
+  const modes = named(R.MODES, { day: N('Día', 'Day'), night: N('Noche con neón', 'Neon night') });
 
   const categories = [
     { id: 'all', name: N('Todo', 'All') },
@@ -125,28 +117,29 @@
 
   // ————————————————————————————————— Lo que se vende: espacio
   // 1 casilla = 1 m². Una oficina tiene 8 m de fondo y el ancho que se quiera, de 8 a 24 m
-  // (las normas del piso están en js/world.js). Con más metros caben más personas y objetos;
+  // (las normas del piso y los números están en js/rules.js). Con más metros caben más personas y objetos;
   // colores, marca y contenido son iguales en todos. Precio de ejemplo (US$ por m² al mes).
-  const pricePerM2 = 0.25;
+  const pricePerM2 = R.PRICE_PER_M2;
   // Atajos de ancho. "Piso completo" todavía no se puede arrendar.
-  const sizes = [
-    { id: 's', name: N('S', 'S'), w: 8, note: N('Un equipo pequeño o un fundador con sus agentes.', 'A small team or a founder with their agents.') },
-    { id: 'm', name: N('M', 'M'), w: 12, note: N('Equipo con sala de reuniones.', 'A team with a meeting area.') },
-    { id: 'l', name: N('L', 'L'), w: 16, note: N('Oficina completa con zona de descanso.', 'A full office with a lounge area.') },
-    { id: 'xl', name: N('XL', 'XL'), w: 24, note: N('El ancho máximo: así siempre hay un pasillo a menos de 24 m.', 'The widest one: so there is always a hallway within 24 m.') },
-    { id: 'floor', name: N('Piso completo', 'Whole floor'), w: 48, soon: true,
-      note: N('Sede propia: un piso entero con varias salas, ascensor y letrero en el lobby.', 'Your own HQ: a whole floor with several rooms, elevator stop and a sign in the lobby.') },
-  ];
+  const sizes = R.SIZES.map((z) => Object.assign({ name: z.id === 'floor' ? N('Piso completo', 'Whole floor') : N(z.id.toUpperCase(), z.id.toUpperCase()) }, z, {
+    note: {
+      s: N('Un equipo pequeño o un fundador con sus agentes.', 'A small team or a founder with their agents.'),
+      m: N('Equipo con sala de reuniones.', 'A team with a meeting area.'),
+      l: N('Oficina completa con zona de descanso.', 'A full office with a lounge area.'),
+      xl: N('El ancho máximo: así siempre hay un pasillo a menos de 24 m.', 'The widest one: so there is always a hallway within 24 m.'),
+      floor: N('Sede propia: un piso entero con varias salas, ascensor y letrero en el lobby.', 'Your own HQ: a whole floor with several rooms, elevator stop and a sign in the lobby.'),
+    }[z.id],
+  }));
   // Puesto en el coworking: la puerta de entrada para la comunidad.
   const desk = {
-    m2: 4, price: 5, residents: 2,
+    m2: R.DESK.m2, price: R.DESK.price, residents: R.DESK.residents,
     name: N('Puesto en el coworking', 'Coworking desk'),
     note: N('Un escritorio fijo en la sala compartida, con tu avatar, un agente y tu tarjeta con links.',
       'A fixed desk in the shared room, with your avatar, one agent and your card with links.'),
   };
 
   // Límites que no dependen del tamaño.
-  const plan = { maxLinks: 4 };
+  const plan = R.PLAN;
 
   const byType = {};
   for (const it of items) byType[it.type] = it;
