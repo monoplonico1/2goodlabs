@@ -20,6 +20,12 @@ export default {
       return Response.redirect(url.toString(), 301);
     }
 
+    // El inglés pasó a ser el idioma por defecto (/); las direcciones viejas /en/ van ahí.
+    if (/^\/en(\/|\/index\.html)?$/.test(url.pathname)) {
+      url.pathname = '/';
+      return Response.redirect(url.toString(), 301);
+    }
+
     if (url.pathname === '/api/contact') return contact(request, env);
     if (url.pathname.startsWith('/api/')) return api(request, env, url.pathname.slice(5));
 
@@ -62,7 +68,7 @@ async function contact(request, env) {
   const name = field('name', 100).replace(/[\r\n]+/g, ' ');
   const email = field('email', 200);
   const message = field('message', 5000);
-  const lang = field('lang', 5) === 'en' ? 'en' : 'es';
+  const lang = field('lang', 5) === 'es' ? 'es' : 'en';
 
   // Campo trampa: las personas no lo ven; si viene lleno es un bot. Fingimos éxito.
   if (field('website', 200)) return reply(true, 200);

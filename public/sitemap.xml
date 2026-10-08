@@ -3,13 +3,13 @@
   <url>
     <loc>https://2goodlabs.com/</loc>
     <lastmod>2026-10-08</lastmod>
-    <xhtml:link rel="alternate" hreflang="es" href="https://2goodlabs.com/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://2goodlabs.com/en/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://2goodlabs.com/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://2goodlabs.com/es/"/>
   </url>
   <url>
-    <loc>https://2goodlabs.com/en/</loc>
+    <loc>https://2goodlabs.com/es/</loc>
     <lastmod>2026-10-08</lastmod>
-    <xhtml:link rel="alternate" hreflang="es" href="https://2goodlabs.com/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://2goodlabs.com/en/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://2goodlabs.com/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://2goodlabs.com/es/"/>
   </url>
 </urlset>

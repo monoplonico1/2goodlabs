@@ -1,7 +1,7 @@
 // Genera las páginas publicadas a partir de src/index.html y de public/js/data.js:
 //
-//   public/index.html      español (/)
-//   public/en/index.html   inglés (/en/)
+//   public/index.html      inglés (/), el idioma por defecto
+//   public/es/index.html   español (/es/)
 //   public/sitemap.xml, public/robots.txt
 //
 // Cada idioma tiene su propia URL para que los buscadores indexen los dos, y la vista
@@ -33,8 +33,8 @@ const assets = ['public/styles.css', ...listDir('public/js'), ...listDir('public
 const version = crypto.createHash('sha1').update(assets.map(read).join('\n')).digest('hex').slice(0, 8);
 
 const LANGS = {
-  es: { path: '/', base: '/', out: 'index.html', ogLocale: 'es_ES', ogLocaleAlt: 'en_US' },
-  en: { path: '/en/', base: '/', out: 'en/index.html', ogLocale: 'en_US', ogLocaleAlt: 'es_ES' },
+  en: { path: '/', base: '/', out: 'index.html', ogLocale: 'en_US', ogLocaleAlt: 'es_ES' },
+  es: { path: '/es/', base: '/', out: 'es/index.html', ogLocale: 'es_ES', ogLocaleAlt: 'en_US' },
 };
 
 const t = (v, lang) => (v && typeof v === 'object' && !Array.isArray(v) ? v[lang] : v);
@@ -133,4 +133,4 @@ ${Object.values(LANGS)
 );
 fs.writeFileSync(path.join(PUB, 'robots.txt'), `User-agent: *\nAllow: /\n\nSitemap: ${SITE}/sitemap.xml\n`);
 
-console.log(`Listo (v=${version}): public/index.html, public/en/index.html, sitemap.xml, robots.txt`);
+console.log(`Listo (v=${version}): public/index.html, public/es/index.html, sitemap.xml, robots.txt`);

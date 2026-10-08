@@ -1,4 +1,4 @@
-// Idioma: español (/) o inglés (/en/). Manda la URL; ?lang=en|es la puede forzar.
+// Idioma: inglés (/, por defecto) o español (/es/). Manda la URL; ?lang=en|es la puede forzar.
 // En el HTML: data-i18n="clave" cambia el texto, data-i18n-attr="atributo:clave" un atributo.
 
 (function () {
@@ -104,16 +104,16 @@
   function initialLang() {
     const q = new URLSearchParams(location.search).get('lang');
     if (q === 'es' || q === 'en') return q;
-    // Cada idioma tiene su URL (/ y /en/): manda el idioma del HTML servido. La preferencia
+    // Cada idioma tiene su URL (/ y /es/): manda el idioma del HTML servido. La preferencia
     // guardada se aplica antes, con una redirección real desde la portada (ver src/index.html).
-    return document.documentElement.lang === 'en' ? 'en' : 'es';
+    return document.documentElement.lang === 'es' ? 'es' : 'en';
   }
 
   TGL.lang = initialLang();
 
   // Texto en el idioma actual: acepta {es, en} o un texto plano.
   TGL.t = function (v) {
-    if (v && typeof v === 'object' && !Array.isArray(v)) return v[TGL.lang] !== undefined ? v[TGL.lang] : v.es;
+    if (v && typeof v === 'object' && !Array.isArray(v)) return v[TGL.lang] !== undefined ? v[TGL.lang] : v.en !== undefined ? v.en : v.es;
     return v;
   };
   TGL.ui = (key) => ui[TGL.lang][key];
@@ -146,12 +146,12 @@
     window.dispatchEvent(new Event('langchange'));
   };
 
-  // En el sitio publicado, la URL sigue al idioma (/ ↔ /en/) sin recargar.
+  // En el sitio publicado, la URL sigue al idioma (/ ↔ /es/) sin recargar.
   function syncPath() {
     const url = new URL(location.href);
     if (url.searchParams.has('lang')) url.searchParams.set('lang', TGL.lang);
     const p = url.pathname.replace(/index\.html$/, '');
-    if (p === '/' || p === '/en/') url.pathname = TGL.lang === 'en' ? '/en/' : '/';
+    if (p === '/' || p === '/es/') url.pathname = TGL.lang === 'es' ? '/es/' : '/';
     if (url.href !== location.href) history.replaceState(null, '', url);
   }
   syncPath();

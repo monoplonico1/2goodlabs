@@ -1,6 +1,6 @@
 <!doctype html>
 <!--
-  Plantilla. NO edites public/index.html ni public/en/index.html: se generan con
+  Plantilla. NO edites public/index.html ni public/es/index.html: se generan con
   `node build.js` a partir de este archivo. Los {{…}} los llena build.js.
 -->
 <html lang="{{lang}}">
@@ -9,11 +9,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <script>
     document.documentElement.classList.add('js');
-    // Quien eligió inglés antes y entra a la portada va a /en/ con una redirección real,
-    // antes de cargar nada. Una URL explícita (/en/ o ?lang=) siempre manda.
+    // Quien eligió español antes y entra a la portada va a /es/ con una redirección real,
+    // antes de cargar nada. Una URL explícita (/es/ o ?lang=) siempre manda.
     try {
-      if (localStorage.getItem('tgl-lang') === 'en' && /^\/(index\.html)?$/.test(location.pathname) && !/[?&]lang=/.test(location.search))
-        location.replace('/en/' + location.search + location.hash);
+      if (localStorage.getItem('tgl-lang') === 'es' && /^\/(index\.html)?$/.test(location.pathname) && !/[?&]lang=/.test(location.search))
+        location.replace('/es/' + location.search + location.hash);
     } catch (e) {}
   </script>
   <title>{{t:title}}</title>
@@ -52,8 +52,8 @@
 
   <div class="top-right">
     <div class="lang panel" role="group" data-i18n-attr="aria-label:langLabel" aria-label="{{t:langLabel}}">
-      <button type="button" data-lang="es">ES</button>
       <button type="button" data-lang="en">EN</button>
+      <button type="button" data-lang="es">ES</button>
     </div>
     <button id="btn-simple" class="panel btn-dir" type="button" aria-controls="simple" aria-expanded="false">
       <span data-i18n="simpleView">{{t:simpleView}}</span>

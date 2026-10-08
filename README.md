@@ -24,9 +24,10 @@ en el celular o los botones junto al minimapa; `0` o ⛶ muestra el piso complet
 Cada sala tiene un bloque **?** con información de la empresa y un botón a su sitio
 (zumiapp.co, pickpals.co). En Zumi también hay un cartel para descargar la app en el App Store. Los letreros de Zumi y Pickpals también tienen el link debajo.
 
-Idiomas: español en `/` e inglés en `/en/`. El selector ES/EN cambia sin recargar y
-actualiza la URL. La elección se recuerda: quien eligió inglés y vuelve a la portada (`/`)
-es redirigido a `/en/` antes de cargar nada. Una URL explícita (`/en/`, `?lang=`) siempre manda.
+Idiomas: inglés en `/` (por defecto) y español en `/es/`. El selector EN/ES cambia sin
+recargar y actualiza la URL. La elección se recuerda: quien eligió español y vuelve a la
+portada (`/`) es redirigido a `/es/` antes de cargar nada. Una URL explícita (`/es/`,
+`?lang=`) siempre manda. Las direcciones viejas `/en/` redirigen a `/` (en el Worker).
 Los recursos se referencian con rutas absolutas (`/js/…`), así que hay que servir `public/`
 como raíz.
 
@@ -100,7 +101,7 @@ formulario de contacto.
 
 ```
 src/index.html      plantilla de la página (editar aquí, no en public/*.html)
-build.js            genera public/index.html (es), public/en/index.html, sitemap y robots
+build.js            genera public/index.html (en), public/es/index.html, sitemap y robots
 worker/index.js     redirección www → 2goodlabs.com y POST /api/contact
 worker/api.js       API del edificio compartido (reservas, publicar) sobre Supabase
 supabase/migrations base de datos (tablas, permisos, vencimiento de reservas)
@@ -137,7 +138,7 @@ Después de cambiar `src/index.html` o cualquier archivo de `public/js` o `publi
 node build.js
 ```
 
-y commitear el resultado. Genera una página por idioma (`/` y `/en/`) con el contenido
+y commitear el resultado. Genera una página por idioma (`/` y `/es/`) con el contenido
 de la vista simple ya escrito en el HTML, así los buscadores lo leen sin ejecutar el
 juego. También versiona los CSS/JS por su contenido (`?v=…`), así que ya no hay que
 subir números a mano.
