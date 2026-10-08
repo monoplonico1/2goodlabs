@@ -20,7 +20,7 @@
   const player = {
     kind: 'human', px: world.spawn.x, py: world.spawn.y, dir: 'down', frame: 0,
     look: { skin: '#f0c49a', hair: '#6b4a2b', hairStyle: 'short', body: '#e0a030', legs: '#2d3340' },
-    path: null, walkT: 0, onArrive: null,
+    path: null, walkT: 0, onArrive: null, stillT: 0,
   };
 
   // En data.js las posiciones son relativas a la sala; aquí pasan a coordenadas del edificio.
@@ -216,8 +216,10 @@
         }
       }
       animate(player, moving, dt);
+      player.stillT = moving ? 0 : player.stillT + dt;
     } else {
       animate(player, false, dt);
+      player.stillT += dt;
     }
 
     for (const n of npcs) {
@@ -333,7 +335,9 @@
 
   function autoScale() {
     const tilesWide = canvas.clientWidth < 700 ? 11 : 24;
-    return Math.max(2, Math.floor(Math.min(canvas.width / (tilesWide * T), canvas.height / (11 * T))));
+    // un paso más lejos que lo que llenaría la pantalla: se ve más del edificio al entrar
+    const step = Math.max(1, Math.round(dpr));
+    return Math.max(2, Math.floor(Math.min(canvas.width / (tilesWide * T), canvas.height / (11 * T))) - step);
   }
   function fitScale() {
     return Math.min(canvas.width / (world.W * T), canvas.height / (world.H * T));
@@ -448,8 +452,26 @@
     }
     if (hoverNpc && hoverNpc !== nearNpc) drawRing(hoverNpc);
     if (nearNpc) drawRing(nearNpc);
+    drawPlayerMarker();
     drawJoystick();
     drawMinimap();
+  }
+
+  // Flecha dorada que titila sobre la cabeza cuando el personaje se queda quieto: así se
+  // encuentra rápido. Tamaño fijo en pantalla, para que se vea aunque se aleje la cámara.
+  function drawPlayerMarker() {
+    if (player.stillT < 0.6 || Math.floor(player.stillT * 2.5) % 2) return;
+    const [sx, sy] = toScreen(player.px, player.py - 30);
+    const u = Math.max(3, Math.round(2.5 * dpr)), bob = Math.round(Math.sin(player.stillT * 5) * u);
+    const x = Math.round(sx), y = Math.round(sy - 6 * u + bob);
+    const rows = [[-3, 3], [-3, 3], [-2, 2], [-1, 1], [0, 0]]; // flecha hacia abajo, en pixeles grandes
+    const px = (x0, x1, yy, c) => { ctx.fillStyle = c; ctx.fillRect(x + x0 * u, y + yy * u, (x1 - x0 + 1) * u, u); };
+    // borde oscuro: una casilla alrededor de cada fila, arriba y en la punta
+    px(-4, 4, -1, '#1d1f24');
+    rows.forEach(([a, b], i) => px(a - 1, b + 1, i, '#1d1f24'));
+    px(0, 0, rows.length, '#1d1f24');
+    rows.forEach(([a, b], i) => px(a, b, i, i < 2 ? '#ffd24d' : '#f2a65a'));
+    px(-3, -2, 0, '#fff6c8'); // brillo
   }
 
   function drawJoystick() {
