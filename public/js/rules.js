@@ -20,8 +20,11 @@
   ];
   const PLAN = {
     maxLinks: 4,
-    // Gratis por ahora: lo que una cuenta puede tener publicado a la vez.
+    // Lanzamiento: cada cuenta tiene gratis 1 oficina y 1 puesto (se muestra el precio
+    // tachado). Desde la segunda se paga; mientras no haya pagos, no se puede.
     free: { offices: 1, desks: 1 },
+    promo: true,
+    payments: false,
   };
   // Reserva mientras se edita: si no se publica a tiempo, se pierde y el lugar se libera.
   const HOLD = { minutes: 20, extendMinutes: 10 };
@@ -199,6 +202,16 @@
   const m2 = (doc) => (doc.kind === 'desk' ? DESK.m2 : doc.w * DEPTH);
   // Precio de lista en US$ al mes (para cuando se cobre).
   const price = (doc) => (doc.kind === 'desk' ? DESK.price : Math.round(m2(doc) * PRICE_PER_M2));
+  // ¿Este espacio entra en lo gratis de la cuenta? list: los espacios de la cuenta en orden;
+  // gratis son los primeros de cada tipo. Si doc no está en la lista, es uno nuevo.
+  function isFree(list, doc) {
+    if (!PLAN.promo) return false;
+    const same = list.filter((d) => d.kind === doc.kind);
+    const i = same.findIndex((d) => d.id === doc.id);
+    return (i < 0 ? same.length : i) < PLAN.free[doc.kind === 'desk' ? 'desks' : 'offices'];
+  }
+  // Lo que se cobra al mes (US$): 0 si es gratis; si no, el precio de lista.
+  const charge = (list, doc) => (isFree(list, doc) ? 0 : price(doc));
   // Más metros, más gente y más objetos.
   const limits = (doc) => (doc.kind === 'desk'
     ? { maxItems: 0, maxResidents: DESK.residents, maxLinks: PLAN.maxLinks }
@@ -373,7 +386,7 @@
     RULES, ROWS, COWORK, DESKS, fillGap, floorPlan, starts,
     leasesOf, startsFor, fitPlace, fits, numberFor, freeDesks,
     ITEMS, byType, FLOORS, WALLS, MODES, PEOPLE,
-    newId, empty, area, entriesOf, m2, price, limits, footprint, canPlace, surfacesOf, sanitize, proUsage,
+    newId, empty, area, entriesOf, m2, price, isFree, charge, limits, footprint, canPlace, surfacesOf, sanitize, proUsage,
     isColor, isUrl, clampText,
   };
 });

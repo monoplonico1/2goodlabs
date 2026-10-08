@@ -16,7 +16,9 @@
       w1Title: '¿Qué quieres arrendar?', w1Hint: 'Puedes cambiarlo después.',
       deskCard: 'Un puesto en el coworking', deskCardNote: 'Un escritorio fijo en la sala compartida: tu avatar, un agente y tu tarjeta con links.',
       officeCard: 'Una oficina propia', officeCardNote: 'Una sala con tus muros, tu letrero, tus muebles y tu equipo.',
-      from: 'desde {p}/mes',
+      from: 'desde {p}/mes', free: 'GRATIS', freeNote: 'Gratis durante el lanzamiento: tu primera oficina y tu primer puesto.',
+      needsPayOffice: 'Tu oficina gratis ya está en uso. Para tener otra, muy pronto podrás pagar.',
+      needsPayDesk: 'Tu puesto gratis ya está en uso. Para tener otro, muy pronto podrás pagar.', rentFree: 'Arrendar gratis', payable: 'De pago · muy pronto',
       w2Title: '¿De qué tamaño?', w2Hint: 'Todas tienen 8 m de fondo. Pagas por metro cuadrado: con más metros caben más personas y más objetos.',
       people: '{n} personas o agentes',
       w3Title: '¿Dónde?', w3Office: 'Ya la ubicamos en un lugar libre. Toca el plano (o el edificio) para moverla, o usa las flechas. Solo te dejamos elegir lugares con pasillo.',
@@ -94,7 +96,9 @@
       w1Title: 'What do you want to rent?', w1Hint: 'You can change it later.',
       deskCard: 'A coworking desk', deskCardNote: 'A fixed desk in the shared room: your avatar, one agent and your card with links.',
       officeCard: 'Your own office', officeCardNote: 'A room with your walls, your sign, your furniture and your team.',
-      from: 'from {p}/mo',
+      from: 'from {p}/mo', free: 'FREE', freeNote: 'Free during launch: your first office and your first desk.',
+      needsPayOffice: 'Your free office is already in use. To get another one, payments are coming very soon.',
+      needsPayDesk: 'Your free desk is already in use. To get another one, payments are coming very soon.', rentFree: 'Rent for free', payable: 'Paid · coming soon',
       w2Title: 'How big?', w2Hint: 'All are 8 m deep. You pay per square meter: more meters fit more people and more objects.',
       people: '{n} people or agents',
       w3Title: 'Where?', w3Office: 'We already put it in a free spot. Tap the plan (or the building) to move it, or use the arrows. Only spots with a hallway are allowed.',
@@ -281,7 +285,7 @@
     updateHere();
   }
   function renderMine() {
-    const total = saved.reduce((n, d) => n + space.price(d), 0);
+    const total = saved.reduce((n, d) => n + TGL.rules.charge(saved, d), 0);
     minePanel.innerHTML = `
       <div class="ed-mine-head"><strong>${esc(tr('mySpaces'))}</strong><small>${esc(fill('total', { n: saved.length, p: money(total) }))}</small></div>
       ${saved.map((d) => `<div class="ed-mine-row"><i style="--c:${d.identity.primary}"></i><span><strong>${esc(spaceName(d))}</strong><small>${esc(d.kind === 'desk' ? 'Coworking · ' + fill('deskN', { n: d.desk + 1 }) : fill('officeN', { n: d.number }) + ' · ' + space.m2(d) + ' m²')}</small></span><button type="button" class="ed-btn" data-go="${d.id}">${esc(tr('go'))}</button></div>`).join('')}
@@ -461,6 +465,7 @@
   // Confirmar: lo nuevo se guarda tal cual; un cambio de tamaño o lugar conserva todo lo
   // personalizado que todavía quepa.
   function confirmRent() {
+    if (doc && !canHave(doc)) return;
     let next = cleanDoc();
     if (wiz.back) {
       const keep = { id: next.id, kind: next.kind, w: next.w, row: next.row, x: next.x, number: next.number, desk: next.desk };
@@ -699,13 +704,18 @@
       <footer class="ed-foot"></footer>`;
   }
   function wizKind() {
-    const card = (kind, title, note, price) => `
-      <button type="button" class="ed-choice" data-act="kind" data-v="${kind}">
-        <strong>${esc(tr(title))}</strong><small>${esc(tr(note))}</small><b>${esc(price)}</b>
+    const card = (kind, title, note, text) => {
+      const d = { kind, w: 8, id: '' }, ok = canHave(d);
+      return `
+      <button type="button" class="ed-choice" data-act="kind" data-v="${kind}" ${ok ? '' : 'disabled'}>
+        <strong>${esc(tr(title))}</strong><small>${esc(tr(note))}</small>
+        <b>${priceTag(d, text)}</b>${ok ? '' : `<small class="ed-pay">${esc(tr('payable'))}</small>`}
       </button>`;
+    };
     return `
       ${card('desk', 'deskCard', 'deskCardNote', money(cat.desk.price) + tr('perMonth'))}
       ${card('office', 'officeCard', 'officeCardNote', fill('from', { p: money(Math.round(8 * 8 * cat.pricePerM2)) }))}
+      <p class="ed-note">${esc(tr('freeNote'))}</p>
       <p class="ed-hint">${esc(tr('w1Hint'))}</p>`;
   }
   // Anchos que caben en algún lugar libre ahora mismo.
@@ -729,7 +739,7 @@
         return `<button type="button" class="ed-choice${doc && doc.w === w ? ' on' : ''}" data-act="wsize" data-v="${w}" ${fits ? '' : 'disabled'}>
           <span class="ed-size-plan">${sizePlan(w)}</span>
           <span><strong>${esc(z ? fill('officeSize', { s: nm(z) }) : fill('officeSize', { s: w + ' m' }))}</strong><small>${w} × 8 m · ${w * 8} m²</small><small>${esc(fits ? fill('people', { n: space.limits(d).maxResidents }) : tr('noFitNow'))}</small></span>
-          <b>${money(Math.round(w * 8 * cat.pricePerM2))}${esc(tr('perMonth'))}</b>
+          <b>${priceTag({ kind: 'office', w, id: doc ? doc.id : '' })}</b>
         </button>`;
       }).join('')}
       <p class="ed-note">${esc(tr('floorSoon'))}</p>`;
@@ -755,8 +765,9 @@
         ${row('sumWhat', tr(desk ? 'deskCard' : 'officeCard'))}
         ${desk ? '' : row('sumSize', doc.w + ' × 8 m · ' + space.m2(doc) + ' m²')}
         ${row('sumWhere', desk ? 'Coworking · ' + fill('deskN', { n: doc.desk + 1 }) : fill('officeN', { n: doc.number }) + ' · ' + fill('rowLabel', { r: doc.row }))}
-        ${row('sumPrice', fill('perMonthLong', { p: money(space.price(doc)) }))}
+        <div class="ed-sum-row"><span>${esc(tr('sumPrice'))}</span><strong>${priceTag(doc, fill('perMonthLong', { p: money(space.price(doc)) }))}</strong></div>
       </div>
+      ${canHave(doc) ? '' : `<p class="ed-status bad">${esc(tr(doc.kind === 'desk' ? 'needsPayDesk' : 'needsPayOffice'))}</p>`}
       ${wiz.mode === 'new' ? field(tr('emailLabel'), `<input type="email" data-email value="${esc(account.email || '')}" placeholder="tu@correo.com" autocomplete="email">`) + `<p class="ed-note">${esc(tr('emailHint'))}</p>` : ''}
       <p class="ed-hint">${esc(tr('w4Hint'))}</p>`;
   }
@@ -775,7 +786,7 @@
     const label = { brand: 'sBrand', style: 'sStyle', items: 'sItems', people: 'sPeople' };
     panel.innerHTML = `
       <header class="ed-head">
-        <div class="ed-head-title"><strong>${esc(spaceName(doc))}</strong><small>${esc(doc.kind === 'desk' ? 'Coworking · ' + fill('deskN', { n: doc.desk + 1 }) : fill('officeN', { n: doc.number }) + ' · ' + space.m2(doc) + ' m²')} · ${money(space.price(doc))}${esc(tr('perMonth'))}</small></div>
+        <div class="ed-head-title"><strong>${esc(spaceName(doc))}</strong><small>${esc(doc.kind === 'desk' ? 'Coworking · ' + fill('deskN', { n: doc.desk + 1 }) : fill('officeN', { n: doc.number }) + ' · ' + space.m2(doc) + ' m²')} · ${priceTag(doc)}</small></div>
         <button type="button" class="ed-icon" data-act="close" aria-label="${esc(tr('close'))}">✕</button>
       </header>
       <div class="ed-tools">
@@ -830,6 +841,15 @@
   }
 
   const money = (n) => 'US$ ' + n;
+  // Precio de un espacio: durante el lanzamiento el primero de cada tipo va gratis (precio
+  // tachado). list: los espacios de la cuenta (en el asistente, sin el que se está cambiando).
+  const accountList = () => saved.filter((d) => !(view === 'wizard' && wiz.back && d.id === wiz.back.id && d.kind !== (doc && doc.kind)));
+  const freeFor = (d) => TGL.rules.isFree(accountList(), d);
+  const canHave = (d) => freeFor(d) || TGL.rules.PLAN.payments;
+  function priceTag(d, text) {
+    const p = esc(text || money(space.price(d)) + tr('perMonth'));
+    return freeFor(d) ? `<s>${p}</s> <b class="ed-free">${esc(tr('free'))}</b>` : p;
+  }
   const fill = (k, o) => tr(k).replace(/\{(\w)\}/g, (m, c) => o[c]);
 
   // ————————————————————————————————— Plano de la zona de arriendo
@@ -1036,12 +1056,13 @@
     if (view === 'wizard') {
       const steps = wiz.kind ? stepsOf() : STEPS.new.office, i = steps.indexOf(wiz.step);
       const last = i === steps.length - 1;
-      const nextLabel = last ? (wiz.mode === 'new' ? fill('rent', { p: money(space.price(doc)) }) : tr('applyChange')) : tr('next');
+      const nextLabel = last ? (wiz.mode === 'new' ? (freeFor(doc) ? tr('rentFree') : fill('rent', { p: money(space.price(doc)) })) : tr('applyChange')) : tr('next');
+      const blocked = last && doc && !canHave(doc);
       foot.innerHTML = `
         ${message ? status('') : ''}
         <div class="ed-nav">
           <button type="button" class="ed-btn" data-act="wprev" ${i <= 0 && wiz.mode === 'new' ? 'disabled' : ''}>${esc(tr('prev'))}</button>
-          ${wiz.step === 'kind' ? '' : `<button type="button" class="ed-btn ed-primary" data-act="wnext">${esc(nextLabel)}</button>`}
+          ${wiz.step === 'kind' ? '' : `<button type="button" class="ed-btn ed-primary" data-act="wnext" ${blocked ? 'disabled' : ''}>${esc(nextLabel)}</button>`}
         </div>`;
       return;
     }

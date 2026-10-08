@@ -121,3 +121,14 @@ test('el catálogo del editor coincide con las reglas', () => {
   assert.deepStrictEqual(plain(cat.floors.map((f) => [f.id, f.tier, f.color])), R.FLOORS.map((f) => [f.id, f.tier, f.color]));
   for (const k of Object.keys(R.PEOPLE)) assert.strictEqual(cat.people[k][0], R.PEOPLE[k], 'people ' + k);
 });
+
+test('lanzamiento: gratis la primera oficina y el primer puesto', () => {
+  const o1 = { id: 'o-1', kind: 'office', w: 8 }, o2 = { id: 'o-2', kind: 'office', w: 8 }, d1 = { id: 'd-1', kind: 'desk' };
+  assert.ok(R.isFree([], o1));
+  assert.ok(R.isFree([o1], d1));
+  assert.ok(!R.isFree([o1], o2));
+  assert.ok(R.isFree([o1, o2], o1));
+  assert.ok(!R.isFree([o1, o2], o2));
+  assert.strictEqual(R.charge([o1], o1), 0);
+  assert.strictEqual(R.charge([o1, o2], o2), R.price(o2));
+});

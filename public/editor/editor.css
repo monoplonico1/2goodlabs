@@ -451,3 +451,10 @@ input[type=color] { width: 32px; height: 28px; padding: 0; border: 1px solid #d6
   .ed-cap { grid-template-columns: 90px 1fr; font-size: 10px; }
   .ed-foot .ed-note { display: none; }
 }
+
+/* Lanzamiento: precio tachado y GRATIS */
+.ed-panel s { color: #9a9ea6; font-weight: 400; }
+.ed-free { display: inline-block; padding: 1px 6px; border-radius: 4px; background: #2f9e5a; color: #fff; font-size: 11px; letter-spacing: .04em; }
+.ed-choice .ed-pay { color: #b5654a; font-weight: 600; }
+.ed-choice > b { text-align: right; }
+.ed-choice > b s { display: block; font-size: 11px; }
