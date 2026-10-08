@@ -7,7 +7,8 @@
 //   true      → encendido para todos.
 
 (function () {
-  TGL.features = { editor: 'preview' };
+  // El editor ya es parte del sitio público: un solo ambiente para todos.
+  TGL.features = { editor: true };
 
   function enabled(name) {
     const mode = TGL.features[name];

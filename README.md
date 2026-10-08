@@ -55,8 +55,8 @@ Se enciende y apaga en `public/js/features.js`:
 | `editor:` | Qué pasa |
 | --- | --- |
 | `false` | Apagado: sus archivos ni se cargan |
-| `'preview'` (actual) | Solo para quien entra con `?editor=1` (se recuerda hasta `?editor=0`) |
-| `true` | Encendido para todos |
+| `'preview'` | Solo para quien entra con `?editor=1` (se recuerda hasta `?editor=0`) |
+| `true` (actual) | Encendido para todos: es el sitio público |
 
 Qué incluye, pensado para que escale a un producto:
 
