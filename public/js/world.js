@@ -309,6 +309,12 @@
     for (const o of objects) { o.x += OX * T; o.y += OY * T; o.sortY += OY * T; }
     for (const sp of breakSpots) { sp.x += OX; sp.y += OY; }
     SKY_H += OY;
+    // El lobby se alarga hasta el borde izquierdo, bajo la fila C.
+    const lobby = room('lobby');
+    for (let y = lobby.y; y < lobby.y + lobby.h; y++) for (let x = 1; x < lobby.x; x++) set(x, y, FLOOR.lobby);
+    for (let x = 1; x < lobby.x; x++) for (const y of [lobby.y - 1, lobby.y - 2]) set(x, y, FACE);
+    lobby.w += lobby.x - 1;
+    lobby.x = 1;
   }
 
   // ————————————————————————————————— Colisiones
@@ -833,9 +839,10 @@
   // Con el edificio crecido: el pasillo de la fila A y el de la fila B (los dos de punta a
   // punta), el de la izquierda (de la fila A al lobby) y los dos verticales hasta el lobby.
   const X = OX, Y = OY;
-  const RESET = [[1, 0, X + 57, Y + 14]];
-  const BASE_HALLS = [[1, 14, X + 57, 2], [1, Y + 14, X + 57, 2], [X + 1, 14, 2, Y + 20], [X + 20, Y + 14, 2, 20], [X + 39, Y + 14, 2, 20]];
-  const PICS = [[X + 16, Y + 12], [X + 34, Y + 12], [X + 46, Y + 12], [10, 12], [30, 12], [52, 12], [74, 12]];
+  // La fila C (a la izquierda de Board) sale a su propio pasillo, que llega al de la izquierda.
+  const RESET = [[1, 0, X + 57, Y + 14], [1, Y + 14, X, 18]];
+  const BASE_HALLS = [[1, 14, X + 57, 2], [1, Y + 14, X + 57, 2], [X + 1, 14, 2, Y + 20], [X + 20, Y + 14, 2, 20], [X + 39, Y + 14, 2, 20], [1, Y + 30, X + 1, 2]];
+  const PICS = [[X + 16, Y + 12], [X + 34, Y + 12], [X + 46, Y + 12], [10, 12], [30, 12], [52, 12], [74, 12], [6, Y + 28], [16, Y + 28]];
   const inReset = (x, y) => RESET.some(([rx, ry, rw, rh]) => x >= rx && x < rx + rw && y >= ry && y < ry + rh);
   const ZONE_X0 = 1, ZONE_X1 = X + 57;
 

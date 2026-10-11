@@ -255,7 +255,7 @@
     if (room && room !== currentRoom) {
       currentRoom = room;
       if (!room.quiet) showToast(room);
-      $('#hud-room').textContent = TGL.t(room.name);
+      if ($('#hud-room')) $('#hud-room').textContent = TGL.t(room.name);
     }
   }
 
@@ -814,8 +814,8 @@
     }
     // Los contadores son del equipo de 2GoodLabs, sin las personas de oficinas de terceros.
     const own = npcs.filter((n) => !n.resident), humans = own.filter((n) => n.kind === 'human').length;
-    $('#hud-humans').textContent = humans;
-    $('#hud-agents').textContent = own.length - humans;
+    if ($('#hud-humans')) $('#hud-humans').textContent = humans;
+    if ($('#hud-agents')) $('#hud-agents').textContent = own.length - humans;
   }
   function toggleDirectory(open) {
     const show = open === undefined ? panel.hidden : open;
@@ -982,7 +982,7 @@
     buildDirectory();
     if (dialogFor) openDialog(dialogFor);
     if (infoRoom) openInfo(infoRoom.id);
-    if (currentRoom) $('#hud-room').textContent = TGL.t(currentRoom.name);
+    if (currentRoom && $('#hud-room')) $('#hud-room').textContent = TGL.t(currentRoom.name);
     if (currentRoom) showToast(currentRoom);
     updateHint();
   });

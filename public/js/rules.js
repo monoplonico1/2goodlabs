@@ -38,11 +38,14 @@
   // Filas (y, alto) con sus tramos entre muros del edificio ('wall') y pasillos ('hall').
   // A: la fila de arriba, de punta a punta (da a la calle). B: la del medio; su tramo de la
   // izquierda (1–24) está antes del pasillo que baja al lobby y cabe una oficina de hasta 24 m.
+  // C: otro tramo igual, más abajo.
   // up: los pasillos entre oficinas suben hasta el pasillo de arriba. num: primera oficina.
   // Las coordenadas son las del edificio crecido (ver OX, OY en js/world.js).
   const ROWS = [
     { id: 'A', num: 201, y: 3, h: DEPTH, hallY: 14, up: false, bays: [{ L: 1, R: 82, l: 'wall', r: 'wall' }] },
     { id: 'B', num: 101, y: 19, h: DEPTH, hallY: 30, up: true, bays: [{ L: 1, R: 24, l: 'wall', r: 'wall' }, { L: 28, R: 82, l: 'hall', r: 'wall' }] },
+    // C: a la izquierda de Board, con su pasillo hacia el pasillo que baja al lobby.
+    { id: 'C', num: 301, y: 35, h: DEPTH, hallY: 46, up: true, bays: [{ L: 1, R: 24, l: 'wall', r: 'wall' }] },
   ];
   const COWORK = { id: 'cowork', row: 'B', a: 29, w: 15, fixed: true };
   // Puestos del coworking (relativos a la sala): escritorio de 2 × 1 y, delante, dos personas.
