@@ -187,6 +187,7 @@
     codeSent: 'Te enviamos un código a {e}. Si no llega en un minuto, revisa la carpeta de spam.',
     verifyPublish: 'Verificar y publicar', verify: 'Entrar', resend: 'Reenviar código', changeEmail: 'Usar otro correo',
     badCode: 'Código incorrecto o vencido.', tooMany: 'Demasiados intentos. Espera un minuto y vuelve a intentar.',
+    waitSecs: 'Por seguridad, se puede pedir un código por minuto. Podrás pedir otro en {n} s.', sendIn: 'Enviar código ({n})', resendIn: 'Reenviar código ({n})',
     published: '¡Publicado! Ya todos ven tu espacio.', signedIn: 'Listo, entraste como {e}.',
     signIn: 'Entrar', signOut: 'Salir', signedAs: 'Cuenta: {e}', haveSpace: '¿Ya tienes un espacio? Entra con tu correo',
     holdBar: '{n} · quedan {t} · Publicar', reservedLeft: 'Reservada · {t}', yoursLeft: 'Tuya · {t} para publicar',
@@ -210,6 +211,7 @@
     codeSent: "We sent a code to {e}. If it doesn't arrive within a minute, check your spam folder.",
     verifyPublish: 'Verify and publish', verify: 'Sign in', resend: 'Resend code', changeEmail: 'Use another email',
     badCode: 'Wrong or expired code.', tooMany: 'Too many attempts. Wait a minute and try again.',
+    waitSecs: 'For security, a code can be requested once a minute. You can ask for another one in {n} s.', sendIn: 'Send code ({n})', resendIn: 'Resend code ({n})',
     published: 'Published! Everyone can see your space now.', signedIn: 'Done, signed in as {e}.',
     signIn: 'Sign in', signOut: 'Sign out', signedAs: 'Account: {e}', haveSpace: 'Already have a space? Sign in with your email',
     holdBar: '{n} · {t} left · Publish', reservedLeft: 'Reserved · {t}', yoursLeft: 'Yours · {t} to publish',
@@ -434,6 +436,11 @@
       if (d) el.textContent = fill(el.dataset.fmt || 'holdLeft', { t: left(d) });
     });
     updateHoldBar();
+    if (view === 'auth' && auth) panel.querySelectorAll('[data-wait]').forEach((b) => {
+      const n = waitLeft();
+      b.disabled = n > 0 || busy;
+      b.textContent = n ? fill(b.dataset.wait, { n }) : tr(b.dataset.label);
+    });
     if (saved.some((d) => isHold(d) && msLeft(d) <= 0)) refresh();
   }, 1000);
 
@@ -753,20 +760,30 @@
       ? `<p class="ed-hint">${esc(tr(publish ? 'pubIntro' : 'signIntro'))}</p>
         <form class="ed-auth" data-auth="email">
           ${field(tr('emailLabel'), `<input type="email" data-auth-email required value="${esc(auth.email)}" placeholder="${esc(tr('emailPlaceholder'))}" autocomplete="email">`)}
-          <button type="submit" class="ed-btn ed-primary">${esc(tr('sendCode'))}</button>
+          <button type="submit" class="ed-btn ed-primary" data-wait="sendIn" data-label="sendCode" ${waitLeft() ? 'disabled' : ''}>${esc(waitLeft() ? fill('sendIn', { n: waitLeft() }) : tr('sendCode'))}</button>
         </form>`
       : `<p class="ed-hint">${esc(fill('codeSent', { e: auth.email }))}</p>
         <form class="ed-auth" data-auth="code">
           ${field(tr('codeLabel'), `<input type="text" data-auth-code required inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" placeholder="000000">`)}
           <button type="submit" class="ed-btn ed-primary">${esc(tr(publish ? 'verifyPublish' : 'verify'))}</button>
         </form>
-        <p class="ed-row"><button type="button" class="ed-textbtn" data-act="authresend">${esc(tr('resend'))}</button>
+        <p class="ed-row"><button type="button" class="ed-textbtn" data-act="authresend" data-wait="resendIn" data-label="resend" ${waitLeft() ? 'disabled' : ''}>${esc(waitLeft() ? fill('resendIn', { n: waitLeft() }) : tr('resend'))}</button>
           <button type="button" class="ed-textbtn" data-act="authback">${esc(tr('changeEmail'))}</button></p>`;
     panel.innerHTML = `${head}<div class="ed-body">${body}</div><footer class="ed-foot"></footer>`;
   }
+  // Supabase deja pedir un código por minuto (por cuenta): se muestra cuánto falta.
+  const waitLeft = () => (auth && auth.waitUntil ? Math.max(0, Math.ceil((auth.waitUntil - Date.now()) / 1000)) : 0);
+  function waitFor(secs) {
+    auth.waitUntil = Date.now() + secs * 1000;
+    render();
+    flash(fill('waitSecs', { n: secs }), true);
+  }
   function authError(e) {
     const c = (e && e.code) || '', st = e && e.data && e.data.status;
-    if (st === 429 || /rate|too_many/i.test(c)) return flash(tr('tooMany'), true);
+    if (st === 429 || /rate|too_many/i.test(c)) {
+      const m = /(\d+)\s*seconds?/i.exec((e.data && (e.data.msg || e.data.message)) || '');
+      return waitFor(m ? Number(m[1]) : 60);
+    }
     if (/otp|token|expired|invalid/i.test(c) || st === 403) return flash(tr('badCode'), true);
     if (/email/i.test(c)) return flash(tr('badEmail'), true);
     console.error('2GoodLabs auth', c, e && e.data);
@@ -774,7 +791,7 @@
   }
   async function sendAuthCode(email) {
     if (!isEmail(email)) return flash(tr('badEmail'), true);
-    if (auth.sentAt && Date.now() - auth.sentAt < 60000 && auth.email === email) return flash(tr('tooMany'), true);
+    if (waitLeft()) return flash(fill('waitSecs', { n: waitLeft() }), true);
     setBusy(true);
     try {
       if (auth.purpose === 'publish') {
@@ -787,7 +804,7 @@
       auth.mode = await cloud.sendCode(email);
       auth.email = email;
       auth.step = 'code';
-      auth.sentAt = Date.now();
+      auth.waitUntil = Date.now() + 60000;
       setBusy(false);
       render();
       const input = panel.querySelector('[data-auth-code]');
