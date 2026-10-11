@@ -538,3 +538,32 @@ html:not(.js) .s-back { display: none; }
   border-color: var(--gold);
   pointer-events: none;
 }
+
+/* Vista de texto: pestañas y manifiesto */
+.btn-what { min-width: 38px; justify-content: center; font-size: 17px; font-weight: 800; }
+.s-tabs { display: flex; gap: 6px; padding-top: 16px; border-bottom: 1px solid #e3ded3; }
+.s-tabs button {
+  padding: 9px 14px;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: 8px 8px 0 0;
+  background: none;
+  font: inherit;
+  font-weight: 700;
+  font-size: 15px;
+  color: #6b6f78;
+  cursor: pointer;
+}
+.s-tabs button[aria-selected="true"] { background: #fff; border-color: #e3ded3; color: #1d1f24; margin-bottom: -1px; }
+html:not(.js) .s-tabs { display: none; }
+html.js .s-panel[data-off] { display: none; }
+.s-mtitle { font-size: 30px !important; line-height: 1.15; margin: 8px 0 14px !important; }
+.s-steps { list-style: none; counter-reset: step; padding: 0; margin: 0 0 18px; display: grid; gap: 10px; }
+.s-steps li { counter-increment: step; display: grid; grid-template-columns: 34px 1fr; column-gap: 12px; padding: 12px 14px; background: #fff; border: 1px solid #e3ded3; border-radius: 10px; }
+.s-steps li::before { content: counter(step); grid-row: span 2; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 8px; background: #ffc367; font-weight: 800; }
+.s-steps strong { font-size: 16px; }
+.s-steps span { color: #4a4e57; font-size: 15px; }
+.s-closing { font-size: 21px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.35; margin: 22px 0 14px !important; }
+.s-cta { padding: 12px 18px; border-radius: 10px; border: 1px solid #1d1f24; background: #ffc367; color: #1d1f24; font: inherit; font-weight: 800; font-size: 16px; cursor: pointer; }
+html:not(.js) .s-cta { display: none; }
+@media (max-width: 700px) { .s-mtitle { font-size: 24px !important; } }

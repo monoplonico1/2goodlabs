@@ -50,7 +50,7 @@ function jsonld(lang) {
       name: '2GoodLabs',
       url: SITE + '/',
       logo: SITE + '/logo.png',
-      description: t(TGL.company.about, lang),
+      description: t(TGL.company.description, lang),
       founder: founders.map((m) => ({ '@id': SITE + '/#' + m.id })),
     },
     ...founders.map((m) => ({

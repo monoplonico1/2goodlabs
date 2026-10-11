@@ -13,16 +13,16 @@
         location.replace('/es/' + location.search + location.hash);
     } catch (e) {}
   </script>
-  <title>2GoodLabs — AI-powered product lab</title>
-  <meta name="description" content="2GoodLabs is the product lab of Cesar and Ricardo, two product and UX designers who use AI as their main tool. This is where we build Zumi and Pickpals. Walk around our office.">
+  <title>2GoodLabs — AI startups & labs directory</title>
+  <meta name="description" content="A living building of AI startups, labs, independent businesses and portfolios. Publish your space for free, walk the offices and meet the people who build.">
   <link rel="canonical" href="https://2goodlabs.com/">
   <link rel="alternate" hreflang="en" href="https://2goodlabs.com/">
   <link rel="alternate" hreflang="es" href="https://2goodlabs.com/es/">
   <link rel="alternate" hreflang="x-default" href="https://2goodlabs.com/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="2GoodLabs">
-  <meta property="og:title" content="2GoodLabs — AI-powered product lab">
-  <meta property="og:description" content="2GoodLabs is the product lab of Cesar and Ricardo, two product and UX designers who use AI as their main tool. This is where we build Zumi and Pickpals. Walk around our office.">
+  <meta property="og:title" content="2GoodLabs — AI startups & labs directory">
+  <meta property="og:description" content="A living building of AI startups, labs, independent businesses and portfolios. Publish your space for free, walk the offices and meet the people who build.">
   <meta property="og:url" content="https://2goodlabs.com/">
   <meta property="og:image" content="https://2goodlabs.com/og.png">
   <meta property="og:image:width" content="1200">
@@ -37,7 +37,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Silkscreen&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css?v=1c9dca3b">
+  <link rel="stylesheet" href="/styles.css?v=2f59355e">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -48,7 +48,7 @@
         "name": "2GoodLabs",
         "url": "https://2goodlabs.com/",
         "logo": "https://2goodlabs.com/logo.png",
-        "description": "We are Cesar and Ricardo, two product and user experience designers. AI is our main tool: every agent in this office stands for work we do with it. This is where we build our products, Zumi and Pickpals.",
+        "description": "2GoodLabs is a living building where AI startups, labs, independent businesses and portfolios get their own office. A directory to publish, find and meet the people who build, and to create opportunities for each other.",
         "founder": [
           {
             "@id": "https://2goodlabs.com/#cesar"
@@ -135,9 +135,7 @@
       <button type="button" data-lang="en">EN</button>
       <button type="button" data-lang="es">ES</button>
     </div>
-    <button id="btn-simple" class="panel btn-dir" type="button" aria-controls="simple" aria-expanded="false">
-      <span data-i18n="simpleView">Simple view</span>
-    </button>
+    <button id="btn-simple" class="panel btn-dir btn-what" type="button" aria-controls="simple" aria-expanded="false" data-i18n-attr="aria-label:simpleView;title:simpleView" aria-label="What is this?" title="What is this?">?</button>
     <button id="btn-directory" class="panel btn-dir" type="button" aria-controls="directory" aria-expanded="false">
       <span aria-hidden="true">☰</span> <span data-i18n="directory">Directory</span>
     </button>
@@ -202,13 +200,32 @@
       <header class="s-head">
         <div>
           <h1 class="s-logo">2GoodLabs</h1>
-          <p class="s-tag">An AI-powered product lab</p>
+          <p class="s-tag">AI startups &amp; labs directory</p>
         </div>
-        <button type="button" class="s-back" data-simple-close>← Back to the office</button>
+        <button type="button" class="s-back" data-simple-close>← Back to the building</button>
       </header>
 
+      <nav class="s-tabs" role="tablist">
+        <button type="button" role="tab" data-stab="what" aria-selected="true">What is this?</button><button type="button" role="tab" data-stab="founders" aria-selected="false">The founders</button>
+      </nav>
+
+      <div class="s-panel" data-panel="what" role="tabpanel">
+      <section class="s-manifesto">
+        <h3 class="s-mtitle">A building for everyone who builds.</h3>
+        <p class="s-lead">2GoodLabs is a living directory of AI startups, labs, independent businesses and portfolios. Not a list: a place. Every office in this building is someone&#39;s work, someone&#39;s bet, someone&#39;s late nights.</p>
+        <p>Building something new can feel lonely. You ship, you post, and it disappears into a feed. Here, your work gets an address: a door people can walk through, a sign with your name on it, and a team, human and AI, that says hello.</p><p>Walk the halls and you&#39;ll find founders shipping their first product, studios experimenting with agents, freelancers with portfolios worth seeing, and side projects that might become companies. Knock. Read their story. Follow their links.</p><p>Opportunities rarely come from algorithms. They come from being in the same room: the client who walks by, the cofounder down the hall, the collaborator you didn&#39;t know you needed. 2GoodLabs is that room, open to everyone, all the time.</p><p>The more of us who move in, the more each of us is worth finding.</p>
+      </section>
       <section>
-        <h2>What is 2GoodLabs</h2>
+        <h2>How it works</h2>
+        <ol class="s-steps"><li><strong>Rent a space</strong><span>An office as big as you need, or a desk in the coworking. Free during launch.</span></li><li><strong>Make it yours</strong><span>Your name and colors, your furniture, your team and your agents, your story and your links.</span></li><li><strong>Publish and get found</strong><span>Everyone who visits can walk in, meet your team and reach you.</span></li></ol>
+        <p class="s-closing">Let&#39;s be connected. Let&#39;s create opportunities for each other.</p>
+        <button type="button" class="s-cta" data-simple-rent>Find your spot →</button>
+      </section>
+      </div>
+
+      <div class="s-panel" data-panel="founders" role="tabpanel" data-off>
+      <section>
+        <h2>Who we are</h2>
         <p class="s-lead">We are Cesar and Ricardo, two product and user experience designers. AI is our main tool: every agent in this office stands for work we do with it. This is where we build our products, Zumi and Pickpals.</p>
       </section>
 
@@ -338,18 +355,19 @@
           <p class="s-status" role="status"></p>
         </form>
       </section>
+      </div>
 
       <footer class="s-foot">© 2026 2GoodLabs · <a href="https://2goodlabs.com">2goodlabs.com</a></footer>
   </main>
 
-  <script src="/js/data.js?v=1c9dca3b"></script>
-  <script src="/js/features.js?v=1c9dca3b"></script>
-  <script src="/js/i18n.js?v=1c9dca3b"></script>
-  <script src="/js/art.js?v=1c9dca3b"></script>
-  <script src="/js/art-rooms.js?v=1c9dca3b"></script>
-  <script src="/js/rules.js?v=1c9dca3b"></script>
-  <script src="/js/world.js?v=1c9dca3b"></script>
-  <script src="/js/game.js?v=1c9dca3b"></script>
-  <script src="/js/simple.js?v=1c9dca3b"></script>
+  <script src="/js/data.js?v=2f59355e"></script>
+  <script src="/js/features.js?v=2f59355e"></script>
+  <script src="/js/i18n.js?v=2f59355e"></script>
+  <script src="/js/art.js?v=2f59355e"></script>
+  <script src="/js/art-rooms.js?v=2f59355e"></script>
+  <script src="/js/rules.js?v=2f59355e"></script>
+  <script src="/js/world.js?v=2f59355e"></script>
+  <script src="/js/game.js?v=2f59355e"></script>
+  <script src="/js/simple.js?v=2f59355e"></script>
 </body>
 </html>

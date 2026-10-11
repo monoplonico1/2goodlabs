@@ -13,16 +13,16 @@
         location.replace('/es/' + location.search + location.hash);
     } catch (e) {}
   </script>
-  <title>2GoodLabs — Laboratorio de producto con IA</title>
-  <meta name="description" content="2GoodLabs es el laboratorio de producto de Cesar y Ricardo, dos diseñadores de producto y UX que trabajan con IA como herramienta principal. Aquí construimos Zumi y Pickpals. Recorre nuestra oficina.">
+  <title>2GoodLabs — Directorio de startups y labs de IA</title>
+  <meta name="description" content="Un edificio vivo de startups, laboratorios, negocios independientes y portafolios que trabajan con IA. Publica tu espacio gratis, recorre las oficinas y conoce a quienes construyen.">
   <link rel="canonical" href="https://2goodlabs.com/es/">
   <link rel="alternate" hreflang="en" href="https://2goodlabs.com/">
   <link rel="alternate" hreflang="es" href="https://2goodlabs.com/es/">
   <link rel="alternate" hreflang="x-default" href="https://2goodlabs.com/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="2GoodLabs">
-  <meta property="og:title" content="2GoodLabs — Laboratorio de producto con IA">
-  <meta property="og:description" content="2GoodLabs es el laboratorio de producto de Cesar y Ricardo, dos diseñadores de producto y UX que trabajan con IA como herramienta principal. Aquí construimos Zumi y Pickpals. Recorre nuestra oficina.">
+  <meta property="og:title" content="2GoodLabs — Directorio de startups y labs de IA">
+  <meta property="og:description" content="Un edificio vivo de startups, laboratorios, negocios independientes y portafolios que trabajan con IA. Publica tu espacio gratis, recorre las oficinas y conoce a quienes construyen.">
   <meta property="og:url" content="https://2goodlabs.com/es/">
   <meta property="og:image" content="https://2goodlabs.com/og.png">
   <meta property="og:image:width" content="1200">
@@ -37,7 +37,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Silkscreen&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css?v=1c9dca3b">
+  <link rel="stylesheet" href="/styles.css?v=2f59355e">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -48,7 +48,7 @@
         "name": "2GoodLabs",
         "url": "https://2goodlabs.com/",
         "logo": "https://2goodlabs.com/logo.png",
-        "description": "Somos Cesar y Ricardo, dos diseñadores de producto y experiencia de usuario. La IA es nuestra herramienta principal: cada agente de esta oficina representa tareas que hacemos con ella. Aquí construimos nuestros productos, Zumi y Pickpals.",
+        "description": "2GoodLabs es un edificio vivo donde startups, laboratorios, negocios independientes y portafolios que trabajan con IA tienen su propia oficina. Un directorio para publicar, encontrar y conocer a quienes construyen, y crear oportunidades entre todos.",
         "founder": [
           {
             "@id": "https://2goodlabs.com/#cesar"
@@ -135,9 +135,7 @@
       <button type="button" data-lang="en">EN</button>
       <button type="button" data-lang="es">ES</button>
     </div>
-    <button id="btn-simple" class="panel btn-dir" type="button" aria-controls="simple" aria-expanded="false">
-      <span data-i18n="simpleView">Vista simple</span>
-    </button>
+    <button id="btn-simple" class="panel btn-dir btn-what" type="button" aria-controls="simple" aria-expanded="false" data-i18n-attr="aria-label:simpleView;title:simpleView" aria-label="¿Qué es esto?" title="¿Qué es esto?">?</button>
     <button id="btn-directory" class="panel btn-dir" type="button" aria-controls="directory" aria-expanded="false">
       <span aria-hidden="true">☰</span> <span data-i18n="directory">Directorio</span>
     </button>
@@ -202,13 +200,32 @@
       <header class="s-head">
         <div>
           <h1 class="s-logo">2GoodLabs</h1>
-          <p class="s-tag">Laboratorio de producto con IA</p>
+          <p class="s-tag">Directorio de startups y labs de IA</p>
         </div>
-        <button type="button" class="s-back" data-simple-close>← Volver a la oficina</button>
+        <button type="button" class="s-back" data-simple-close>← Volver al edificio</button>
       </header>
 
+      <nav class="s-tabs" role="tablist">
+        <button type="button" role="tab" data-stab="what" aria-selected="true">¿Qué es esto?</button><button type="button" role="tab" data-stab="founders" aria-selected="false">Los fundadores</button>
+      </nav>
+
+      <div class="s-panel" data-panel="what" role="tabpanel">
+      <section class="s-manifesto">
+        <h3 class="s-mtitle">Un edificio para todos los que construyen.</h3>
+        <p class="s-lead">2GoodLabs es un directorio vivo de startups, laboratorios, negocios independientes y portafolios que trabajan con IA. No es una lista: es un lugar. Cada oficina de este edificio es el trabajo de alguien, la apuesta de alguien, las noches largas de alguien.</p>
+        <p>Construir algo nuevo puede sentirse solitario. Lanzas, publicas y se pierde en un feed. Aquí tu trabajo tiene una dirección: una puerta por la que se puede entrar, un letrero con tu nombre y un equipo, humano y de IA, que saluda.</p><p>Recorre los pasillos y vas a encontrar fundadores lanzando su primer producto, estudios experimentando con agentes, freelancers con portafolios que vale la pena ver y proyectos paralelos que podrían convertirse en empresas. Toca la puerta. Lee su historia. Sigue sus links.</p><p>Las oportunidades casi nunca vienen de un algoritmo. Vienen de estar en el mismo lugar: el cliente que pasa por el pasillo, el socio de la oficina de al lado, el colaborador que no sabías que necesitabas. 2GoodLabs es ese lugar, abierto para todos, todo el tiempo.</p><p>Entre más llegamos, más vale la pena encontrarnos.</p>
+      </section>
       <section>
-        <h2>Qué es 2GoodLabs</h2>
+        <h2>Cómo funciona</h2>
+        <ol class="s-steps"><li><strong>Arrienda un espacio</strong><span>Una oficina del tamaño que necesites, o un puesto en el coworking. Gratis durante el lanzamiento.</span></li><li><strong>Hazlo tuyo</strong><span>Tu nombre y tus colores, tus muebles, tu equipo y tus agentes, tu historia y tus links.</span></li><li><strong>Publícalo y que te encuentren</strong><span>Todos los que visitan pueden entrar, conocer a tu equipo y contactarte.</span></li></ol>
+        <p class="s-closing">Estemos conectados. Creemos oportunidades entre todos.</p>
+        <button type="button" class="s-cta" data-simple-rent>Encuentra tu lugar →</button>
+      </section>
+      </div>
+
+      <div class="s-panel" data-panel="founders" role="tabpanel" data-off>
+      <section>
+        <h2>Quiénes somos</h2>
         <p class="s-lead">Somos Cesar y Ricardo, dos diseñadores de producto y experiencia de usuario. La IA es nuestra herramienta principal: cada agente de esta oficina representa tareas que hacemos con ella. Aquí construimos nuestros productos, Zumi y Pickpals.</p>
       </section>
 
@@ -338,18 +355,19 @@
           <p class="s-status" role="status"></p>
         </form>
       </section>
+      </div>
 
       <footer class="s-foot">© 2026 2GoodLabs · <a href="https://2goodlabs.com">2goodlabs.com</a></footer>
   </main>
 
-  <script src="/js/data.js?v=1c9dca3b"></script>
-  <script src="/js/features.js?v=1c9dca3b"></script>
-  <script src="/js/i18n.js?v=1c9dca3b"></script>
-  <script src="/js/art.js?v=1c9dca3b"></script>
-  <script src="/js/art-rooms.js?v=1c9dca3b"></script>
-  <script src="/js/rules.js?v=1c9dca3b"></script>
-  <script src="/js/world.js?v=1c9dca3b"></script>
-  <script src="/js/game.js?v=1c9dca3b"></script>
-  <script src="/js/simple.js?v=1c9dca3b"></script>
+  <script src="/js/data.js?v=2f59355e"></script>
+  <script src="/js/features.js?v=2f59355e"></script>
+  <script src="/js/i18n.js?v=2f59355e"></script>
+  <script src="/js/art.js?v=2f59355e"></script>
+  <script src="/js/art-rooms.js?v=2f59355e"></script>
+  <script src="/js/rules.js?v=2f59355e"></script>
+  <script src="/js/world.js?v=2f59355e"></script>
+  <script src="/js/game.js?v=2f59355e"></script>
+  <script src="/js/simple.js?v=2f59355e"></script>
 </body>
 </html>

@@ -1,12 +1,14 @@
-// Vista simple: todo el contenido como página normal, sin juego.
+// Vista de texto (botón "?"): dos pestañas, qué es 2GoodLabs (el manifiesto) y los
+// fundadores (quiénes somos, productos, agentes y contacto), como página normal, sin juego.
 // La misma función arma el HTML en el navegador (al cambiar de idioma) y en build.js,
 // que lo deja escrito en index.html para buscadores y para quien no usa JavaScript.
 
 (function () {
   const text = {
     es: {
-      back: '← Volver a la oficina',
-      aboutTitle: 'Qué es 2GoodLabs',
+      back: '← Volver al edificio',
+      whatTab: '¿Qué es esto?', foundersTab: 'Los fundadores',
+      aboutTitle: 'Quiénes somos',
       foundersTitle: 'Fundadores',
       productsTitle: 'Productos',
       agentsTitle: 'El equipo de agentes',
@@ -24,8 +26,9 @@
       appStore: 'App Store',
     },
     en: {
-      back: '← Back to the office',
-      aboutTitle: 'What is 2GoodLabs',
+      back: '← Back to the building',
+      whatTab: 'What is this?', foundersTab: 'The founders',
+      aboutTitle: 'Who we are',
       foundersTitle: 'Founders',
       productsTitle: 'Products',
       agentsTitle: 'The agent team',
@@ -49,8 +52,10 @@
   const host = (url) => url.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
   const link = (url, label) => `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(label || host(url))} ↗</a>`;
 
-  TGL.renderSimple = function (lang) {
-    const L = text[lang];
+  TGL.renderSimple = function (lang, tab) {
+    const L = text[lang], M = TGL.manifesto[lang];
+    tab = tab || 'what';
+    const panel = (id) => `class="s-panel" data-panel="${id}" role="tabpanel"${tab === id ? '' : ' data-off'}`;
     const t = (v) => (v && typeof v === 'object' && !Array.isArray(v) ? v[lang] : v);
     const role = (m) => t(TGL.roles[m.role].label);
     const person = (m) => `
@@ -75,6 +80,25 @@
         <button type="button" class="s-back" data-simple-close>${esc(L.back)}</button>
       </header>
 
+      <nav class="s-tabs" role="tablist">
+        ${['what', 'founders'].map((id) => `<button type="button" role="tab" data-stab="${id}" aria-selected="${tab === id}">${esc(L[id + 'Tab'])}</button>`).join('')}
+      </nav>
+
+      <div ${panel('what')}>
+      <section class="s-manifesto">
+        <h3 class="s-mtitle">${esc(M.title)}</h3>
+        <p class="s-lead">${esc(M.lead)}</p>
+        ${M.body.map((p) => `<p>${esc(p)}</p>`).join('')}
+      </section>
+      <section>
+        <h2>${esc(M.stepsTitle)}</h2>
+        <ol class="s-steps">${M.steps.map(([h, p]) => `<li><strong>${esc(h)}</strong><span>${esc(p)}</span></li>`).join('')}</ol>
+        <p class="s-closing">${esc(M.closing)}</p>
+        <button type="button" class="s-cta" data-simple-rent>${esc(M.cta)}</button>
+      </section>
+      </div>
+
+      <div ${panel('founders')}>
       <section>
         <h2>${esc(L.aboutTitle)}</h2>
         <p class="s-lead">${esc(t(TGL.company.about))}</p>
@@ -118,6 +142,7 @@
           <p class="s-status" role="status"></p>
         </form>
       </section>
+      </div>
 
       <footer class="s-foot">© ${new Date().getFullYear()} 2GoodLabs · <a href="${esc(TGL.company.url)}">${esc(host(TGL.company.url))}</a></footer>`;
   };
@@ -129,8 +154,21 @@
   const view = $('#simple');
   if (!view) return;
 
+  let tab = 'what';
   function render() {
-    view.innerHTML = TGL.renderSimple(TGL.lang);
+    // lo escrito en el formulario de contacto no se pierde al cambiar de pestaña o de idioma
+    const form = view.querySelector('.s-form'), keep = form ? [...form.elements].map((el) => el.value) : null;
+    view.innerHTML = TGL.renderSimple(TGL.lang, tab);
+    const again = view.querySelector('.s-form');
+    if (keep && again) [...again.elements].forEach((el, i) => { if (el.type !== 'hidden' && el.type !== 'submit' && keep[i] != null) el.value = keep[i]; });
+    drawFaces();
+  }
+  function setTab(id) {
+    if (id === tab) return;
+    tab = id;
+    view.querySelectorAll('[data-stab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.stab === id)));
+    view.querySelectorAll('[data-panel]').forEach((p) => p.toggleAttribute('data-off', p.dataset.panel !== id));
+    view.scrollTop = 0;
     drawFaces();
   }
   function drawFaces() {
@@ -145,9 +183,11 @@
   // prefill: texto para el mensaje (por ejemplo, la oficina por la que preguntan).
   TGL.openSimple = function (anchor, prefill) {
     document.body.classList.add('simple-open');
+    const target = anchor && view.querySelector('#' + anchor);
+    const inPanel = target && target.closest('[data-panel]');
+    if (inPanel) setTab(inPanel.dataset.panel);
     view.scrollTop = 0;
     drawFaces();
-    const target = anchor && view.querySelector('#' + anchor);
     if (target) target.scrollIntoView();
     const msg = view.querySelector('.s-form textarea');
     if (prefill && msg && (!msg.value || msg.dataset.prefilled === '1')) {
@@ -166,7 +206,17 @@
   };
 
   $('#btn-simple').addEventListener('click', () => (TGL.simpleOpen() ? TGL.closeSimple() : TGL.openSimple()));
-  view.addEventListener('click', (e) => { if (e.target.closest('[data-simple-close]')) TGL.closeSimple(); });
+  view.addEventListener('click', (e) => {
+    if (e.target.closest('[data-simple-close]')) return TGL.closeSimple();
+    const t = e.target.closest('[data-stab]');
+    if (t) return setTab(t.dataset.stab);
+    // "Encuentra tu lugar": de vuelta al edificio, con el paso a paso para arrendar
+    if (e.target.closest('[data-simple-rent]')) {
+      TGL.closeSimple();
+      const rent = $('#btn-editor');
+      if (rent) rent.click();
+    }
+  });
   // Si la persona edita el mensaje sugerido, ya es suyo: no se vuelve a reemplazar.
   view.addEventListener('input', (e) => { if (e.target.matches('textarea')) delete e.target.dataset.prefilled; });
 

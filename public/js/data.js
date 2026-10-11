@@ -7,12 +7,57 @@ window.TGL = window.TGL || {};
 
 TGL.company = {
   name: '2GoodLabs',
-  tagline: { es: 'Laboratorio de producto con IA', en: 'An AI-powered product lab' },
+  tagline: { es: 'Directorio de startups y labs de IA', en: 'AI startups & labs directory' },
+  // Qué es 2GoodLabs hoy (buscadores y datos estructurados). "about" es la parte de los fundadores.
+  description: {
+    es: '2GoodLabs es un edificio vivo donde startups, laboratorios, negocios independientes y portafolios que trabajan con IA tienen su propia oficina. Un directorio para publicar, encontrar y conocer a quienes construyen, y crear oportunidades entre todos.',
+    en: '2GoodLabs is a living building where AI startups, labs, independent businesses and portfolios get their own office. A directory to publish, find and meet the people who build, and to create opportunities for each other.',
+  },
   // Dominio del sitio (canonical, sitemap, datos estructurados).
   url: 'https://2goodlabs.com',
   about: {
     es: 'Somos Cesar y Ricardo, dos diseñadores de producto y experiencia de usuario. La IA es nuestra herramienta principal: cada agente de esta oficina representa tareas que hacemos con ella. Aquí construimos nuestros productos, Zumi y Pickpals.',
     en: 'We are Cesar and Ricardo, two product and user experience designers. AI is our main tool: every agent in this office stands for work we do with it. This is where we build our products, Zumi and Pickpals.',
+  },
+};
+
+// El manifiesto: lo primero que se lee en la vista de texto ("What is this?").
+TGL.manifesto = {
+  en: {
+    title: 'A building for everyone who builds.',
+    lead: '2GoodLabs is a living directory of AI startups, labs, independent businesses and portfolios. Not a list: a place. Every office in this building is someone\'s work, someone\'s bet, someone\'s late nights.',
+    body: [
+      'Building something new can feel lonely. You ship, you post, and it disappears into a feed. Here, your work gets an address: a door people can walk through, a sign with your name on it, and a team, human and AI, that says hello.',
+      'Walk the halls and you\'ll find founders shipping their first product, studios experimenting with agents, freelancers with portfolios worth seeing, and side projects that might become companies. Knock. Read their story. Follow their links.',
+      'Opportunities rarely come from algorithms. They come from being in the same room: the client who walks by, the cofounder down the hall, the collaborator you didn\'t know you needed. 2GoodLabs is that room, open to everyone, all the time.',
+      'The more of us who move in, the more each of us is worth finding.',
+    ],
+    stepsTitle: 'How it works',
+    steps: [
+      ['Rent a space', 'An office as big as you need, or a desk in the coworking. Free during launch.'],
+      ['Make it yours', 'Your name and colors, your furniture, your team and your agents, your story and your links.'],
+      ['Publish and get found', 'Everyone who visits can walk in, meet your team and reach you.'],
+    ],
+    closing: 'Let\'s be connected. Let\'s create opportunities for each other.',
+    cta: 'Find your spot →',
+  },
+  es: {
+    title: 'Un edificio para todos los que construyen.',
+    lead: '2GoodLabs es un directorio vivo de startups, laboratorios, negocios independientes y portafolios que trabajan con IA. No es una lista: es un lugar. Cada oficina de este edificio es el trabajo de alguien, la apuesta de alguien, las noches largas de alguien.',
+    body: [
+      'Construir algo nuevo puede sentirse solitario. Lanzas, publicas y se pierde en un feed. Aquí tu trabajo tiene una dirección: una puerta por la que se puede entrar, un letrero con tu nombre y un equipo, humano y de IA, que saluda.',
+      'Recorre los pasillos y vas a encontrar fundadores lanzando su primer producto, estudios experimentando con agentes, freelancers con portafolios que vale la pena ver y proyectos paralelos que podrían convertirse en empresas. Toca la puerta. Lee su historia. Sigue sus links.',
+      'Las oportunidades casi nunca vienen de un algoritmo. Vienen de estar en el mismo lugar: el cliente que pasa por el pasillo, el socio de la oficina de al lado, el colaborador que no sabías que necesitabas. 2GoodLabs es ese lugar, abierto para todos, todo el tiempo.',
+      'Entre más llegamos, más vale la pena encontrarnos.',
+    ],
+    stepsTitle: 'Cómo funciona',
+    steps: [
+      ['Arrienda un espacio', 'Una oficina del tamaño que necesites, o un puesto en el coworking. Gratis durante el lanzamiento.'],
+      ['Hazlo tuyo', 'Tu nombre y tus colores, tus muebles, tu equipo y tus agentes, tu historia y tus links.'],
+      ['Publícalo y que te encuentren', 'Todos los que visitan pueden entrar, conocer a tu equipo y contactarte.'],
+    ],
+    closing: 'Estemos conectados. Creemos oportunidades entre todos.',
+    cta: 'Encuentra tu lugar →',
   },
 };
 

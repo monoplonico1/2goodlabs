@@ -4,8 +4,8 @@
 (function () {
   const ui = {
     es: {
-      title: '2GoodLabs — Laboratorio de producto con IA',
-      description: '2GoodLabs es el laboratorio de producto de Cesar y Ricardo, dos diseñadores de producto y UX que trabajan con IA como herramienta principal. Aquí construimos Zumi y Pickpals. Recorre nuestra oficina.',
+      title: '2GoodLabs — Directorio de startups y labs de IA',
+      description: 'Un edificio vivo de startups, laboratorios, negocios independientes y portafolios que trabajan con IA. Publica tu espacio gratis, recorre las oficinas y conoce a quienes construyen.',
       officeLabel: 'Oficina de 2GoodLabs en pixel art. Usa las flechas o WASD para caminar, E para hablar. El directorio tiene el mismo contenido en texto.',
       directory: 'Directorio',
       closeDirectory: 'Cerrar directorio',
@@ -38,7 +38,7 @@
       getOn: 'Descárgala en el',
       getZumi: 'Descargar Zumi en el App Store',
       appStoreBtn: 'Descargar en el App Store ↗',
-      simpleView: 'Vista simple',
+      simpleView: '¿Qué es esto?',
       officeView: 'Volver a la oficina',
       writeUs: 'Escríbenos',
       portfolio: 'Portafolio',
@@ -48,8 +48,8 @@
       rentMessage: 'Hola, me interesa la oficina {n} en el edificio de 2GoodLabs.',
     },
     en: {
-      title: '2GoodLabs — AI-powered product lab',
-      description: '2GoodLabs is the product lab of Cesar and Ricardo, two product and UX designers who use AI as their main tool. This is where we build Zumi and Pickpals. Walk around our office.',
+      title: '2GoodLabs — AI startups & labs directory',
+      description: 'A living building of AI startups, labs, independent businesses and portfolios. Publish your space for free, walk the offices and meet the people who build.',
       officeLabel: '2GoodLabs office in pixel art. Use the arrow keys or WASD to walk, E to talk. The directory has the same content as text.',
       directory: 'Directory',
       closeDirectory: 'Close directory',
@@ -82,7 +82,7 @@
       getOn: 'Download on the',
       getZumi: 'Get Zumi on the App Store',
       appStoreBtn: 'Download on the App Store ↗',
-      simpleView: 'Simple view',
+      simpleView: 'What is this?',
       officeView: 'Back to the office',
       writeUs: 'Write to us',
       portfolio: 'Portfolio',
