@@ -711,7 +711,9 @@
     if (code === 'slow_down') return flash(tr('slowDown'), true);
     if (code === 'expired' || code === 'not_found') { refresh(); return flash(tr('expired'), true); }
     if (code === 'not_yours') { refresh(); return flash(tr('notMine'), true); }
-    flash(tr('netError'), true);
+    // lo inesperado: el código va entre paréntesis para poder diagnosticarlo
+    console.error('2GoodLabs cloud', code, e && e.data);
+    flash(tr('netError') + (code ? ' (' + code + ')' : ''), true);
   }
   function setBusy(on) {
     busy = on;
@@ -767,7 +769,8 @@
     if (st === 429 || /rate|too_many/i.test(c)) return flash(tr('tooMany'), true);
     if (/otp|token|expired|invalid/i.test(c) || st === 403) return flash(tr('badCode'), true);
     if (/email/i.test(c)) return flash(tr('badEmail'), true);
-    return flash(tr('netError'), true);
+    console.error('2GoodLabs auth', c, e && e.data);
+    return flash(tr('netError') + (c ? ' (' + c + ')' : ''), true);
   }
   async function sendAuthCode(email) {
     if (!isEmail(email)) return flash(tr('badEmail'), true);
