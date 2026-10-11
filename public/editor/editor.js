@@ -168,6 +168,53 @@
       saveError: 'Could not save: this browser does not allow storing data (private mode?).',
     },
   };
+  // Con el servidor: reservas, publicar y entrar con código.
+  Object.assign(L.es, {
+    w4Hint: 'Queda reservado para ti 20 minutos mientras lo armas. Para conservarlo, publícalo: es gratis, solo con tu correo.',
+    rented: '¡Reservado! Tienes 20 minutos para armarlo y publicarlo.',
+    restore: 'Soltar este espacio', restoreConfirm: '¿Soltar este espacio? Queda libre para otros y se pierde lo que armaste.',
+    savedLocal: 'Guardado.', saving: 'Guardando…', publish: 'Publicar',
+    holdLeft: 'Reservado · quedan {t}', holdNote: 'Nadie más lo ve todavía. Publícalo antes de que se acabe el tiempo para conservarlo.',
+    publishedNote: 'Publicado: todos lo ven. Lo que guardas se ve al instante.',
+    netError: 'No pudimos conectar con el servidor. Intenta de nuevo.',
+    taken: 'Alguien acaba de tomar ese lugar. Te movimos al libre más cercano.', takenDesk: 'Alguien acaba de tomar ese puesto. Elige otro.',
+    floorFull: 'El piso está lleno por ahora.', slowDown: 'Demasiados cambios seguidos. Espera un momento.',
+    hasHold: 'Ya tienes un espacio en obra: {n}. Publícalo o suéltalo antes de arrendar otro.', goToIt: 'Ir a terminarlo',
+    expired: 'Se acabó el tiempo: la reserva se liberó y lo que armaste se perdió.',
+    pubTitle: 'Publicar tu espacio', pubIntro: 'Es gratis. Escribe tu correo y te mandamos un código de 6 dígitos. Al pedirlo, tu reserva gana 10 minutos más.',
+    signTitle: 'Entrar', signIntro: 'Escribe tu correo y te mandamos un código de 6 dígitos para ver y editar tus espacios.',
+    emailLabel: 'Tu correo', sendCode: 'Enviar código', codeLabel: 'Código de 6 dígitos',
+    codeSent: 'Te enviamos un código a {e}. Si no llega en un minuto, revisa la carpeta de spam.',
+    verifyPublish: 'Verificar y publicar', verify: 'Entrar', resend: 'Reenviar código', changeEmail: 'Usar otro correo',
+    badCode: 'Código incorrecto o vencido.', tooMany: 'Demasiados intentos. Espera un minuto y vuelve a intentar.',
+    published: '¡Publicado! Ya todos ven tu espacio.', signedIn: 'Listo, entraste como {e}.',
+    signIn: 'Entrar', signOut: 'Salir', signedAs: 'Cuenta: {e}', haveSpace: '¿Ya tienes un espacio? Entra con tu correo',
+    holdBar: '{n} · quedan {t} · Publicar', reservedLeft: 'Reservada · {t}', yoursLeft: 'Tuya · {t} para publicar',
+    released: 'Listo, el espacio quedó libre.', notMine: 'Ese espacio ya no es tuyo.',
+  });
+  Object.assign(L.en, {
+    w4Hint: "It's held for you for 20 minutes while you set it up. To keep it, publish it: it's free, you only need your email.",
+    rented: 'Reserved! You have 20 minutes to set it up and publish it.',
+    restore: 'Release this space', restoreConfirm: 'Release this space? It becomes available to others and your setup is lost.',
+    savedLocal: 'Saved.', saving: 'Saving…', publish: 'Publish',
+    holdLeft: 'Reserved · {t} left', holdNote: 'Nobody else sees it yet. Publish it before time runs out to keep it.',
+    publishedNote: 'Published: everyone sees it. What you save shows right away.',
+    netError: "We couldn't reach the server. Please try again.",
+    taken: 'Someone just took that spot. We moved you to the nearest free one.', takenDesk: 'Someone just took that desk. Pick another one.',
+    floorFull: 'The floor is full for now.', slowDown: 'Too many changes in a row. Wait a moment.',
+    hasHold: 'You already have a space under construction: {n}. Publish or release it before renting another one.', goToIt: 'Go finish it',
+    expired: 'Time ran out: the reservation was released and your setup was lost.',
+    pubTitle: 'Publish your space', pubIntro: "It's free. Enter your email and we'll send you a 6-digit code. Asking for it adds 10 more minutes to your reservation.",
+    signTitle: 'Sign in', signIntro: "Enter your email and we'll send you a 6-digit code to see and edit your spaces.",
+    emailLabel: 'Your email', sendCode: 'Send code', codeLabel: '6-digit code',
+    codeSent: "We sent a code to {e}. If it doesn't arrive within a minute, check your spam folder.",
+    verifyPublish: 'Verify and publish', verify: 'Sign in', resend: 'Resend code', changeEmail: 'Use another email',
+    badCode: 'Wrong or expired code.', tooMany: 'Too many attempts. Wait a minute and try again.',
+    published: 'Published! Everyone can see your space now.', signedIn: 'Done, signed in as {e}.',
+    signIn: 'Sign in', signOut: 'Sign out', signedAs: 'Account: {e}', haveSpace: 'Already have a space? Sign in with your email',
+    holdBar: '{n} · {t} left · Publish', reservedLeft: 'Reserved · {t}', yoursLeft: 'Yours · {t} to publish',
+    released: 'Done, the space is free again.', notMine: 'That space is no longer yours.',
+  });
   const tr = (k) => L[TGL.lang][k];
   const nm = (o) => TGL.t(o.name);
   const esc = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -176,7 +223,11 @@
 
   // ————————————————————————————————— Estado
   let isOpen = false, previewing = false, dirty = false;
-  let saved = space.load();   // los espacios guardados en este navegador
+  const cloud = TGL.cloud;
+  let floor = [];             // el piso como lo manda el servidor (todos los espacios)
+  let floorVersion = null;
+  let saved = [];             // mis espacios (documentos)
+  const meta = {};            // id → { status: 'hold' | 'published', expiresAt, extended }
   let view = 'edit';          // 'wizard' (arrendar, paso a paso) | 'edit' (personalizar)
   let doc = null;             // el espacio que se está editando
   let history = [], hIndex = -1;
@@ -186,7 +237,7 @@
   let hover = null;      // casilla relativa a la sala bajo el puntero
   let drag = null;       // { ref, startX, startY, dx, dy, moved }
   let message = null, messageTimer = null;
-  let upgradedFrom = null;           // puesto que pasa a oficina (se libera al guardar)
+  let busy = false;                  // esperando al servidor
   let lastTab = null, reveal = null; // para conservar el scroll del panel entre renders
   const openPeople = new Set();      // tarjetas de personas abiertas (índices)
 
@@ -234,15 +285,15 @@
   function labelButtons() {
     btn.innerHTML = '+ ' + esc(tr('create')) + ' <span class="ed-badge">' + tr('beta') + '</span>';
     mineBtn.textContent = fill('mySpacesN', { n: saved.length });
-    mineBtn.hidden = isOpen || !saved.length;
-    if (!saved.length) minePanel.hidden = true;
+    mineBtn.hidden = isOpen || !(saved.length || cloud.registered);
+    if (mineBtn.hidden) minePanel.hidden = true;
+    updateHoldBar();
     backPill.textContent = tr('back');
     updateHere();
   }
 
   // ————————————————————————————————— Dónde estoy
   // Se personaliza solo el espacio en el que está el jugador: su oficina o junto a su puesto.
-  const account = (() => { try { return JSON.parse(localStorage.getItem('tgl-account') || '{}'); } catch (e) { return {}; } })();
   const isEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v || '');
   function spaceAtPlayer() {
     const p = game.playerTile(), q = world.roomAt(p.x, p.y);
@@ -286,34 +337,167 @@
   }
   function renderMine() {
     const total = saved.reduce((n, d) => n + TGL.rules.charge(saved, d), 0);
+    const where = (d) => (d.kind === 'desk' ? 'Coworking · ' + fill('deskN', { n: d.desk + 1 }) : fill('officeN', { n: d.number }) + ' · ' + space.m2(d) + ' m²');
+    const state = (d) => (isHold(d) ? ' · ' + fill('holdLeft', { t: left(d) }) : '');
     minePanel.innerHTML = `
       <div class="ed-mine-head"><strong>${esc(tr('mySpaces'))}</strong><small>${esc(fill('total', { n: saved.length, p: money(total) }))}</small></div>
-      ${saved.map((d) => `<div class="ed-mine-row"><i style="--c:${d.identity.primary}"></i><span><strong>${esc(spaceName(d))}</strong><small>${esc(d.kind === 'desk' ? 'Coworking · ' + fill('deskN', { n: d.desk + 1 }) : fill('officeN', { n: d.number }) + ' · ' + space.m2(d) + ' m²')}</small></span><button type="button" class="ed-btn" data-go="${d.id}">${esc(tr('go'))}</button></div>`).join('')}
+      ${saved.map((d) => `<div class="ed-mine-row"><i style="--c:${d.identity.primary}"></i><span><strong>${esc(spaceName(d))}</strong><small>${esc(where(d) + state(d))}</small></span><button type="button" class="ed-btn" data-go="${d.id}">${esc(tr('go'))}</button></div>`).join('')}
       <p class="ed-note">${esc(tr('customizeTip'))}</p>
-      ${account.email ? `<p class="ed-note">${esc(tr('account'))}: <strong>${esc(account.email)}</strong></p>` : ''}`;
+      ${cloud.registered
+        ? `<p class="ed-note">${esc(fill('signedAs', { e: cloud.user.email }))} · <button type="button" class="ed-textbtn" data-signout>${esc(tr('signOut'))}</button></p>`
+        : `<p class="ed-note"><button type="button" class="ed-textbtn" data-signin>${esc(tr('haveSpace'))}</button></p>`}`;
   }
   mineBtn.addEventListener('click', () => {
     minePanel.hidden = !minePanel.hidden;
     if (!minePanel.hidden) renderMine();
   });
   minePanel.addEventListener('click', (e) => {
+    if (e.target.closest('[data-signout]')) { minePanel.hidden = true; cloud.signOut().then(refresh); return; }
+    if (e.target.closest('[data-signin]')) { minePanel.hidden = true; openPanel(); return startAuth('signin'); }
     const b = e.target.closest('[data-go]');
     if (!b) return;
     minePanel.hidden = true;
     goTo(saved.find((d) => d.id === b.dataset.go));
   });
 
+  // ————————————————————————————————— El piso compartido (servidor)
+  // El servidor manda todo el piso: lo mío con su contenido, lo publicado de otros con el suyo
+  // y lo que otros están armando solo como lugar reservado. Se vuelve a leer cuando cambia.
+  const isHold = (d) => meta[d.id] && meta[d.id].status === 'hold';
+  const msLeft = (d) => (meta[d.id] && meta[d.id].expiresAt ? Date.parse(meta[d.id].expiresAt) - cloud.now() : 0);
+  function clock(ms) {
+    const sec = Math.max(0, Math.ceil(ms / 1000));
+    return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
+  }
+  const left = (d) => clock(msLeft(d));
+  // Todos los espacios del piso como documentos (lo de otros en obra, sin contenido).
+  function floorDocs() {
+    return floor.map((s) => {
+      if (s.mine) return saved.find((d) => d.id === s.id) || space.sanitize(s.doc);
+      return s.doc ? space.sanitize(s.doc) : space.reservedDoc(s);
+    });
+  }
+  // Lo que llega del servidor sobre uno de mis espacios.
+  function adopt(sp) {
+    const d = space.sanitize(sp.doc);
+    meta[sp.id] = { status: sp.status, expiresAt: sp.expiresAt, extended: !!sp.extended };
+    saved = saved.filter((o) => o.id !== sp.id).concat(d);
+    const i = floor.findIndex((o) => o.id === sp.id);
+    const row = Object.assign({}, sp, { mine: true });
+    if (i >= 0) floor[i] = row; else floor.push(row);
+    return d;
+  }
+  function forget(id) {
+    saved = saved.filter((d) => d.id !== id);
+    floor = floor.filter((s) => s.id !== id);
+    delete meta[id];
+  }
+  let refreshing = null, releasing = null;
+  function refresh() {
+    if (refreshing) return refreshing;
+    const heldBefore = saved.filter(isHold).map((d) => d.id);
+    refreshing = cloud.building().then((r) => {
+      floor = r.spaces;
+      floorVersion = r.floor.version;
+      saved = floor.filter((sp) => sp.mine).map((sp) => space.sanitize(sp.doc));
+      Object.keys(meta).forEach((k) => delete meta[k]);
+      floor.filter((sp) => sp.mine).forEach((sp) => { meta[sp.id] = { status: sp.status, expiresAt: sp.expiresAt, extended: !!sp.extended }; });
+      // Una reserva mía que ya no está: venció. Si la estaba editando, se cierra.
+      const lost = heldBefore.filter((id) => !saved.some((d) => d.id === id) && id !== releasing);
+      if (isOpen && doc && view !== 'wizard' && lost.includes(doc.id)) closeEditor(true);
+      if (lost.length) notice(tr('expired'), true);
+      if (!drag && !previewing) show();
+      // sin interrumpir a quien está escribiendo
+      const typing = panel.contains(document.activeElement) && /INPUT|TEXTAREA/.test(document.activeElement.tagName);
+      if (isOpen && !typing && view !== 'auth') render();
+      labelButtons();
+    }).catch(() => { /* sin conexión: se reintenta en la próxima vuelta */ })
+      .finally(() => { refreshing = null; });
+    return refreshing;
+  }
+  // Cada 15 s se pregunta solo la versión del piso; si cambió, se vuelve a leer todo.
+  async function poll() {
+    if (document.hidden) return;
+    try {
+      const r = await cloud.version();
+      if (r.version !== floorVersion) refresh();
+    } catch (e) { /* se reintenta */ }
+  }
+  setInterval(poll, 15000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
+  cloud.onSession(() => refresh());
+
+  // El reloj de las reservas: cuenta regresiva en pantalla y, al vencer, se libera.
+  setInterval(() => {
+    document.querySelectorAll('[data-left]').forEach((el) => {
+      const d = saved.find((o) => o.id === el.dataset.left);
+      if (d) el.textContent = fill(el.dataset.fmt || 'holdLeft', { t: left(d) });
+    });
+    updateHoldBar();
+    if (saved.some((d) => isHold(d) && msLeft(d) <= 0)) refresh();
+  }, 1000);
+
+  // Aviso suelto (fuera del panel).
+  function notice(text, bad) {
+    const n = document.createElement('div');
+    n.className = 'panel ed-notice' + (bad ? ' bad' : '');
+    n.textContent = text;
+    document.body.appendChild(n);
+    setTimeout(() => n.remove(), bad ? 7000 : 4000);
+  }
+
+  // Si tengo algo en obra, una barra con el tiempo que queda y el atajo para publicar.
+  const holdBar = document.createElement('button');
+  holdBar.type = 'button';
+  holdBar.className = 'panel ed-holdbar';
+  holdBar.hidden = true;
+  document.body.appendChild(holdBar);
+  function updateHoldBar() {
+    const d = saved.find(isHold);
+    holdBar.hidden = isOpen || !d;
+    if (d) holdBar.textContent = '🚧 ' + fill('holdBar', { n: spaceName(d), t: left(d) });
+  }
+  holdBar.addEventListener('click', () => {
+    const d = saved.find(isHold);
+    if (!d) return;
+    goTo(d);
+    openPanel();
+    editSpace(d);
+  });
+
+  // En el edificio, sobre cada reserva, el tiempo que le queda.
+  game.overlays.add((ctx) => {
+    for (const sp of floor) {
+      if (sp.status !== 'hold' || sp.kind !== 'office') continue;
+      const q = world.room(sp.id);
+      if (!q) continue;
+      const ms = Date.parse(sp.expiresAt) - cloud.now();
+      const text = fill(sp.mine ? 'yoursLeft' : 'reservedLeft', { t: sp.mine ? clock(ms) : Math.max(1, Math.ceil(ms / 60000)) + ' min' });
+      ctx.save();
+      ctx.font = '7px Silkscreen, monospace';
+      const w = ctx.measureText(text).width + 8, x = (q.x + q.w / 2) * T - w / 2, y = (q.y + 1) * T;
+      ctx.fillStyle = '#1d1f24';
+      ctx.fillRect(x, y, w, 11);
+      ctx.fillStyle = '#f2c94c';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, x + w / 2, y + 6);
+      ctx.restore();
+    }
+  });
+
   // ————————————————————————————————— Abrir y cerrar
   // Dos momentos: arrendar (un paso a paso: qué, tamaño, dónde, confirmar) y personalizar
   // (también por pasos: marca, estilo, muebles, personas). Cada persona arrienda un espacio.
   const isMobile = () => window.matchMedia('(max-width: 700px)').matches;
-  const others = () => saved.filter((d) => d.id !== doc.id);
-  const othersAfterSave = () => saved.filter((d) => d.id !== doc.id && d.id !== upgradedFrom);
+  const others = () => floorDocs().filter((d) => d.id !== doc.id);
+  // El piso sin el espacio que se está cambiando (para ubicar el borrador).
+  const floorWithout = (id) => floorDocs().filter((d) => d.id !== id);
   const spaceName = (d) => d.identity.name || (d.kind === 'desk' ? fill('deskN', { n: d.desk + 1 }) : fill('officeN', { n: d.number }));
 
   // Muestra en el edificio lo guardado o, mientras se arrienda o edita, el borrador.
   function show() {
-    space.render(doc ? others().concat(cleanDoc()) : saved);
+    space.render(doc ? others().filter((d) => !wiz || !wiz.back || d.id !== wiz.back.id).concat(cleanDoc()) : floorDocs());
     ROOM = doc ? doc.id : null;
     room = doc ? world.room(doc.kind === 'desk' ? 'cowork' : doc.id) : null;
   }
@@ -356,7 +540,7 @@
   }
 
   function closeEditor(force) {
-    if (!force && view === 'edit' && dirty && !confirm(tr('leaveConfirm'))) return;
+    if (!force && view === 'edit' && dirty && saved.some((d) => d.id === doc.id)) save(true);
     isOpen = previewing = false;
     view = 'edit';
     doc = wiz = null;
@@ -416,7 +600,7 @@
   }
   function draftOffice(identity, w) {
     const d = doc && doc.kind === 'office' ? doc : Object.assign(space.empty('office'), wiz.back && wiz.mode === 'change' ? { id: wiz.back.id } : {});
-    const list = saved.filter((o) => !wiz.back || o.id !== wiz.back.id);
+    const list = floorWithout(wiz.back && wiz.back.id);
     const place = nearestPlace(list, d, w, anchor(d));
     if (!place) return false;
     const rowBefore = d.x != null ? d.row : null;
@@ -427,7 +611,7 @@
     return true;
   }
   function draftDesk() {
-    const list = saved.filter((o) => !wiz.back || o.id !== wiz.back.id);
+    const list = floorWithout(wiz.back && wiz.back.id);
     const free = space.freeDesks(list);
     if (!free.length) return false;
     const d = Object.assign(space.empty('desk'), wiz.back && wiz.back.kind === 'desk' ? { id: wiz.back.id } : {});
@@ -462,10 +646,10 @@
     render();
   }
 
-  // Confirmar: lo nuevo se guarda tal cual; un cambio de tamaño o lugar conserva todo lo
-  // personalizado que todavía quepa.
-  function confirmRent() {
-    if (doc && !canHave(doc)) return;
+  // Confirmar: lo nuevo se reserva en el servidor (20 min para armarlo y publicarlo); un cambio
+  // de tamaño o lugar conserva todo lo personalizado que todavía quepa.
+  async function confirmRent() {
+    if (busy || (doc && !canHave(doc))) return;
     let next = cleanDoc();
     if (wiz.back) {
       const keep = { id: next.id, kind: next.kind, w: next.w, row: next.row, x: next.x, number: next.number, desk: next.desk };
@@ -484,22 +668,178 @@
       const spot = spots.find((p) => !space.canPlace(next, { type: 'info' }, p.x, p.y));
       if (spot) next.items.push({ type: 'info', x: spot.x, y: spot.y });
     }
-    const email = panel.querySelector('[data-email]');
-    if (email && email.value && !isEmail(email.value)) return flash(tr('badEmail'), true);
-    if (email && email.value) {
-      account.email = email.value.trim();
-      try { localStorage.setItem('tgl-account', JSON.stringify(account)); } catch (e) { /* sin guardado */ }
+    const where = next.kind === 'office' ? { row: next.row, x: next.x, w: next.w } : { desk: next.desk };
+    const mode = wiz.mode;
+    setBusy(true);
+    try {
+      let sp;
+      if (mode === 'change') {
+        // primero lo que se personalizó (si había algo sin guardar), después el lugar
+        await cloud.saveDoc(next.id, wiz.back);
+        sp = (await cloud.move(Object.assign({ id: next.id }, where))).space;
+      } else {
+        sp = (await cloud.hold(Object.assign({ kind: next.kind, doc: next }, where))).space;
+        // de puesto a oficina: el puesto se suelta cuando la oficina se publica
+        if (mode === 'upgrade') rememberUpgrade(sp.id, wiz.back.id);
+      }
+      setBusy(false);
+      const d = adopt(sp);
+      wiz = null;
+      editSpace(d);
+      goTo(d); // se personaliza estando ahí
+      requestAnimationFrame(focusRoom);
+      if (mode !== 'change') flash(tr('rented'));
+      labelButtons();
+    } catch (e) {
+      setBusy(false);
+      onCloudError(e, next);
     }
-    const list = saved.filter((d) => d.id !== next.id && (!wiz.back || d.id !== wiz.back.id)).concat(next);
-    if (!space.save(list)) return flash(tr('saveError'), true);
-    saved = list;
-    const isNew = wiz.mode === 'new';
-    wiz = null;
-    editSpace(next);
-    goTo(next); // se personaliza estando ahí
-    requestAnimationFrame(focusRoom);
-    if (isNew) flash(tr('rented'));
   }
+
+  // Lo que dice el servidor cuando no se pudo, en palabras.
+  function onCloudError(e, d) {
+    const code = e && e.code;
+    if (code === 'taken' && d && d.kind === 'office' && e.data.suggest) {
+      Object.assign(doc, e.data.suggest);
+      refresh().then(() => { show(); render(); flash(tr('taken'), true); });
+      return;
+    }
+    if (code === 'taken') { refresh(); return flash(tr(d && d.kind === 'desk' ? 'takenDesk' : 'taken'), true); }
+    if (code === 'has_hold') { const h = saved.find(isHold); return flash(fill('hasHold', { n: h ? spaceName(h) : '' }), true); }
+    if (code === 'limit') return flash(tr(d && d.kind === 'desk' ? 'needsPayDesk' : 'needsPayOffice'), true);
+    if (code === 'full') return flash(tr('floorFull'), true);
+    if (code === 'slow_down') return flash(tr('slowDown'), true);
+    if (code === 'expired' || code === 'not_found') { refresh(); return flash(tr('expired'), true); }
+    if (code === 'not_yours') { refresh(); return flash(tr('notMine'), true); }
+    flash(tr('netError'), true);
+  }
+  function setBusy(on) {
+    busy = on;
+    panel.classList.toggle('ed-busy', on);
+    panel.querySelectorAll('.ed-primary').forEach((b) => { b.disabled = on; });
+  }
+  // De puesto a oficina: qué puesto soltar cuando se publique la oficina.
+  function rememberUpgrade(officeId, deskId) {
+    try { const m = JSON.parse(localStorage.getItem('tgl-upgrade') || '{}'); m[officeId] = deskId; localStorage.setItem('tgl-upgrade', JSON.stringify(m)); } catch (e) { /* nada */ }
+  }
+  function upgradeOf(officeId) {
+    try { return JSON.parse(localStorage.getItem('tgl-upgrade') || '{}')[officeId] || null; } catch (e) { return null; }
+  }
+
+  // ————————————————————————————————— Publicar y entrar (correo → código)
+  // purpose 'publish': publica doc (si no hay cuenta, primero el correo y el código).
+  // purpose 'signin': solo entrar, para ver mis espacios en este dispositivo.
+  let auth = null; // { purpose, id, step: 'email' | 'code', email, mode, sentAt }
+  async function startAuth(purpose) {
+    if (purpose === 'publish' && cloud.registered) return publishNow();
+    auth = { purpose, id: purpose === 'publish' ? doc.id : null, step: 'email', email: (cloud.user && cloud.user.email) || '' };
+    view = 'auth';
+    tool = selected = null;
+    render();
+    const input = panel.querySelector('[data-auth-email]');
+    if (input) input.focus();
+  }
+  function renderAuth() {
+    const publish = auth.purpose === 'publish';
+    const d = publish && saved.find((o) => o.id === auth.id);
+    const head = `
+      <header class="ed-head">
+        <div class="ed-head-title">${d ? `<small data-left="${d.id}">${esc(fill('holdLeft', { t: left(d) }))}</small>` : ''}<strong>${esc(tr(publish ? 'pubTitle' : 'signTitle'))}</strong></div>
+        <button type="button" class="ed-icon" data-act="authclose" aria-label="${esc(tr('close'))}">✕</button>
+      </header>`;
+    const body = auth.step === 'email'
+      ? `<p class="ed-hint">${esc(tr(publish ? 'pubIntro' : 'signIntro'))}</p>
+        <form class="ed-auth" data-auth="email">
+          ${field(tr('emailLabel'), `<input type="email" data-auth-email required value="${esc(auth.email)}" placeholder="${esc(tr('emailPlaceholder'))}" autocomplete="email">`)}
+          <button type="submit" class="ed-btn ed-primary">${esc(tr('sendCode'))}</button>
+        </form>`
+      : `<p class="ed-hint">${esc(fill('codeSent', { e: auth.email }))}</p>
+        <form class="ed-auth" data-auth="code">
+          ${field(tr('codeLabel'), `<input type="text" data-auth-code required inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" placeholder="000000">`)}
+          <button type="submit" class="ed-btn ed-primary">${esc(tr(publish ? 'verifyPublish' : 'verify'))}</button>
+        </form>
+        <p class="ed-row"><button type="button" class="ed-textbtn" data-act="authresend">${esc(tr('resend'))}</button>
+          <button type="button" class="ed-textbtn" data-act="authback">${esc(tr('changeEmail'))}</button></p>`;
+    panel.innerHTML = `${head}<div class="ed-body">${body}</div><footer class="ed-foot"></footer>`;
+  }
+  function authError(e) {
+    const c = (e && e.code) || '', st = e && e.data && e.data.status;
+    if (st === 429 || /rate|too_many/i.test(c)) return flash(tr('tooMany'), true);
+    if (/otp|token|expired|invalid/i.test(c) || st === 403) return flash(tr('badCode'), true);
+    if (/email/i.test(c)) return flash(tr('badEmail'), true);
+    return flash(tr('netError'), true);
+  }
+  async function sendAuthCode(email) {
+    if (!isEmail(email)) return flash(tr('badEmail'), true);
+    if (auth.sentAt && Date.now() - auth.sentAt < 60000 && auth.email === email) return flash(tr('tooMany'), true);
+    setBusy(true);
+    try {
+      if (auth.purpose === 'publish') {
+        await cloud.ensure();
+        // pedir el código alarga la reserva 10 min (una sola vez)
+        const d = saved.find((o) => o.id === auth.id);
+        if (d && isHold(d) && !meta[d.id].extended) cloud.extend(d.id).then((r) => adopt(r.space)).catch(() => {});
+        if (dirty) await save(true);
+      }
+      auth.mode = await cloud.sendCode(email);
+      auth.email = email;
+      auth.step = 'code';
+      auth.sentAt = Date.now();
+      setBusy(false);
+      render();
+      const input = panel.querySelector('[data-auth-code]');
+      if (input) input.focus();
+    } catch (e) {
+      setBusy(false);
+      authError(e);
+    }
+  }
+  async function verifyAuthCode(code) {
+    setBusy(true);
+    try {
+      await cloud.verifyCode(auth.email, code.trim(), auth.mode);
+    } catch (e) {
+      setBusy(false);
+      return authError(e);
+    }
+    setBusy(false);
+    if (auth.purpose === 'publish') return publishNow();
+    const email = auth.email;
+    auth = null;
+    await refresh();
+    closeEditor(true);
+    notice(fill('signedIn', { e: email }));
+    if (saved.length) { minePanel.hidden = false; renderMine(); }
+  }
+  async function publishNow() {
+    const id = auth ? auth.id : doc.id;
+    const d = id === (doc && doc.id) ? cleanDoc() : saved.find((o) => o.id === id);
+    setBusy(true);
+    try {
+      const r = await cloud.publish(id, d);
+      const pub = adopt(r.space);
+      const desk = upgradeOf(id);
+      if (desk) await cloud.release(desk).then(() => forget(desk)).catch(() => {});
+      setBusy(false);
+      auth = null;
+      dirty = false;
+      editSpace(pub);
+      flash(tr('published'));
+      refresh();
+    } catch (e) {
+      setBusy(false);
+      if (view === 'auth' && auth) { auth = null; editSpace(saved.find((o) => o.id === id) || doc); }
+      onCloudError(e, d);
+    }
+  }
+  panel.addEventListener('submit', (e) => {
+    const f = e.target.closest('[data-auth]');
+    if (!f) return;
+    e.preventDefault();
+    if (busy) return;
+    if (f.dataset.auth === 'email') return sendAuthCode(f.querySelector('[data-auth-email]').value.trim().toLowerCase());
+    return verifyAuthCode(f.querySelector('[data-auth-code]').value);
+  });
 
   // ————————————————————————————————— Personalizar, por pasos
   const editSteps = () => (doc.kind === 'desk' ? ['brand', 'people'] : ['brand', 'style', 'items', 'people']);
@@ -519,7 +859,11 @@
   function editGo(dir) {
     const steps = editSteps(), i = steps.indexOf(tab) + dir;
     if (i < 0) return;
-    if (i >= steps.length) { save(); return closeEditor(true); }
+    if (i >= steps.length) {
+      if (isHold(doc)) return startAuth('publish');
+      save(true);
+      return closeEditor(true);
+    }
     tab = steps[i];
     tool = selected = null;
     render();
@@ -556,9 +900,15 @@
     if (history.length > 60) history.shift();
     hIndex = history.length - 1;
     dirty = true;
+    autosave();
     show();
     render();
     refocus();
+  }
+  let autoTimer = null;
+  function autosave() {
+    clearTimeout(autoTimer);
+    autoTimer = setTimeout(() => { if (dirty && view === 'edit' && doc) save(true); }, 4000);
   }
   function undo() {
     if (hIndex <= 0) return;
@@ -581,17 +931,21 @@
     refocus();
   }
   // Antes de guardar, lo que está a medio escribir (frases vacías, links incompletos) se limpia.
-  function save() {
-    if (!doc) return;
-    doc = cleanDoc();
-    const list = othersAfterSave().concat(doc);
-    if (!space.save(list)) { render(); return flash(tr('saveError'), true); }
-    saved = clone(list);
-    upgradedFrom = null;
-    dirty = false;
-    show();
-    render();
-    flash(tr('savedLocal'));
+  // quiet: guardado automático (sin mensaje si sale bien).
+  async function save(quiet) {
+    if (!doc || !saved.some((d) => d.id === doc.id)) return;
+    clearTimeout(autoTimer);
+    const sent = cleanDoc(), stamp = JSON.stringify(doc);
+    if (!quiet) flash(tr('saving'));
+    try {
+      const r = await cloud.saveDoc(sent.id, sent);
+      const d = adopt(r.space);
+      // si no se tocó nada mientras viajaba, lo guardado es lo que se ve
+      if (doc && doc.id === d.id && JSON.stringify(doc) === stamp) dirty = false;
+      if (isOpen && view === 'edit') { renderFoot(); if (!quiet) flash(tr('savedLocal')); }
+    } catch (e) {
+      if (isOpen) onCloudError(e, sent);
+    }
   }
 
   function flash(text, bad) {
@@ -674,9 +1028,10 @@
   function render() {
     labelButtons();
     const oldBody = panel.querySelector('.ed-body');
-    const here = view === 'wizard' ? 'w-' + wiz.step : tab;
+    const here = view === 'wizard' ? 'w-' + wiz.step : view === 'auth' ? 'auth' : tab;
     const scroll = oldBody && lastTab === here ? oldBody.scrollTop : 0;
     if (view === 'wizard') renderWizard();
+    else if (view === 'auth') renderAuth();
     else renderEdit();
     lastTab = here;
     const body = panel.querySelector('.ed-body');
@@ -704,6 +1059,15 @@
       <footer class="ed-foot"></footer>`;
   }
   function wizKind() {
+    const h = wiz.mode === 'new' && saved.find(isHold);
+    if (h) {
+      return `<div class="ed-callout"><p>${esc(fill('hasHold', { n: spaceName(h) }))}</p>
+        <button type="button" class="ed-btn ed-primary" data-act="gohold">${esc(tr('goToIt'))}</button></div>`;
+    }
+    const signin = cloud.registered ? '' : `<p class="ed-note"><button type="button" class="ed-textbtn" data-act="signin">${esc(tr('haveSpace'))}</button></p>`;
+    return wizCards() + signin;
+  }
+  function wizCards() {
     const card = (kind, title, note, text) => {
       const d = { kind, w: 8, id: '' }, ok = canHave(d);
       return `
@@ -720,7 +1084,7 @@
   }
   // Anchos que caben en algún lugar libre ahora mismo.
   function officeWidths() {
-    const list = saved.filter((o) => !wiz.back || o.id !== wiz.back.id), d = Object.assign(space.empty('office'), { id: doc && doc.id });
+    const list = floorWithout(wiz.back && wiz.back.id), d = Object.assign(space.empty('office'), { id: doc && doc.id });
     const out = [];
     for (let w = zone.RULES.minWidth; w <= zone.RULES.maxWidth; w++) if (space.fitPlace(list, d, zone.ROWS[0].id, null, w)) out.push(w);
     return out;
@@ -768,7 +1132,6 @@
         <div class="ed-sum-row"><span>${esc(tr('sumPrice'))}</span><strong>${priceTag(doc, fill('perMonthLong', { p: money(space.price(doc)) }))}</strong></div>
       </div>
       ${canHave(doc) ? '' : `<p class="ed-status bad">${esc(tr(doc.kind === 'desk' ? 'needsPayDesk' : 'needsPayOffice'))}</p>`}
-      ${wiz.mode === 'new' ? field(tr('emailLabel'), `<input type="email" data-email value="${esc(account.email || '')}" placeholder="${esc(tr('emailPlaceholder'))}" autocomplete="email">`) + `<p class="ed-note">${esc(tr('emailHint'))}</p>` : ''}
       <p class="ed-hint">${esc(tr('w4Hint'))}</p>`;
   }
   function sizePlan(w) {
@@ -803,8 +1166,11 @@
             <button type="button" data-act="restore">${esc(tr('restore'))}</button>
           </div>
         </details>
-        <button type="button" class="ed-btn ed-primary" data-act="save">${esc(tr('save'))}</button>
+        ${isHold(doc)
+          ? `<button type="button" class="ed-btn" data-act="save">${esc(tr('save'))}</button><button type="button" class="ed-btn ed-primary ed-publish" data-act="publish">${esc(tr('publish'))}</button>`
+          : `<button type="button" class="ed-btn ed-primary" data-act="save">${esc(tr('save'))}</button>`}
       </div>
+      ${isHold(doc) ? `<div class="ed-hold"><strong data-left="${doc.id}">${esc(fill('holdLeft', { t: left(doc) }))}</strong><small>${esc(tr('holdNote'))}</small></div>` : ''}
       <nav class="ed-tabs ed-stepper">${steps.map((id, i) => `<button type="button" data-tab="${id}" class="${tab === id ? 'on' : ''}"><i>${i + 1}</i>${esc(tr(label[id]))}</button>`).join('')}</nav>
       <div class="ed-body">${renderTab()}</div>
       <footer class="ed-foot"></footer>`;
@@ -1051,8 +1417,12 @@
 
   function renderFoot() {
     const foot = panel.querySelector('.ed-foot');
-    if (!foot) return;
+    if (!foot || !isOpen || (view === 'edit' && !doc)) return;
     const status = (fallback) => `<p class="ed-status ${message && message.bad ? 'bad' : ''}">${esc(message ? message.text : fallback)}</p>`;
+    if (view === 'auth') {
+      foot.innerHTML = message ? status('') : '';
+      return;
+    }
     if (view === 'wizard') {
       const steps = wiz.kind ? stepsOf() : STEPS.new.office, i = steps.indexOf(wiz.step);
       const last = i === steps.length - 1;
@@ -1068,11 +1438,11 @@
     }
     const steps = editSteps(), i = steps.indexOf(tab), last = i === steps.length - 1;
     foot.innerHTML = `
-      ${status(dirty ? tr('unsaved') : tr('localNote'))}
+      ${status(dirty ? tr('unsaved') : isHold(doc) ? tr('holdNote') : tr('publishedNote'))}
       <div class="ed-nav">
         <button type="button" class="ed-btn" data-act="eprev" ${i <= 0 ? 'disabled' : ''}>${esc(tr('prev'))}</button>
         <span class="ed-nav-count">${esc(fill('stepCount', { n: i + 1, t: steps.length }))}</span>
-        <button type="button" class="ed-btn ed-primary" data-act="enext">${esc(last ? tr('finish') : tr('next'))}</button>
+        <button type="button" class="ed-btn ed-primary" data-act="enext">${esc(last ? tr(isHold(doc) ? 'publish' : 'finish') : tr('next'))}</button>
       </div>`;
     // El botón dice si lo que se ve ya está guardado.
     const sb = panel.querySelector('[data-act=save]');
@@ -1123,10 +1493,32 @@
         return resetSpace();
       case 'restore': {
         if (!confirm(tr('restoreConfirm'))) return;
-        const list = others();
-        if (!space.save(list)) return flash(tr('saveError'), true);
-        saved = list;
-        doc = null;
+        const id = doc.id;
+        setBusy(true);
+        releasing = id;
+        return cloud.release(id).then(() => {
+          setBusy(false);
+          forget(id);
+          dirty = false;
+          closeEditor(true);
+          notice(tr('released'));
+          refresh();
+        }).catch((e) => { setBusy(false); onCloudError(e, doc); });
+      }
+      case 'publish': return startAuth('publish');
+      case 'gohold': {
+        const h = saved.find(isHold);
+        if (!h) return;
+        goTo(h);
+        return editSpace(h);
+      }
+      case 'signin': return startAuth('signin');
+      case 'authresend': return sendAuthCode(auth.email);
+      case 'authback': auth.step = 'email'; return render();
+      case 'authclose': {
+        const back = auth && auth.purpose === 'publish' && saved.find((o) => o.id === auth.id);
+        auth = null;
+        if (back) return editSpace(back);
         return closeEditor(true);
       }
       case 'pick': {
@@ -1488,7 +1880,7 @@
       ctx.setLineDash([]);
     };
     const cw = world.room('cowork');
-    const list = doc ? others().concat(doc) : saved;
+    const list = doc ? saved.filter((d) => d.id !== doc.id).concat(doc) : saved;
     for (const d of list) {
       const cur = doc && d.id === doc.id;
       if (d.kind === 'desk') { const k = zone.DESKS[d.desk]; dashed(cw.x + k.x, cw.y + k.y - 1, 2, 3, cur ? '#ffc367' : 'rgba(255,195,103,.6)'); }
@@ -1552,4 +1944,5 @@
     ctx.restore();
   }
   labelButtons();
+  refresh();
 })();

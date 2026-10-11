@@ -458,3 +458,64 @@ input[type=color] { width: 32px; height: 28px; padding: 0; border: 1px solid #d6
 .ed-choice .ed-pay { color: #b5654a; font-weight: 600; }
 .ed-choice > b { text-align: right; }
 .ed-choice > b s { display: block; font-size: 11px; }
+
+/* Servidor: reserva en obra, avisos, entrar con código */
+.ed-holdbar {
+  position: fixed;
+  left: 50%;
+  top: calc(var(--gap) + 64px);
+  transform: translateX(-50%);
+  padding: 8px 14px;
+  font-weight: 800;
+  font-size: 13px;
+  background: #f2c94c;
+  color: #1d1f24;
+  border-color: #1d1f24;
+  z-index: 7;
+  white-space: nowrap;
+  max-width: calc(100vw - 2 * var(--gap));
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+body.editing .ed-holdbar { display: none; }
+.ed-notice {
+  position: fixed;
+  left: 50%;
+  top: calc(var(--gap) + 64px);
+  transform: translateX(-50%);
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  background: #1d1f24;
+  color: #fff;
+  z-index: 30;
+  max-width: min(420px, calc(100vw - 2 * var(--gap)));
+  text-align: center;
+}
+.ed-notice.bad { background: #8a3b3b; }
+.ed-hold {
+  display: grid;
+  gap: 2px;
+  margin: 0 12px 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #f2c94c;
+  color: #1d1f24;
+}
+.ed-hold strong { font-size: 13px; font-variant-numeric: tabular-nums; }
+.ed-hold small { font-size: 11px; line-height: 1.35; }
+.ed-publish { background: #2f9e5a; border-color: #1f6f3f; color: #fff; }
+.ed-textbtn {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #2f5fc4;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.ed-auth { display: grid; gap: 10px; }
+.ed-auth input[data-auth-code] { font-size: 22px; letter-spacing: 6px; text-align: center; font-variant-numeric: tabular-nums; }
+.ed-busy { cursor: progress; }
+.ed-busy .ed-primary { opacity: .6; }

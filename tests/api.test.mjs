@@ -33,6 +33,7 @@ const db = {
     f.spaces = rows(`select * from spaces where floor = ${+id} and (status = 'published' or expires_at > ${lit(now)})`);
     return f;
   },
+  version: async (id) => { const [f] = rows(`select version from floors where id = ${+id}`); return f ? f.version : null; },
   spacesOf: async (owner) => rows(`select * from spaces where owner = ${lit(owner)}`),
   commit: async (floor, version, mode, row) => +sql(`select floor_commit(${floor}::smallint, ${version}, ${lit(mode)}, ${lit(JSON.stringify(row))}::jsonb)`),
   rateHit: async (key, max, s) => sql(`select rate_hit(${lit(key)}, ${max}, ${s})`) === 't',

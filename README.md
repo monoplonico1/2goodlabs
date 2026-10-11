@@ -38,8 +38,11 @@ persona y tiene el mismo contenido en texto (para lectores de pantalla y buscado
 ## Editor de oficinas (beta)
 
 Un módulo aparte, en `public/editor/`, para arrendar y personalizar espacios en la zona de
-arriendo: oficinas y puestos en el coworking. Una cuenta (por ahora este navegador, con su
-correo en `tgl-account`) puede arrendar varios (`tgl-myspace`); cada uno se arrienda y se
+arriendo: oficinas y puestos en el coworking. Todo se guarda en el servidor
+(`editor/cloud.js` → `/api`): al confirmar, el lugar queda reservado 20 minutos (los demás lo
+ven "RESERVED", con su tiempo) y para conservarlo se publica con el correo y un código de 6
+dígitos (al pedir el código la reserva gana 10 minutos, una vez). Sin publicar, vence y el
+lugar se libera. Una cuenta puede tener varios espacios; cada uno se arrienda y se
 personaliza por separado. "+ Arrendar un espacio" siempre arrienda uno nuevo; para
 personalizar hay que estar en el espacio (aparece "✎ Personalizar …"), y "Mis espacios"
 lleva a cada uno. Dos momentos, los dos paso a paso:

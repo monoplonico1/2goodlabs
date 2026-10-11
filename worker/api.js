@@ -1,6 +1,7 @@
 // API del edificio compartido. El navegador propone; aquí se decide con las mismas reglas
 // (public/js/rules.js) y se guarda en Supabase con la llave service_role.
 //
+//   GET  /api/version            solo el número de versión del piso (para saber si volver a leer)
 //   GET  /api/building           el piso como lo ven todos: publicados y reservas en curso
 //   GET  /api/mine               mis espacios (con mi reserva y su borrador)
 //   POST /api/hold               reservar un lugar para empezar a armar (20 min)
@@ -35,7 +36,7 @@ const fail = (status, error, extra) => { throw new Fail(status, error, extra); }
 
 export async function api(request, env, action, db = supabase(env)) {
   const routes = {
-    'GET building': building, 'GET mine': mine,
+    'GET version': version, 'GET building': building, 'GET mine': mine,
     'POST hold': hold, 'POST move': move, 'POST doc': saveDoc, 'POST publish': publish,
     'POST release': release, 'POST extend': extend, 'POST claim': claim,
   };
@@ -44,7 +45,8 @@ export async function api(request, env, action, db = supabase(env)) {
   if (!db) return json({ ok: false, error: 'not_configured' }, 503);
   try {
     const ctx = { env, db, now: Date.now(), ip: request.headers.get('CF-Connecting-IP') || 'local' };
-    ctx.user = await userOf(request, db);
+    // la versión se pregunta cada 15 s: no hace falta saber quién pregunta
+    ctx.user = action === 'version' ? null : await userOf(request, db);
     const body = request.method === 'POST' ? await readBody(request) : null;
     return json(Object.assign({ ok: true, now: new Date(ctx.now).toISOString() }, await fn(ctx, body, new URL(request.url))));
   } catch (err) {
@@ -83,6 +85,7 @@ const placeOf = (s) => ({ id: s.id, kind: s.kind, row: s.row, x: s.x, w: s.w, de
 function view(s, own) {
   const out = placeOf(s);
   out.status = s.status;
+  out.mine = !!own;
   out.expiresAt = s.status === 'hold' ? s.expires_at : null;
   if (own) {
     out.extended = s.extended;
@@ -181,6 +184,12 @@ async function turnstile(ctx, token) {
 }
 
 // ————————————————————————————————— Acciones
+async function version(ctx, body, url) {
+  const v = await ctx.db.version(Number(url.searchParams.get('floor')) || FLOOR);
+  if (v == null) fail(404, 'no_floor');
+  return { version: v };
+}
+
 async function building(ctx, body, url) {
   const id = Number(url.searchParams.get('floor')) || FLOOR;
   const floor = await ctx.db.floor(id, iso(ctx.now));
@@ -220,7 +229,7 @@ async function hold(ctx, body) {
 // Mismo espacio con otro lugar o tamaño. Lo que ya no quepa adentro se descarta.
 async function move(ctx, body) {
   needUser(ctx);
-  await rate(ctx, 'write:' + ctx.user.id, 120, 10);
+  await rate(ctx, 'write:' + ctx.user.id, 300, 10);
   return onFloor(ctx, (floor) => {
     const s = ownSpace(ctx, floor, body.id);
     const raw = Object.assign({}, s.doc, placeOf(s));
@@ -234,7 +243,7 @@ async function move(ctx, body) {
 
 async function saveDoc(ctx, body) {
   needUser(ctx);
-  await rate(ctx, 'write:' + ctx.user.id, 120, 10);
+  await rate(ctx, 'write:' + ctx.user.id, 300, 10);
   return onFloor(ctx, (floor) => {
     const s = ownSpace(ctx, floor, body.id);
     const doc = R.sanitize(Object.assign({}, body.doc, placeOf(s), { id: s.id, kind: s.kind }));
@@ -321,6 +330,10 @@ export function supabase(env) {
       if (!f) return null;
       f.spaces = await rest(`spaces?floor=eq.${id}&or=(status.eq.published,expires_at.gt."${nowIso}")&select=*`);
       return f;
+    },
+    async version(id) {
+      const [f] = await rest(`floors?id=eq.${id}&select=version`);
+      return f ? f.version : null;
     },
     spacesOf: (owner) => rest(`spaces?owner=eq.${encodeURIComponent(owner)}&select=*`),
     commit: (floor, version, mode, row) => rpc('floor_commit', { p_floor: floor, p_version: version, p_mode: mode, p_row: row }),

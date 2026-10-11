@@ -1,7 +1,6 @@
 // Un "espacio" es el documento que describe lo que alguien arrienda: una oficina o un puesto
-// en el coworking. Es solo datos (JSON): lo que hoy se guarda en este navegador es exactamente
-// lo que mañana guardaría el servidor. Una cuenta puede arrendar varios; cada uno se
-// personaliza por separado, estando en él.
+// en el coworking. Es solo datos (JSON) y se guarda en el servidor (editor/cloud.js). Una
+// cuenta puede tener varios; cada uno se personaliza por separado, estando en él.
 //
 // {
 //   schema: 4, id, kind: 'office' | 'desk',
@@ -123,7 +122,8 @@
 
   // ————————————————————————————————— Aplicar al edificio
   // Muestra exactamente esta lista: construye las oficinas, cambia los escritorios del
-  // coworking y pone objetos y personas.
+  // coworking y pone objetos y personas. Un espacio con reserved: true es de otra persona que
+  // todavía lo está armando: se ve en obra, sin su contenido.
   let shown = [];
   function render(list) {
     for (const d of shown) {
@@ -153,9 +153,16 @@
     room.infoLinks = doc.content.links.map((l) => l.url);
   }
 
+  const RESERVED = { es: 'RESERVADA', en: 'RESERVED' };
   function officeContent(doc) {
     const room = world.room(doc.id);
     brand(room, doc, (TGL.lang === 'en' ? 'Office ' : 'Oficina ') + doc.number);
+    room.reserved = !!doc.reserved;
+    if (doc.reserved) {
+      room.name = RESERVED;
+      room.blurb = { es: 'Alguien la está armando. Si no la publica a tiempo, vuelve a estar libre.', en: 'Someone is setting it up. If they don\'t publish it in time, it becomes available again.' };
+      room.info = null;
+    }
     for (const it of doc.items) {
       const def = cat.byType[it.type];
       world.addObject(cat.build(def, it), room.x + it.x, room.y + it.y, def.w, def.h, {
@@ -173,6 +180,7 @@
     let room = world.room(doc.id);
     if (!room) TGL.rooms.push((room = { id: doc.id, deskRoom: true, rects: [], color: '#f2a65a' }));
     brand(room, doc, (TGL.lang === 'en' ? 'Desk ' : 'Puesto ') + (doc.desk + 1));
+    if (doc.reserved) room.name = RESERVED;
     const cw = world.room('cowork'), d = zone.DESKS[doc.desk], def = cat.byType.desk;
     world.removeTagged('desk-' + doc.desk);
     world.addObject(cat.build(def, { color: doc.deskColor }), cw.x + d.x, cw.y + d.y, 2, 1, {
@@ -200,8 +208,17 @@
     }));
   }
 
-  // ————————————————————————————————— Guardado local (por ahora)
-  // Los espacios de este navegador, ya validados y ubicados.
+  // Lo que se reserva por otra persona se ve así: solo el lugar, en obra.
+  function reservedDoc(s) {
+    return Object.assign(empty(s.kind), {
+      id: s.id, row: s.row, x: s.x, w: s.w || 8, number: s.number, desk: s.desk,
+      reserved: true, deskColor: '#f2c94c',
+      surfaces: { floor: 'checker', floorColor: '#e8d9a8', walls: 'stripes', wallColor: '#f2e6c4' },
+    });
+  }
+
+  // ————————————————————————————————— Lo guardado en este navegador (versión anterior)
+  // Antes del servidor, los espacios se guardaban solo aquí. Se leen para ofrecer publicarlos.
   function load() {
     let raw = null;
     try {
@@ -234,9 +251,6 @@
 
   TGL.space = {
     SCHEMA, empty, newId, templates, sanitize, canPlace, footprint, proUsage, area, limits, sizesFor, entriesOf,
-    m2, price, startsFor, fitPlace, numberFor, freeDesks, settle, render, load, save,
+    m2, price, startsFor, fitPlace, numberFor, freeDesks, settle, render, reservedDoc, load, save,
   };
-
-  // Al cargar la página, lo que se guardó en este navegador aparece en el edificio.
-  render(load());
 })();
