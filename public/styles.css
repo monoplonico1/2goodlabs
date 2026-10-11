@@ -189,10 +189,11 @@ kbd {
   right: var(--gap);
   bottom: calc(var(--gap) + var(--safe-b));
   display: flex;
+  flex-direction: column; /* el zoom encima del mapa, todo a la derecha */
   align-items: flex-end;
   gap: 8px;
 }
-.zoom { display: flex; flex-direction: column; padding: 3px; gap: 3px; }
+.zoom { display: flex; flex-direction: row; padding: 3px; gap: 3px; }
 .zoom button {
   width: 34px;
   height: 34px;
@@ -578,3 +579,53 @@ html:not(.js) .s-cta { display: none; }
   .logo { font-size: 17px; }
   .brand { padding: 7px 10px; }
 }
+
+/* Directorio: espacios publicados */
+.dir-tools { display: grid; gap: 4px; margin: 4px 0 10px; }
+.dir-tools input {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--panel-edge);
+  background: #14171c;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+}
+.dir-tools input:focus { outline: none; border-color: var(--gold); }
+.dir-tools small { font-size: 12px; color: var(--muted); }
+.dir-spaces { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.dir-space {
+  display: grid;
+  gap: 3px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--panel-edge);
+  border-left: 4px solid var(--c);
+  background: rgba(255, 255, 255, .03);
+}
+.dir-space-head { display: flex; align-items: center; gap: 8px; }
+.dir-space-head i { width: 10px; height: 10px; border-radius: 3px; background: var(--a); flex: none; }
+.dir-space-head strong { font-size: 15px; }
+.dir-yours { margin-left: auto; padding: 1px 6px; border-radius: 4px; background: var(--gold); color: #1d1f24; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+.dir-space small { font-size: 12px; color: var(--muted); }
+.dir-space p { margin: 2px 0 0; font-size: 13px; line-height: 1.4; color: var(--text); }
+.dir-links a { color: var(--gold); font-weight: 700; text-decoration: none; font-size: 12px; }
+.dir-links a:hover { text-decoration: underline; }
+.dir-space button, .dir-empty button {
+  justify-self: start;
+  margin-top: 4px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--panel-edge);
+  background: #22262e;
+  color: var(--gold);
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+}
+.dir-space button:hover, .dir-empty button:hover { border-color: var(--gold); }
+.dir-empty { margin: 8px 0; font-size: 13px; color: var(--muted); }
+.dir-empty p { margin: 0 0 6px; }
+.dir-house { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--panel-edge); }
+.dir-house h3 { margin: 0 0 8px; font-family: Silkscreen, monospace; font-weight: 400; font-size: 12px; color: var(--muted); text-transform: uppercase; }

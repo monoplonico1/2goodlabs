@@ -761,6 +761,8 @@
 
   function buildDirectory() {
     const list = $('#dir-rooms');
+    // Con el edificio compartido, el directorio lo arma el editor: las oficinas publicadas.
+    if (TGL.directoryView) return TGL.directoryView(list, () => { toggleDirectory(false); closeDialog(); });
     list.innerHTML = '';
     for (const room of TGL.rooms) {
       const members = npcs.filter((n) => n.room === room.id);
@@ -821,7 +823,7 @@
     const show = open === undefined ? panel.hidden : open;
     panel.hidden = !show;
     $('#btn-directory').setAttribute('aria-expanded', String(show));
-    if (show) panel.querySelector('button, a').focus({ preventScroll: true });
+    if (show) { buildDirectory(); panel.querySelector('button, a, input').focus({ preventScroll: true }); }
     else canvas.focus({ preventScroll: true });
   }
   $('#btn-directory').addEventListener('click', () => toggleDirectory());
@@ -1035,6 +1037,7 @@
     setFocus,
     refreshStatic() { if (staticLayer) staticLayer = world.renderStatic(); },
     setResidents,
+    refreshDirectory: () => { if (!panel.hidden) buildDirectory(); },
     overlays,
     get dpr() { return dpr; },
   };

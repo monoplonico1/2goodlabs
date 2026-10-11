@@ -192,6 +192,9 @@
     signIn: 'Entrar', signOut: 'Salir', signedAs: 'Cuenta: {e}', haveSpace: '¿Ya tienes un espacio? Entra con tu correo',
     holdBar: '{n} · quedan {t} · Publicar', reservedLeft: 'Reservada · {t}', yoursLeft: 'Tuya · {t} para publicar',
     released: 'Listo, el espacio quedó libre.', notMine: 'Ese espacio ya no es tuyo.',
+    dirCount: '{n} espacios publicados', dirCount1: '1 espacio publicado', dirSearch: 'Buscar por nombre o tema…', dirNone: 'Nada con ese nombre todavía.',
+    dirEmpty: 'Todavía no hay espacios publicados. ¿Serás el primero?', dirFirst: '+ Arrendar un espacio', dirHouse: 'Del equipo de 2GoodLabs',
+    deskOf: 'Puesto {n} · Coworking', yours: 'Tuyo',
   });
   Object.assign(L.en, {
     w4Hint: "It's held for you for 20 minutes while you set it up. To keep it, publish it: it's free, you only need your email.",
@@ -216,6 +219,9 @@
     signIn: 'Sign in', signOut: 'Sign out', signedAs: 'Account: {e}', haveSpace: 'Already have a space? Sign in with your email',
     holdBar: '{n} · {t} left · Publish', reservedLeft: 'Reserved · {t}', yoursLeft: 'Yours · {t} to publish',
     released: 'Done, the space is free again.', notMine: 'That space is no longer yours.',
+    dirCount: '{n} published spaces', dirCount1: '1 published space', dirSearch: 'Search by name or topic…', dirNone: 'Nothing with that name yet.',
+    dirEmpty: 'No spaces have been published yet. Want to be the first?', dirFirst: '+ Rent a space', dirHouse: 'From the 2GoodLabs team',
+    deskOf: 'Desk {n} · Coworking', yours: 'Yours',
   });
   const tr = (k) => L[TGL.lang][k];
   const nm = (o) => TGL.t(o.name);
@@ -415,6 +421,7 @@
       const typing = panel.contains(document.activeElement) && /INPUT|TEXTAREA/.test(document.activeElement.tagName);
       if (isOpen && !typing && view !== 'auth') render();
       labelButtons();
+      game.refreshDirectory();
     }).catch(() => { /* sin conexión: se reintenta en la próxima vuelta */ })
       .finally(() => { refreshing = null; });
     return refreshing;
@@ -494,6 +501,61 @@
       ctx.restore();
     }
   });
+
+  // ————————————————————————————————— Directorio: lo publicado en el edificio
+  // Reemplaza al directorio del juego (js/game.js): cada oficina y puesto publicado, con su
+  // nombre, su frase, sus links y "Ir"; al final, las salas del equipo de 2GoodLabs.
+  let dirQuery = '';
+  TGL.directoryView = function (list, close) {
+    const pub = floorDocs().filter((d) => { const sp = floor.find((o) => o.id === d.id); return sp && sp.status === 'published'; })
+      .sort((a, b) => (a.kind === b.kind ? (a.number || a.desk) - (b.number || b.desk) : a.kind === 'office' ? -1 : 1));
+    const q = dirQuery.trim().toLowerCase();
+    const hit = (d) => !q || [d.identity.name, d.identity.tagline, d.content.about].join(' ').toLowerCase().includes(q);
+    const shown = pub.filter(hit);
+    const host = (u) => u.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+    const card = (d) => `
+      <li class="dir-space" style="--c:${d.identity.primary};--a:${d.identity.accent}">
+        <div class="dir-space-head"><i></i><strong>${esc(spaceName(d))}</strong>${saved.some((o) => o.id === d.id) ? `<span class="dir-yours">${esc(tr('yours'))}</span>` : ''}</div>
+        <small>${esc(d.kind === 'desk' ? fill('deskOf', { n: d.desk + 1 }) : fill('officeN', { n: d.number }) + ' · ' + space.m2(d) + ' m²')}</small>
+        ${d.identity.tagline ? `<p>${esc(d.identity.tagline)}</p>` : ''}
+        ${d.content.links.length ? `<p class="dir-links">${d.content.links.map((l) => `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label || host(l.url))} ↗</a>`).join(' · ')}</p>` : ''}
+        <button type="button" data-dir-go="${d.id}">${esc(tr('go'))} →</button>
+      </li>`;
+    const house = TGL.rooms.filter((r) => r.link || r.id === 'board');
+    list.innerHTML = `
+      <div class="dir-tools">
+        <input type="search" data-dir-q value="${esc(dirQuery)}" placeholder="${esc(tr('dirSearch'))}" aria-label="${esc(tr('dirSearch'))}">
+        <small>${esc(pub.length === 1 ? tr('dirCount1') : fill('dirCount', { n: pub.length }))}</small>
+      </div>
+      ${pub.length
+        ? (shown.length ? `<ul class="dir-spaces">${shown.map(card).join('')}</ul>` : `<p class="dir-empty">${esc(tr('dirNone'))}</p>`)
+        : `<div class="dir-empty"><p>${esc(tr('dirEmpty'))}</p><button type="button" data-dir-rent>${esc(tr('dirFirst'))}</button></div>`}
+      <section class="dir-house">
+        <h3>${esc(tr('dirHouse'))}</h3>
+        <ul class="dir-spaces">${house.map((r) => `
+          <li class="dir-space" style="--c:${r.color};--a:${r.color}">
+            <div class="dir-space-head"><i></i><strong>${esc(TGL.t(r.name))}</strong></div>
+            <p>${esc(TGL.t(r.blurb))}</p>
+            ${r.link ? `<p class="dir-links"><a href="${esc(r.link)}" target="_blank" rel="noopener">${esc(host(r.link))} ↗</a></p>` : ''}
+            <button type="button" data-dir-room="${r.id}">${esc(tr('go'))} →</button>
+          </li>`).join('')}</ul>
+      </section>`;
+    const input = list.querySelector('[data-dir-q]');
+    input.oninput = () => {
+      dirQuery = input.value;
+      const at = input.selectionStart;
+      TGL.directoryView(list, close);
+      const again = list.querySelector('[data-dir-q]');
+      again.focus();
+      again.setSelectionRange(at, at);
+    };
+    list.onclick = (e) => {
+      const go = e.target.closest('[data-dir-go]'), room = e.target.closest('[data-dir-room]');
+      if (go) { close(); const d = floorDocs().find((o) => o.id === go.dataset.dirGo); if (d) goTo(d); }
+      else if (room) { close(); const r = world.room(room.dataset.dirRoom); game.teleport(r.x + Math.floor(r.w / 2), r.y + r.h - 2, 'up'); }
+      else if (e.target.closest('[data-dir-rent]')) { close(); openEditor(); }
+    };
+  };
 
   // ————————————————————————————————— Abrir y cerrar
   // Dos momentos: arrendar (un paso a paso: qué, tamaño, dónde, confirmar) y personalizar
