@@ -93,6 +93,8 @@ kbd {
   font-weight: 800;
   line-height: 1;
 }
+.btn-dir.btn-icon { padding: 0; }
+.btn-icon svg { display: block; width: 20px; height: 20px; }
 .lang { display: flex; padding: 3px; gap: 2px; }
 .lang button {
   border: 0;

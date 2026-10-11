@@ -317,6 +317,19 @@
     lobby.x = 1;
   }
 
+  // Sin cielo ni ciudad por ahora: la terraza ocupa toda la franja derecha, de arriba abajo
+  // (más adelante ese espacio se usará para otras cosas). Baranda arriba y a la derecha.
+  {
+    const bottom = TERRACE.y + TERRACE.h;
+    for (let x = TERRACE.x; x < W - 1; x++) {
+      set(x, 0, RAIL);
+      for (let y = 1; y < TERRACE.y; y++) set(x, y, FLOOR.terrace);
+    }
+    for (let y = 0; y < H; y++) set(W - 1, y, RAIL);
+    TERRACE.rects = [[TERRACE.x, 1, TERRACE.w, bottom - 1]];
+    SKY_H = 0;
+  }
+
   // ————————————————————————————————— Colisiones
   const solid = new Uint8Array(W * H);
   for (let i = 0; i < W * H; i++) solid[i] = isBlocked(grid[i]) ? 1 : 0;
@@ -638,6 +651,7 @@
 
   // Lo que se ve desde la terraza: cielo, nubes y la ciudad.
   function drawSky(ctx) {
+    if (SKY_H <= 0) return;
     const x0 = TERRACE.x * T, w = (W - TERRACE.x) * T, h = SKY_H * T;
     const g = ctx.createLinearGradient(0, 0, 0, h);
     g.addColorStop(0, '#5aa8e6');
