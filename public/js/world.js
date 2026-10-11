@@ -17,12 +17,16 @@
 //
 //  El pasillo de la izquierda recorre todo el piso, de arriba al lobby.
 //
+//  Con la zona de arriendo el edificio crece (OX = 25 columnas a la izquierda, OY = 16 filas
+//  arriba): arriba va la fila A de oficinas (de punta a punta, con su pasillo) y a la
+//  izquierda un tramo más de la fila B. Este plano es el del edificio antes de crecer.
+//
 //  Las salas y los pasillos se definen en data.js (TGL.rooms). Los muebles de cada sala
 //  se ubican relativos a la esquina de la sala, así una sala se puede mover sin tocarlos.
 
 (function () {
   const T = TGL.T, r = TGL.rect, art = TGL.art;
-  const W = 68, H = 44;
+  let W = 68, H = 44; // el edificio original; con la zona de arriendo crece (OX, OY), ver más abajo
   const TOP = 1, FACE = 2, SKY = 3, RAIL = 4;
   const FLOOR = { lobby: 10, board: 11, zumi: 12, pickpals: 13, terrace: 14, hall: 15, rent: 16, open: 17, cowork: 18 };
   const isFloor = (v) => v >= 10;
@@ -36,6 +40,10 @@
   // editor, del tamaño y en el lugar que cada uno arriende, siguiendo las normas del piso.
   // Ahí los pasillos verticales llegan solo hasta el pasillo horizontal.
   const OPEN = !!(TGL.featureOn && TGL.featureOn('editor'));
+  // Con la zona de arriendo, el edificio crece: OY filas arriba (la fila A de oficinas y su
+  // pasillo) y OX columnas a la izquierda (un tramo más de la fila B, para una oficina de
+  // hasta 24 m). Todo lo del edificio original se corre (OX, OY) después de construirlo.
+  const OX = OPEN ? 25 : 0, OY = OPEN ? 16 : 0;
   if (OPEN) {
     for (const id of ['rent1', 'rent2', 'rent3']) TGL.rooms.splice(TGL.rooms.indexOf(room(id)), 1);
     room('hall').rects = [[1, 14, 57, 2], [1, 3, 2, 31], [20, 14, 2, 20], [39, 14, 2, 20]];
@@ -75,7 +83,7 @@
     { k: 'v', x: 58, y: 37, h: 2, to: 'terrace', glass: true },
   ];
 
-  const grid = new Array(W * H).fill(TOP);
+  let grid = new Array(W * H).fill(TOP);
   const at = (x, y) => (x < 0 || y < 0 || x >= W || y >= H ? TOP : grid[y * W + x]);
   const set = (x, y, v) => { grid[y * W + x] = v; };
   const isWall = (v) => v === TOP || v === FACE;
@@ -103,7 +111,7 @@
   DOORS.forEach(openDoor);
 
   // Terraza: sin muros. Arriba se ve el cielo y alrededor hay baranda de vidrio.
-  const SKY_H = TERRACE.y - 1;
+  let SKY_H = TERRACE.y - 1;
   for (let x = TERRACE.x; x < W; x++) {
     for (let y = 0; y < SKY_H; y++) set(x, y, SKY);
     set(x, SKY_H, RAIL);
@@ -280,6 +288,27 @@
   if (!OPEN) {
     put(art.waterCooler(), 20, 3, 1, 1);
     put(art.plant(21), 40, 3, 1, 1);
+  }
+
+  // El edificio crece: lo construido se corre (OX, OY). Arriba de la terraza sigue el cielo;
+  // lo demás nuevo es muro hasta que la zona de arriendo lo construya.
+  if (OX || OY) {
+    const old = grid, W0 = W, H0 = H;
+    W = W0 + OX;
+    H = H0 + OY;
+    grid = new Array(W * H);
+    for (let y = 0; y < H; y++)
+      for (let x = 0; x < W; x++)
+        grid[y * W + x] = y >= OY && x >= OX ? old[(y - OY) * W0 + x - OX] : x >= TERRACE.x + OX && y < OY ? SKY : TOP;
+    for (const q of TGL.rooms) {
+      if (q.rects) q.rects = q.rects.map(([a, b, c, d]) => [a + OX, b + OY, c, d]);
+      if (q.x != null) q.x += OX;
+      if (q.y != null) q.y += OY;
+    }
+    for (const d of DOORS) { d.x += OX; d.y += OY; }
+    for (const o of objects) { o.x += OX * T; o.y += OY * T; o.sortY += OY * T; }
+    for (const sp of breakSpots) { sp.x += OX; sp.y += OY; }
+    SKY_H += OY;
   }
 
   // ————————————————————————————————— Colisiones
@@ -487,6 +516,7 @@
     { k: 'sign', x: 51, y: 32, w: 3, text: 'PICKPALS', fg: '#9cc0ff', url: 'https://pickpals.co', link: '#2f5fc4' },
     { k: 'elevator', x: 55, y: 32, w: 2 },
   ];
+  for (const d of decor) { d.x += OX; d.y += OY; }
 
   // Zonas clicables del mundo (los links bajo los letreros). Se llenan al pintar.
   const links = [];
@@ -570,7 +600,7 @@
   }
 
   function drawRug(ctx) {
-    const x = 25 * T, y = 36 * T, w = 19 * T, h = 4 * T;
+    const x = (25 + OX) * T, y = (36 + OY) * T, w = 19 * T, h = 4 * T;
     r(ctx, x + 2, y + 2, w, h, 'rgba(0,0,0,.2)');
     r(ctx, x, y, w, h, '#ffc367');
     r(ctx, x + 2, y + 2, w - 4, h - 4, '#1d1f24');
@@ -800,11 +830,14 @@
   // Lo que la zona reconstruye (x, y, ancho, alto) y sus pasillos fijos: el horizontal, el de
   // la izquierda y los dos verticales (que en la zona de arriendo llegan solo hasta el
   // pasillo horizontal).
-  const RESET = [[1, 0, 57, 14]];
-  const BASE_HALLS = [[1, 14, 57, 2], [1, 3, 2, 31], [20, 14, 2, 20], [39, 14, 2, 20]];
-  const PICS = [[16, 12], [34, 12], [46, 12]];
+  // Con el edificio crecido: el pasillo de la fila A y el de la fila B (los dos de punta a
+  // punta), el de la izquierda (de la fila A al lobby) y los dos verticales hasta el lobby.
+  const X = OX, Y = OY;
+  const RESET = [[1, 0, X + 57, Y + 14]];
+  const BASE_HALLS = [[1, 14, X + 57, 2], [1, Y + 14, X + 57, 2], [X + 1, 14, 2, Y + 20], [X + 20, Y + 14, 2, 20], [X + 39, Y + 14, 2, 20]];
+  const PICS = [[X + 16, Y + 12], [X + 34, Y + 12], [X + 46, Y + 12], [10, 12], [30, 12], [52, 12], [74, 12]];
   const inReset = (x, y) => RESET.some(([rx, ry, rw, rh]) => x >= rx && x < rx + rw && y >= ry && y < ry + rh);
-  const ZONE_X0 = 1, ZONE_X1 = 57;
+  const ZONE_X0 = 1, ZONE_X1 = X + 57;
 
   // Construye la zona de arriendo con estas oficinas (además del coworking). Crea o quita las
   // salas de cada oficina; su contenido lo pone el editor (editor/space.js).
@@ -945,7 +978,7 @@
     W, H, grid, solid, objects, links, breakSpots, roomAt, drawWallAnims, drawOverlay, renderStatic,
     T, room, refreshSolids, furnishRent, FLOOR_STYLES, WALL_STYLES, OPEN,
     // Zona de arriendo: normas, filas, dónde cabe una oficina y construirla.
-    zone: { OX: 0, RULES, ROWS, DESKS, COWORK, plan: floorPlan, starts, build: buildZone, freeDesk, get leases() { return leases; } },
+    zone: { OX, OY, RULES, ROWS, DESKS, COWORK, plan: floorPlan, starts, build: buildZone, freeDesk, get leases() { return leases; } },
     // Para el editor: sacar y agregar objetos de una sala, y las casillas frente a sus puertas.
     removeTagged(tag) {
       for (let i = objects.length - 1; i >= 0; i--) if (objects[i].tag === tag) objects.splice(i, 1);
@@ -966,6 +999,6 @@
       return tx < 0 || ty < 0 || tx >= W || ty >= H || solid[ty * W + tx] === 1;
     },
     // Se aparece frente al ascensor del lobby.
-    spawn: { x: 56 * T + 8, y: 34 * T + 12 },
+    spawn: { x: (56 + OX) * T + 8, y: (34 + OY) * T + 12 },
   };
 })();

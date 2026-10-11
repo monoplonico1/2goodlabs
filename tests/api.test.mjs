@@ -55,7 +55,7 @@ test('API del edificio', { skip: !PSQL && 'sin PGTEST' }, async (t) => {
     assert.strictEqual((await call('hold', null, { kind: 'office', w: 8 })).error, 'login');
   });
   await t.test('un anónimo reserva una oficina donde haya lugar', async () => {
-    const r = await call('hold', 'anon1', { kind: 'office', w: 12, doc: { identity: { name: 'Lab' } } });
+    const r = await call('hold', 'anon1', { kind: 'office', row: 'B', w: 12, doc: { identity: { name: 'Lab' } } });
     assert.ok(r.ok, JSON.stringify(r));
     h1 = r.space;
     assert.strictEqual(h1.status, 'hold');

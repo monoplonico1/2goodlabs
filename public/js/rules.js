@@ -35,13 +35,16 @@
   // un muro del edificio (otra oficina o planta libre) queda un pasillo de 2 m que cruza la
   // fila. Junto a una oficina quedan 0 m o al menos 8 m libres: no hay retazos.
   const RULES = { hall: 2, minFree: 8, minWidth: 8, maxWidth: 24 };
-  // Fila (y, alto) con sus tramos entre muros del edificio ('wall') y pasillos ('hall'). Una
-  // sola por ahora: el piso de arriba, de punta a punta (a su izquierda va el pasillo que
-  // recorre todo el piso). num: número de la primera oficina de la fila.
+  // Filas (y, alto) con sus tramos entre muros del edificio ('wall') y pasillos ('hall').
+  // A: la fila de arriba, de punta a punta (da a la calle). B: la del medio; su tramo de la
+  // izquierda (1–24) está antes del pasillo que baja al lobby y cabe una oficina de hasta 24 m.
+  // up: los pasillos entre oficinas suben hasta el pasillo de arriba. num: primera oficina.
+  // Las coordenadas son las del edificio crecido (ver OX, OY en js/world.js).
   const ROWS = [
-    { id: 'B', num: 101, y: 3, h: DEPTH, hallY: 14, up: false, bays: [{ L: 3, R: 57, l: 'hall', r: 'wall' }] },
+    { id: 'A', num: 201, y: 3, h: DEPTH, hallY: 14, up: false, bays: [{ L: 1, R: 82, l: 'wall', r: 'wall' }] },
+    { id: 'B', num: 101, y: 19, h: DEPTH, hallY: 30, up: true, bays: [{ L: 1, R: 24, l: 'wall', r: 'wall' }, { L: 28, R: 82, l: 'hall', r: 'wall' }] },
   ];
-  const COWORK = { id: 'cowork', row: 'B', a: 4, w: 15, fixed: true };
+  const COWORK = { id: 'cowork', row: 'B', a: 29, w: 15, fixed: true };
   // Puestos del coworking (relativos a la sala): escritorio de 2 × 1 y, delante, dos personas.
   const DESKS = [0, 3, 6, 9, 12].map((x) => ({ x, y: 1 })).concat([0, 3, 6, 9, 12].map((x) => ({ x, y: 4 })));
 
