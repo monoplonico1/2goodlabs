@@ -50,14 +50,12 @@
     <p class="logo">2GoodLabs</p>
   </header>
 
+  <!-- Arriba a la derecha, uno debajo del otro: arrendar (lo agrega el editor), directorio, qué es esto e idioma. -->
   <div class="top-right">
-    <div class="lang panel" role="group" data-i18n-attr="aria-label:langLabel" aria-label="{{t:langLabel}}">
-      <button type="button" data-lang="en">EN</button>
-      <button type="button" data-lang="es">ES</button>
-    </div>
-    <button id="btn-simple" class="panel btn-dir btn-what" type="button" aria-controls="simple" aria-expanded="false" data-i18n-attr="aria-label:simpleView;title:simpleView" aria-label="{{t:simpleView}}" title="{{t:simpleView}}">?</button>
-    <button id="btn-directory" class="panel btn-dir" type="button" aria-controls="directory" aria-expanded="false">
-      <span aria-hidden="true">☰</span> <span data-i18n="directory">{{t:directory}}</span>
+    <button id="btn-directory" class="panel btn-dir btn-icon" type="button" aria-controls="directory" aria-expanded="false" data-i18n-attr="aria-label:directory;title:directory" aria-label="{{t:directory}}" title="{{t:directory}}">☰</button>
+    <button id="btn-simple" class="panel btn-dir btn-icon" type="button" aria-controls="simple" aria-expanded="false" data-i18n-attr="aria-label:simpleView;title:simpleView" aria-label="{{t:simpleView}}" title="{{t:simpleView}}">?</button>
+    <button id="btn-lang" class="panel btn-dir btn-icon" type="button" data-i18n-attr="aria-label:langSwitch;title:langSwitch" aria-label="{{t:langSwitch}}" title="{{t:langSwitch}}">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg>
     </button>
   </div>
 

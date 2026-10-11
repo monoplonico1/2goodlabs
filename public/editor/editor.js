@@ -248,7 +248,9 @@
   btn.id = 'btn-editor';
   btn.type = 'button';
   btn.className = 'panel ed-open';
-  document.body.appendChild(btn);
+  // arriba de la columna de la derecha: arrendar, mis espacios, y debajo directorio, ? e idioma
+  const column = document.querySelector('.top-right') || document.body;
+  column.prepend(btn);
 
   // Personalizar el espacio en el que estoy, y la lista de mis espacios (con "Ir").
   const here = document.createElement('button');
@@ -260,11 +262,11 @@
   mineBtn.type = 'button';
   mineBtn.className = 'panel ed-mine-btn';
   mineBtn.hidden = true;
-  document.body.appendChild(mineBtn);
+  btn.after(mineBtn);
   const minePanel = document.createElement('div');
   minePanel.className = 'panel ed-mine';
   minePanel.hidden = true;
-  document.body.appendChild(minePanel);
+  column.appendChild(minePanel);
 
   const panel = document.createElement('aside');
   panel.id = 'editor';

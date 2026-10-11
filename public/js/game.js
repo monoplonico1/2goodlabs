@@ -977,6 +977,8 @@
 
   // ————————————————————————————————— Idioma
   document.querySelectorAll('[data-lang]').forEach((b) => b.addEventListener('click', () => TGL.setLang(b.dataset.lang)));
+  const langBtn = $('#btn-lang');
+  if (langBtn) langBtn.addEventListener('click', () => TGL.setLang(TGL.lang === 'en' ? 'es' : 'en'));
   window.addEventListener('langchange', () => {
     staticLayer = world.renderStatic();
     buildDirectory();

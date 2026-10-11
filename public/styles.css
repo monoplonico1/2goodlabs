@@ -77,8 +77,21 @@ kbd {
   top: var(--gap);
   right: var(--gap);
   display: flex;
-  gap: 10px;
-  align-items: stretch;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+  z-index: 6;
+}
+/* Botones de solo ícono, del mismo tamaño */
+.btn-icon {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
 }
 .lang { display: flex; padding: 3px; gap: 2px; }
 .lang button {
@@ -337,10 +350,10 @@ kbd {
 /* ——— Directorio ——— */
 .directory {
   position: fixed;
-  top: calc(var(--gap) + 52px);
-  right: var(--gap);
+  top: calc(var(--gap) + 52px); /* debajo de "Arrendar un espacio" */
+  right: calc(var(--gap) + 52px);
   bottom: calc(var(--gap) + var(--safe-b));
-  width: min(360px, calc(100vw - 2 * var(--gap)));
+  width: min(360px, calc(100vw - 2 * var(--gap) - 52px));
   overflow-y: auto;
   padding: 16px;
   z-index: 5;
@@ -395,16 +408,15 @@ kbd {
   #minimap { width: 128px; }
   .zoom button { width: 30px; height: 26px; font-size: 17px; }
   .top-right { gap: 6px; }
+  .btn-icon { width: 38px; height: 38px; font-size: 16px; }
   .lang button { padding: 4px 6px; font-size: 12px; }
   .btn-dir { padding: 8px 10px; font-size: 13px; }
   .dialog { padding: 12px; gap: 10px; }
   #dlg-portrait { width: 56px; height: 70px; }
   #dlg-bio { font-size: 13px; }
-  .directory { top: calc(var(--gap) + 46px); }
   .hint { bottom: calc(var(--gap) + var(--safe-b) + 104px); }
 }
 @media (max-width: 380px) {
-  .btn-dir [data-i18n] { display: none; }
 }
 
 [hidden] { display: none !important; }
@@ -513,14 +525,10 @@ html:not(.js) .s-back { display: none; }
 .dlg-links a:hover { text-decoration: underline; }
 
 @media (max-width: 700px) {
-  #btn-simple [data-i18n] { font-size: 12px; }
   .s-logo { font-size: 22px; }
   .s-lead { font-size: 17px; }
 }
-@media (max-width: 480px) {
-  /* En teléfonos el botón de vista simple va abajo a la izquierda para no amontonar. */
-  #btn-simple { position: fixed; left: var(--gap); bottom: calc(var(--gap) + var(--safe-b)); }
-}
+
 
 /* Pista inicial en pantallas táctiles */
 .touch-tip {
@@ -540,7 +548,6 @@ html:not(.js) .s-back { display: none; }
 }
 
 /* Vista de texto: pestañas y manifiesto */
-.btn-what { min-width: 38px; justify-content: center; font-size: 17px; font-weight: 800; }
 .s-tabs { display: flex; gap: 6px; padding-top: 16px; border-bottom: 1px solid #e3ded3; }
 .s-tabs button {
   padding: 9px 14px;
@@ -567,3 +574,7 @@ html.js .s-panel[data-off] { display: none; }
 .s-cta { padding: 12px 18px; border-radius: 10px; border: 1px solid #1d1f24; background: #ffc367; color: #1d1f24; font: inherit; font-weight: 800; font-size: 16px; cursor: pointer; }
 html:not(.js) .s-cta { display: none; }
 @media (max-width: 700px) { .s-mtitle { font-size: 24px !important; } }
+@media (max-width: 480px) {
+  .logo { font-size: 17px; }
+  .brand { padding: 7px 10px; }
+}
