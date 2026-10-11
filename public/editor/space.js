@@ -132,7 +132,14 @@
       if (d.kind === 'desk' && d.desk != null) { world.removeTagged('desk-' + d.desk); zone.freeDesk(d.desk); }
     }
     for (let i = TGL.rooms.length - 1; i >= 0; i--) if (TGL.rooms[i].deskRoom && !list.some((d) => d.id === TGL.rooms[i].id)) TGL.rooms.splice(i, 1);
-    if (!zone.build(leasesOf(list))) return false;
+    // Si algún espacio no cumple las normas del piso (p. ej. datos de un plano anterior), se
+    // muestran los demás en vez de nada.
+    if (!zone.build(leasesOf(list))) {
+      const ok = [];
+      for (const d of list) if (d.kind !== 'office' || zone.build(leasesOf(ok.concat(d)))) ok.push(d);
+      list = ok;
+      if (!zone.build(leasesOf(list))) return false;
+    }
     for (const d of list) (d.kind === 'desk' ? deskContent : officeContent)(d);
     world.refreshAllSolids();
     for (const d of list) TGL.game.setResidents(d.id, residentsOf(d));
