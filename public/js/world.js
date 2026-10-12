@@ -53,7 +53,7 @@
       blurb: { es: 'Espacio libre del piso. Aquí se construyen las oficinas, del tamaño que cada uno arriende.', en: 'Free floor space. Offices are built here, as big as each tenant rents.' },
       color: '#c9c9ce',
     }, {
-      id: 'cowork', cowork: true, x: 4, y: 3, w: 15, h: 8,
+      id: 'cowork', cowork: true, x: 4, y: 3, w: 16, h: 8,
       name: { es: 'Coworking', en: 'Coworking' },
       blurb: { es: 'Puestos para creadores que trabajan con IA.', en: 'Desks for people who build with AI.' },
       infoTitle: 'Coworking',

@@ -1170,7 +1170,7 @@
   function officeWidths() {
     const list = floorWithout(wiz.back && wiz.back.id), d = Object.assign(space.empty('office'), { id: doc && doc.id });
     const out = [];
-    for (let w = zone.RULES.minWidth; w <= zone.RULES.maxWidth; w++) if (space.fitPlace(list, d, zone.ROWS[0].id, null, w)) out.push(w);
+    for (const w of TGL.rules.WIDTHS) if (space.fitPlace(list, d, zone.ROWS[0].id, null, w)) out.push(w);
     return out;
   }
   // Los tamaños de siempre (S, M, L, XL) y, además, los anchos exactos que caben en el piso.

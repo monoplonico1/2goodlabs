@@ -132,3 +132,36 @@ test('lanzamiento: gratis la primera oficina y el primer puesto', () => {
   assert.strictEqual(R.charge([o1], o1), 0);
   assert.strictEqual(R.charge([o1, o2], o2), R.price(o2));
 });
+
+test('nunca quedan retazos: lo que sobra siempre se puede arrendar con S, M, L o XL', () => {
+  // Llena el piso al azar muchas veces; después de cada oficina, todo hueco libre de cada tramo
+  // tiene que poder llenarse exacto con los tamaños que se venden.
+  let seed = 7;
+  const rnd = () => ((seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648);
+  for (let round = 0; round < 40; round++) {
+    const leases = [];
+    for (let k = 0; k < 30; k++) {
+      const row = R.ROWS[Math.floor(rnd() * R.ROWS.length)].id, w = R.WIDTHS[Math.floor(rnd() * R.WIDTHS.length)];
+      const ok = R.starts(leases, row, w);
+      if (!ok.length) continue;
+      leases.push({ id: 'o' + k, row, a: ok[Math.floor(rnd() * ok.length)], w });
+      for (const r of R.ROWS)
+        for (const bay of r.bays) {
+          const inBay = [R.COWORK].concat(leases).filter((o) => o.row === r.id && o.a >= bay.L && o.a <= bay.R).sort((p, q) => p.a - q.a);
+          let end = bay.L - 1, kind = bay.l;
+          for (const o of inBay.concat({ a: bay.R + 1, w: 0, edge: true })) {
+            const gap = o.a - end - 1, next = o.edge ? bay.r : 'office';
+            if (inBay.length) assert.ok(R.fillable(gap, kind, next), `fila ${r.id}: hueco de ${gap} entre ${kind} y ${next}`);
+            end = o.a + o.w - 1;
+            kind = 'office';
+          }
+        }
+    }
+  }
+});
+
+test('en el piso vacío cabe cada tamaño en cada fila', () => {
+  // En un tramo de 24 m (filas B izquierda y C) cabe XL, o S + M; una L dejaría un retazo de 8.
+  for (const r of R.ROWS) for (const w of R.WIDTHS) assert.strictEqual(R.starts([], r.id, w).length > 0, !(r.id === 'C' && w === 16), r.id + ' ' + w);
+  assert.deepStrictEqual(R.starts([], 'A', 10), []); // solo los tamaños que se venden
+});

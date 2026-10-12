@@ -42,12 +42,12 @@
   // up: los pasillos entre oficinas suben hasta el pasillo de arriba. num: primera oficina.
   // Las coordenadas son las del edificio crecido (ver OX, OY en js/world.js).
   const ROWS = [
-    { id: 'A', num: 201, y: 3, h: DEPTH, hallY: 14, up: false, bays: [{ L: 1, R: 82, l: 'wall', r: 'wall' }] },
-    { id: 'B', num: 101, y: 19, h: DEPTH, hallY: 30, up: true, bays: [{ L: 1, R: 24, l: 'wall', r: 'wall' }, { L: 28, R: 82, l: 'hall', r: 'wall' }] },
+    { id: 'A', num: 201, y: 3, h: DEPTH, hallY: 14, up: false, bays: [{ L: 1, R: 80, l: 'wall', r: 'wall' }] },
+    { id: 'B', num: 101, y: 19, h: DEPTH, hallY: 30, up: true, bays: [{ L: 1, R: 24, l: 'wall', r: 'wall' }, { L: 28, R: 80, l: 'hall', r: 'wall' }] },
     // C: a la izquierda de Board, con su pasillo hacia el pasillo que baja al lobby.
     { id: 'C', num: 301, y: 35, h: DEPTH, hallY: 46, up: true, bays: [{ L: 1, R: 24, l: 'wall', r: 'wall' }] },
   ];
-  const COWORK = { id: 'cowork', row: 'B', a: 29, w: 15, fixed: true };
+  const COWORK = { id: 'cowork', row: 'B', a: 29, w: 16, fixed: true };
   // Puestos del coworking (relativos a la sala): escritorio de 2 × 1 y, delante, dos personas.
   const DESKS = [0, 3, 6, 9, 12].map((x) => ({ x, y: 1 })).concat([0, 3, 6, 9, 12].map((x) => ({ x, y: 4 })));
 
@@ -103,13 +103,40 @@
     }
     return plan;
   }
-  // Dónde puede empezar (x) una oficina de ancho w en una fila, con las demás donde están.
+  // Los anchos que se venden (S, M, L, XL). Todos son múltiplos de 4, igual que el pasillo
+  // compartido entre dos oficinas: así el piso se puede llenar sin retazos.
+  const WIDTHS = SIZES.filter((z) => !z.soon).map((z) => z.w);
+  // Lo que tiene que quedar entre dos vecinos de una fila: entre oficinas, el pasillo
+  // compartido (4); junto a un muro del edificio, nada; junto a un pasillo, el muro (1).
+  const sepOf = (a, b) => (a === 'office' && b === 'office' ? 4 : (a === 'office' ? b : a) === 'hall' ? 1 : 0);
+  // ¿Un hueco de n columnas entre a y b está bien? Sí si queda justo (sin nada en el medio) o
+  // si se puede llenar exacto con oficinas de los anchos que se venden. Con anchos de 4·k y
+  // pasillos de 4, eso pasa cuando lo que queda (sin las separaciones de los bordes) es
+  // múltiplo de 4 y de al menos 8 (cualquier suma de S, M, L y XL con sus pasillos).
+  function fillable(n, a, b) {
+    if (n === sepOf(a, b)) return true;
+    const m = n - sepOf(a, 'office') - sepOf('office', b);
+    return m >= 8 && m % 4 === 0;
+  }
+  // Dónde puede empezar (x) una oficina de ancho w en una fila, con las demás donde están. Solo
+  // en los anchos que se venden, y solo donde lo que sobra a cada lado se pueda arrendar
+  // después con esos mismos anchos: nunca quedan retazos.
   function starts(leases, rowId, w, skipId) {
     const others = leases.filter((o) => o.id !== skipId && o.id !== COWORK.id), out = [];
     const row = ROWS.find((q) => q.id === rowId);
-    if (!row || w < RULES.minWidth || w > RULES.maxWidth) return out;
-    for (const bay of row.bays)
-      for (let a = bay.L; a + w - 1 <= bay.R; a++) if (floorPlan(others.concat({ id: '?', row: rowId, a, w }))) out.push(a);
+    if (!row || !WIDTHS.includes(w)) return out;
+    const near = [COWORK].concat(others).filter((o) => o.row === rowId);
+    for (const bay of row.bays) {
+      const inBay = near.filter((o) => o.a >= bay.L && o.a <= bay.R);
+      for (let a = bay.L; a + w - 1 <= bay.R; a++) {
+        const left = inBay.filter((o) => o.a + o.w - 1 < a).sort((p, q) => q.a - p.a)[0];
+        const right = inBay.filter((o) => o.a > a).sort((p, q) => p.a - q.a)[0];
+        const gapL = a - (left ? left.a + left.w : bay.L), gapR = (right ? right.a : bay.R + 1) - (a + w);
+        if (!fillable(gapL, left ? 'office' : bay.l, 'office') || !fillable(gapR, 'office', right ? 'office' : bay.r)) continue;
+        // solo se revisa esta fila: un problema en otra no bloquea esta
+        if (floorPlan(others.filter((o) => o.row === rowId).concat({ id: '?', row: rowId, a, w }))) out.push(a);
+      }
+    }
     return out;
   }
 
@@ -389,7 +416,7 @@
 
   return {
     DEPTH, PRICE_PER_M2, DESK, SIZES, PLAN, HOLD,
-    RULES, ROWS, COWORK, DESKS, fillGap, floorPlan, starts,
+    RULES, ROWS, COWORK, DESKS, WIDTHS, fillGap, fillable, floorPlan, starts,
     leasesOf, startsFor, fitPlace, fits, numberFor, freeDesks,
     ITEMS, byType, FLOORS, WALLS, MODES, PEOPLE,
     newId, empty, area, entriesOf, m2, price, isFree, charge, limits, footprint, canPlace, surfacesOf, sanitize, proUsage,
