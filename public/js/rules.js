@@ -42,8 +42,8 @@
   // up: los pasillos entre oficinas suben hasta el pasillo de arriba. num: primera oficina.
   // Las coordenadas son las del edificio crecido (ver OX, OY en js/world.js).
   const ROWS = [
-    { id: 'A', num: 201, y: 3, h: DEPTH, hallY: 14, up: false, bays: [{ L: 1, R: 80, l: 'wall', r: 'wall' }] },
-    { id: 'B', num: 101, y: 19, h: DEPTH, hallY: 30, up: true, bays: [{ L: 1, R: 24, l: 'wall', r: 'wall' }, { L: 28, R: 80, l: 'hall', r: 'wall' }] },
+    { id: 'A', num: 201, y: 3, h: DEPTH, hallY: 14, up: false, bays: [{ L: 1, R: 84, l: 'wall', r: 'wall' }] },
+    { id: 'B', num: 101, y: 19, h: DEPTH, hallY: 30, up: true, bays: [{ L: 1, R: 24, l: 'wall', r: 'wall' }, { L: 28, R: 84, l: 'hall', r: 'wall' }] },
     // C: a la izquierda de Board, con su pasillo hacia el pasillo que baja al lobby.
     { id: 'C', num: 301, y: 35, h: DEPTH, hallY: 46, up: true, bays: [{ L: 1, R: 24, l: 'wall', r: 'wall' }] },
   ];

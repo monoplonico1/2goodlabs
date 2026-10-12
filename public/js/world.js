@@ -326,7 +326,11 @@
       for (let y = 1; y < TERRACE.y; y++) set(x, y, FLOOR.terrace);
     }
     for (let y = 0; y < H; y++) set(W - 1, y, RAIL);
-    TERRACE.rects = [[TERRACE.x, 1, TERRACE.w, bottom - 1]];
+    // arriba, al lado de las filas A y B (que llegan al metro 84), la terraza es más angosta
+    const rowsEnd = OY + 14;
+    TERRACE.rects = OPEN
+      ? [[TERRACE.x + 2, 1, TERRACE.w - 2, rowsEnd - 1], [TERRACE.x, rowsEnd, TERRACE.w, bottom - rowsEnd]]
+      : [[TERRACE.x, 1, TERRACE.w, bottom - 1]];
     SKY_H = 0;
   }
 
@@ -854,11 +858,13 @@
   // punta), el de la izquierda (de la fila A al lobby) y los dos verticales hasta el lobby.
   const X = OX, Y = OY;
   // La fila C (a la izquierda de Board) sale a su propio pasillo, que llega al de la izquierda.
-  const RESET = [[1, 0, X + 57, Y + 14], [1, Y + 14, X, 18]];
-  const BASE_HALLS = [[1, 14, X + 57, 2], [1, Y + 14, X + 57, 2], [X + 1, 14, 2, Y + 20], [X + 20, Y + 14, 2, 20], [X + 39, Y + 14, 2, 20], [1, Y + 30, X + 1, 2]];
+  // Las filas A y B llegan hasta el metro 84 (sus medidas son múltiplos de 4, así los
+  // tamaños calzan sin retazos); su muro derecho queda en el 85, sobre la terraza.
+  const RESET = [[1, 0, X + 60, Y + 14], [1, Y + 14, X, 18]];
+  const BASE_HALLS = [[1, 14, X + 59, 2], [1, Y + 14, X + 59, 2], [X + 1, 14, 2, Y + 20], [X + 20, Y + 14, 2, 20], [X + 39, Y + 14, 2, 20], [1, Y + 30, X + 1, 2]];
   const PICS = [[X + 16, Y + 12], [X + 34, Y + 12], [X + 46, Y + 12], [10, 12], [30, 12], [52, 12], [74, 12], [6, Y + 28], [16, Y + 28]];
   const inReset = (x, y) => RESET.some(([rx, ry, rw, rh]) => x >= rx && x < rx + rw && y >= ry && y < ry + rh);
-  const ZONE_X0 = 1, ZONE_X1 = X + 57;
+  const ZONE_X0 = 1, ZONE_X1 = X + 59;
 
   // Construye la zona de arriendo con estas oficinas (además del coworking). Crea o quita las
   // salas de cada oficina; su contenido lo pone el editor (editor/space.js).
