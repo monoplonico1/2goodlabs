@@ -515,3 +515,27 @@ body.editing .ed-holdbar { display: none; }
 @media (max-width: 480px) {
   .ed-open { padding: 7px 9px; font-size: 12px; }
 }
+
+/* Paso "Plantilla" */
+.ed-templates { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ed-template {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  text-align: left;
+  padding: 10px;
+  border: 1px solid #e3ded3;
+  border-radius: 10px;
+  background: #fff;
+  color: #1d1f24;
+  font: inherit;
+  cursor: pointer;
+}
+.ed-template:hover { border-color: #1d1f24; }
+.ed-template.on { border-color: #ffc367; box-shadow: 0 0 0 2px #ffc367; background: #fffaf0; }
+.ed-template strong { font-size: 13px; }
+.ed-template small { font-size: 11px; line-height: 1.35; color: #6b6f78; }
+.ed-tpl-colors { display: flex; gap: 3px; }
+.ed-tpl-colors i { width: 18px; height: 10px; border-radius: 3px; border: 1px solid rgba(0, 0, 0, .12); }
+.ed-template-blank { border-style: dashed; }
+@media (max-width: 380px) { .ed-templates { grid-template-columns: 1fr; } }

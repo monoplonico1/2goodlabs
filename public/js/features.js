@@ -43,7 +43,7 @@
   // Este archivo va antes que el mundo (world.js decide con él cómo es el piso de arriba);
   // los módulos se cargan cuando ya está todo lo demás.
   function start() {
-    if (enabled('editor')) load('/editor/', 'editor.css', ['catalog.js', 'space.js', 'cloud.js', 'editor.js']);
+    if (enabled('editor')) load('/editor/', 'editor.css', ['catalog.js', 'templates.js', 'space.js', 'cloud.js', 'editor.js']);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();

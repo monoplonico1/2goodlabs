@@ -195,6 +195,8 @@
     dirCount: '{n} espacios publicados', dirCount1: '1 espacio publicado', dirSearch: 'Buscar por nombre o tema…', dirNone: 'Nada con ese nombre todavía.',
     dirEmpty: 'Todavía no hay espacios publicados. ¿Serás el primero?', dirFirst: '+ Arrendar un espacio', dirHouse: 'Del equipo de 2GoodLabs',
     deskOf: 'Puesto {n} · Coworking', yours: 'Tuyo',
+    sStart: 'Plantilla', startIntro: 'Elige cómo empezar. Toca una plantilla y mírala en tu oficina; puedes probar todas. Después cambias el nombre, los colores, los muebles y el equipo.',
+    blank: 'Empezar en blanco', blankNote: 'Una oficina vacía para armarla a tu manera.', startAfter: 'La plantilla se adapta al tamaño de tu oficina. Nada queda fijo: todo se puede cambiar en los pasos siguientes.',
   });
   Object.assign(L.en, {
     w4Hint: "It's held for you for 20 minutes while you set it up. To keep it, publish it: it's free, you only need your email.",
@@ -222,6 +224,8 @@
     dirCount: '{n} published spaces', dirCount1: '1 published space', dirSearch: 'Search by name or topic…', dirNone: 'Nothing with that name yet.',
     dirEmpty: 'No spaces have been published yet. Want to be the first?', dirFirst: '+ Rent a space', dirHouse: 'From the 2GoodLabs team',
     deskOf: 'Desk {n} · Coworking', yours: 'Yours',
+    sStart: 'Template', startIntro: 'Choose how to start. Tap a template and see it in your office; try as many as you like. Then change the name, colors, furniture and team.',
+    blank: 'Start blank', blankNote: 'An empty office to set up your own way.', startAfter: 'Templates adapt to the size of your office. Nothing is fixed: you can change everything in the next steps.',
   });
   const tr = (k) => L[TGL.lang][k];
   const nm = (o) => TGL.t(o.name);
@@ -926,7 +930,8 @@
   });
 
   // ————————————————————————————————— Personalizar, por pasos
-  const editSteps = () => (doc.kind === 'desk' ? ['brand', 'people'] : ['brand', 'style', 'items', 'people']);
+  const editSteps = () => (doc.kind === 'desk' ? ['brand', 'people'] : ['start', 'brand', 'style', 'items', 'people']);
+  let appliedTemplate = null, chosenTemplate = null;
   function editSpace(d) {
     view = 'edit';
     doc = clone(d);
@@ -935,7 +940,9 @@
     dirty = false;
     tool = selected = drag = null;
     openPeople.clear();
-    tab = 'brand';
+    // una oficina recién arrendada empieza eligiendo una plantilla
+    tab = d.kind === 'office' && !d.residents.length && d.items.every((it) => it.type === 'info') ? 'start' : 'brand';
+    chosenTemplate = null;
     show();
     render();
     requestAnimationFrame(focusRoom);
@@ -1230,7 +1237,7 @@
     const steps = editSteps();
     if (!steps.includes(tab)) tab = steps[0];
     const n = steps.indexOf(tab) + 1;
-    const label = { brand: 'sBrand', style: 'sStyle', items: 'sItems', people: 'sPeople' };
+    const label = { start: 'sStart', brand: 'sBrand', style: 'sStyle', items: 'sItems', people: 'sPeople' };
     panel.innerHTML = `
       <header class="ed-head">
         <div class="ed-head-title"><strong>${esc(spaceName(doc))}</strong><small>${esc(doc.kind === 'desk' ? 'Coworking · ' + fill('deskN', { n: doc.desk + 1 }) : fill('officeN', { n: doc.number }) + ' · ' + space.m2(doc) + ' m²')} · ${priceTag(doc)}</small></div>
@@ -1261,6 +1268,7 @@
   }
 
   function renderTab() {
+    if (tab === 'start') return renderStart();
     if (tab === 'items') return renderItems();
     if (tab === 'style') return renderStyle();
     if (tab === 'brand') return renderBrand();
@@ -1403,6 +1411,23 @@
         </button>`).join('')}</div>`;
   }
 
+  // Paso 1 de una oficina: empezar con una plantilla (se ve en el edificio al tocarla).
+  function renderStart() {
+    return `
+      <p class="ed-hint">${esc(tr('startIntro'))}</p>
+      <div class="ed-templates">
+        ${space.templates.map((t) => `
+        <button type="button" class="ed-template${chosenTemplate === t.id ? ' on' : ''}" data-act="template" data-v="${t.id}">
+          <span class="ed-tpl-colors">${t.colors.map((c) => `<i style="background:${c}"></i>`).join('')}</span>
+          <strong>${esc(nm(t))}</strong><small>${esc(TGL.t(t.note))}</small>
+        </button>`).join('')}
+        <button type="button" class="ed-template ed-template-blank${chosenTemplate === 'blank' ? ' on' : ''}" data-act="blank">
+          <strong>${esc(tr('blank'))}</strong><small>${esc(tr('blankNote'))}</small>
+        </button>
+      </div>
+      <p class="ed-note">${esc(tr('startAfter'))}</p>`;
+  }
+
   function renderStyle() {
     const s = doc.surfaces;
     const opt = (list, kind, current, color) => list.map((o) => `
@@ -1412,8 +1437,6 @@
       <h3 class="ed-h">${esc(tr('brandColors'))}</h3>
       ${brandColor('primary')}
       ${brandColor('accent')}
-      <h3 class="ed-h">${esc(tr('templates'))}</h3>
-      <div class="ed-row">${space.templates.map((t) => `<button type="button" class="ed-btn" data-act="template" data-v="${t.id}">${esc(nm(t))}</button>`).join('')}</div>
       <h3 class="ed-h">${esc(tr('floor'))}</h3>
       <div class="ed-field"><span>${esc(tr('floorColor'))}</span>${colorControl('surfaces.floorColor', s.floorColor, cat.palettes.floor)}</div>
       <div class="ed-opts">${opt(cat.floors, 'floor', s.floor, s.floorColor)}</div>
@@ -1631,15 +1654,21 @@
         return render();
       case 'remove': doc.items.splice(selected.index, 1); selected = null; return commit();
       case 'template': {
-        if (!confirm(tr('templateConfirm'))) return;
-        // Las plantillas son para 16 m: si cabe en la misma fila, la oficina se ajusta a ese ancho.
-        const keep = { id: doc.id, kind: 'office', row: doc.row, x: doc.x, w: doc.w, number: doc.number };
-        const ok = space.startsFor(others(), doc, doc.row, 16);
-        if (ok.length) Object.assign(keep, { w: 16, x: ok.reduce((b, x) => (Math.abs(x - doc.x) < Math.abs(b - doc.x) ? x : b), ok[0]) });
-        doc = space.sanitize(Object.assign(clone(space.templates.find((t) => t.id === v).doc), keep));
+        // Si ya armaste algo, se pregunta antes de reemplazarlo.
+        const fresh = !doc.residents.length && doc.items.every((it) => it.type === 'info');
+        if (!fresh && appliedTemplate !== doc.id + ':' + doc.items.length && !confirm(tr('templateConfirm'))) return;
+        // La plantilla se arma para el ancho de esta oficina; el nombre, la frase y el
+        // contenido que ya escribiste se quedan.
+        const tpl = space.templates.find((t) => t.id === v).make(doc.w);
+        const keep = { id: doc.id, kind: 'office', row: doc.row, x: doc.x, w: doc.w, number: doc.number, content: doc.content };
+        tpl.identity = Object.assign(tpl.identity, doc.identity.name ? { name: doc.identity.name } : {}, doc.identity.tagline ? { tagline: doc.identity.tagline } : {});
+        doc = space.sanitize(Object.assign(tpl, keep));
+        appliedTemplate = doc.id + ':' + doc.items.length; // cambiar de plantilla sin tocar nada no pide confirmación
+        chosenTemplate = v;
         selected = tool = null;
         return commit();
       }
+      case 'blank': chosenTemplate = 'blank'; return editGo(1);
       case 'floor': doc.surfaces.floor = v; return commit();
       case 'walls': doc.surfaces.walls = v; return commit();
       case 'mode': doc.mode = v; return commit();

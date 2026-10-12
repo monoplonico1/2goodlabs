@@ -119,7 +119,7 @@ public/
   js/game.js        bucle, movimiento, cámara, minimapa e interacción
   js/features.js    interruptores de módulos en desarrollo
   js/rules.js       normas del piso, catálogo como datos y validación (navegador y Worker)
-  editor/           editor de oficinas (beta): catálogo, documento del espacio e interfaz
+  editor/           editor de oficinas (beta): catálogo, plantillas (templates.js), documento del espacio e interfaz
   og.png, logo.png  imagen para compartir y logo para buscadores
 ```
 
