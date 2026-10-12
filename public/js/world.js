@@ -282,9 +282,7 @@
   put(art.plant(14), 19, 42, 1, 1);
   put(art.plant(15), 43, 42, 1, 1);
 
-  // Pasillos: plantas en los cruces y al final de los pasillos verticales.
-  put(art.plant(19), 3, 15, 1, 1);
-  put(art.plant(20), 57, 14, 1, 1);
+  // Los pasillos quedan despejados: nada que estorbe el paso.
   if (!OPEN) {
     put(art.waterCooler(), 20, 3, 1, 1);
     put(art.plant(21), 40, 3, 1, 1);
