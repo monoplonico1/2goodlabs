@@ -631,3 +631,4 @@ html:not(.js) .s-cta { display: none; }
 .dir-empty p { margin: 0 0 6px; }
 .dir-house { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--panel-edge); }
 .dir-house h3 { margin: 0 0 8px; font-family: Silkscreen, monospace; font-weight: 400; font-size: 12px; color: var(--muted); text-transform: uppercase; }
+.dir-logo { width: 22px; height: 22px; border-radius: 5px; background: #fff; object-fit: contain; flex: none; }

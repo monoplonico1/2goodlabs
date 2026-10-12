@@ -195,6 +195,9 @@
     dirCount: '{n} espacios publicados', dirCount1: '1 espacio publicado', dirSearch: 'Buscar por nombre o tema…', dirNone: 'Nada con ese nombre todavía.',
     dirEmpty: 'Todavía no hay espacios publicados. ¿Serás el primero?', dirFirst: '+ Arrendar un espacio', dirHouse: 'Del equipo de 2GoodLabs',
     deskOf: 'Puesto {n} · Coworking', yours: 'Tuyo',
+    logo: 'Logo', logoUpload: 'Subir logo', logoChange: 'Cambiar logo', logoError: 'No pudimos usar esa imagen. Prueba con un PNG o JPG.',
+    logoNote: 'Se ve en el letrero de tu oficina y en el directorio. PNG, JPG o SVG; idealmente cuadrado.',
+    logoNoteDesk: 'Se ve en el directorio. PNG, JPG o SVG; idealmente cuadrado.',
     sStart: 'Plantilla', startIntro: 'Elige cómo empezar. Toca una plantilla y mírala en tu oficina; puedes probar todas. Después cambias el nombre, los colores, los muebles y el equipo.',
     blank: 'Empezar en blanco', blankNote: 'Una oficina vacía para armarla a tu manera.', startAfter: 'La plantilla se adapta al tamaño de tu oficina. Nada queda fijo: todo se puede cambiar en los pasos siguientes.',
   });
@@ -224,6 +227,9 @@
     dirCount: '{n} published spaces', dirCount1: '1 published space', dirSearch: 'Search by name or topic…', dirNone: 'Nothing with that name yet.',
     dirEmpty: 'No spaces have been published yet. Want to be the first?', dirFirst: '+ Rent a space', dirHouse: 'From the 2GoodLabs team',
     deskOf: 'Desk {n} · Coworking', yours: 'Yours',
+    logo: 'Logo', logoUpload: 'Upload logo', logoChange: 'Change logo', logoError: "We couldn't use that image. Try a PNG or JPG.",
+    logoNote: 'It shows on your office sign and in the directory. PNG, JPG or SVG; square works best.',
+    logoNoteDesk: 'It shows in the directory. PNG, JPG or SVG; square works best.',
     sStart: 'Template', startIntro: 'Choose how to start. Tap a template and see it in your office; try as many as you like. Then change the name, colors, furniture and team.',
     blank: 'Start blank', blankNote: 'An empty office to set up your own way.', startAfter: 'Templates adapt to the size of your office. Nothing is fixed: you can change everything in the next steps.',
   });
@@ -289,6 +295,37 @@
   backPill.className = 'panel ed-back';
   backPill.hidden = true;
   document.body.appendChild(backPill);
+
+  // Logo: cualquier imagen; se reduce aquí a un PNG chico que va dentro del documento.
+  const logoInput = document.createElement('input');
+  logoInput.type = 'file';
+  logoInput.accept = 'image/*';
+  logoInput.hidden = true;
+  document.body.appendChild(logoInput);
+  logoInput.addEventListener('change', () => {
+    const f = logoInput.files[0];
+    logoInput.value = '';
+    if (!f || !doc) return;
+    const url = URL.createObjectURL(f), img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let out = '';
+      for (const size of [64, 48, 32]) {
+        const c = document.createElement('canvas');
+        c.width = c.height = size;
+        const k = Math.min(size / img.naturalWidth, size / img.naturalHeight) || 1;
+        const w = img.naturalWidth * k, h = img.naturalHeight * k;
+        c.getContext('2d').drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+        out = c.toDataURL('image/png');
+        if (TGL.rules.isLogo(out)) break;
+      }
+      if (!TGL.rules.isLogo(out)) return flash(tr('logoError'), true);
+      doc.identity.logo = out;
+      commit();
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); flash(tr('logoError'), true); };
+    img.src = url;
+  });
 
   const fileInput = document.createElement('input');
   fileInput.type = 'file';
@@ -519,7 +556,7 @@
     const host = (u) => u.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
     const card = (d) => `
       <li class="dir-space" style="--c:${d.identity.primary};--a:${d.identity.accent}">
-        <div class="dir-space-head"><i></i><strong>${esc(spaceName(d))}</strong>${saved.some((o) => o.id === d.id) ? `<span class="dir-yours">${esc(tr('yours'))}</span>` : ''}</div>
+        <div class="dir-space-head">${d.identity.logo ? `<img class="dir-logo" src="${esc(d.identity.logo)}" alt="">` : '<i></i>'}<strong>${esc(spaceName(d))}</strong>${saved.some((o) => o.id === d.id) ? `<span class="dir-yours">${esc(tr('yours'))}</span>` : ''}</div>
         <small>${esc(d.kind === 'desk' ? fill('deskOf', { n: d.desk + 1 }) : fill('officeN', { n: d.number }) + ' · ' + space.m2(d) + ' m²')}</small>
         ${d.identity.tagline ? `<p>${esc(d.identity.tagline)}</p>` : ''}
         ${d.content.links.length ? `<p class="dir-links">${d.content.links.map((l) => `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label || host(l.url))} ↗</a>`).join(' · ')}</p>` : ''}
@@ -1466,6 +1503,13 @@
     return `
       ${field(tr('name'), `<input value="${esc(id.name)}" maxlength="24" data-field="identity.name">`)}
       ${field(tr('tagline'), `<input value="${esc(id.tagline)}" maxlength="60" data-field="identity.tagline">`)}
+      <div class="ed-field"><span>${esc(tr('logo'))}</span>
+        <div class="ed-logo">
+          ${id.logo ? `<img src="${esc(id.logo)}" alt="">` : '<i aria-hidden="true">?</i>'}
+          <button type="button" class="ed-btn" data-act="logo">${esc(tr(id.logo ? 'logoChange' : 'logoUpload'))}</button>
+          ${id.logo ? `<button type="button" class="ed-btn ed-danger" data-act="nologo">${esc(tr('remove'))}</button>` : ''}
+        </div>
+        <small class="ed-note">${esc(tr(doc.kind === 'desk' ? 'logoNoteDesk' : 'logoNote'))}</small></div>
       ${infoBox}
       ${field(tr('about'), `<textarea rows="3" maxlength="280" data-field="content.about">${esc(doc.content.about)}</textarea>`)}
       <div class="ed-field"><span>${esc(tr('links'))}</span>${links}
@@ -1669,6 +1713,8 @@
         return commit();
       }
       case 'blank': chosenTemplate = 'blank'; return editGo(1);
+      case 'logo': return logoInput.click();
+      case 'nologo': doc.identity.logo = ''; return commit();
       case 'floor': doc.surfaces.floor = v; return commit();
       case 'walls': doc.surfaces.walls = v; return commit();
       case 'mode': doc.mode = v; return commit();

@@ -539,3 +539,8 @@ body.editing .ed-holdbar { display: none; }
 .ed-tpl-colors i { width: 18px; height: 10px; border-radius: 3px; border: 1px solid rgba(0, 0, 0, .12); }
 .ed-template-blank { border-style: dashed; }
 @media (max-width: 380px) { .ed-templates { grid-template-columns: 1fr; } }
+
+/* Logo */
+.ed-logo { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ed-logo img, .ed-logo i { width: 44px; height: 44px; border-radius: 8px; border: 1px solid #e3ded3; background: #fff; object-fit: contain; }
+.ed-logo i { display: grid; place-items: center; font-style: normal; color: #c3c0b8; font-weight: 800; }

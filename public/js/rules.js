@@ -221,7 +221,7 @@
     id: newId(kind || 'office'),
     kind: kind || 'office',
     w: 8, row: ROWS[0].id, x: null, number: null, desk: null, deskColor: null,
-    identity: { name: '', tagline: '', primary: '#1d1f24', accent: '#ffc367' },
+    identity: { name: '', tagline: '', primary: '#1d1f24', accent: '#ffc367', logo: '' },
     surfaces: { floor: 'plain', floorColor: '#f1f1f3', walls: 'plain', wallColor: '#f7f7f9' },
     mode: 'day',
     items: [],
@@ -252,6 +252,8 @@
 
   const clampText = (v, n) => String(v == null ? '' : v).slice(0, n);
   const isColor = (v) => /^#[0-9a-f]{6}$/i.test(v || '');
+  // Logo: una imagen PNG chica, ya reducida en el navegador (va dentro del documento).
+  const isLogo = (v) => typeof v === 'string' && v.length <= 24000 && /^data:image\/png;base64,[A-Za-z0-9+/]+=*$/.test(v);
   const isUrl = (v) => /^https?:\/\/[^\s]+\.[^\s]+$/i.test(v || '');
   const pick = (list, id, fallback) => (list.some((o) => o.id === id) ? id : fallback);
 
@@ -362,6 +364,7 @@
       tagline: clampText(id.tagline, 60),
       primary: isColor(id.primary) ? id.primary : doc.identity.primary,
       accent: isColor(id.accent) ? id.accent : doc.identity.accent,
+      logo: isLogo(id.logo) ? id.logo : '',
     };
     doc.surfaces = surfacesOf(raw.surfaces || {}, doc.identity);
     doc.mode = pick(MODES, raw.mode, 'day');
@@ -420,6 +423,6 @@
     leasesOf, startsFor, fitPlace, fits, numberFor, freeDesks,
     ITEMS, byType, FLOORS, WALLS, MODES, PEOPLE,
     newId, empty, area, entriesOf, m2, price, isFree, charge, limits, footprint, canPlace, surfacesOf, sanitize, proUsage,
-    isColor, isUrl, clampText,
+    isColor, isUrl, isLogo, clampText,
   };
 });

@@ -556,6 +556,21 @@
       // Una oficina personalizada muestra su nombre y sus colores en lugar de "se arrienda".
       const own = d.room && room(d.room).custom;
       if (own) d = Object.assign({}, d, { text: own.identity.name || TGL.t(room(d.room).name) || '—', bg: own.identity.primary, fg: own.identity.accent });
+      // Con logo, el letrero es más alto: el logo a la izquierda y el nombre al lado.
+      const logo = own && own.identity.logo && logoImage(own.identity.logo);
+      if (logo) {
+        const top = py + 3, ph = 26, s = 22;
+        r(ctx, px + 2, top + 1, pw - 4, ph, 'rgba(0,0,0,.18)');
+        r(ctx, px + 1, top, pw - 2, ph, d.bg || '#23262d');
+        r(ctx, px + 3, top + 2, s, s, '#ffffff');
+        ctx.drawImage(logo, px + 3, top + 2, s, s);
+        ctx.fillStyle = d.fg;
+        ctx.font = '8px Silkscreen, monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(TGL.t(d.text), px + 3 + s + (pw - 3 - s) / 2, top + ph / 2 + 1, pw - s - 10);
+        return;
+      }
       const ph = d.k === 'sign' ? 11 : 13, top = d.k === 'sign' ? py + 5 : py + 4;
       r(ctx, px + 2, top + 1, pw - 4, ph, 'rgba(0,0,0,.18)');
       r(ctx, px + 1, top, pw - 2, ph, d.bg || '#23262d');
@@ -618,6 +633,20 @@
       r(ctx, px + 2, py + 3, pw - 4, 22, '#0b1a10');
       r(ctx, px + pw / 2 - 6, py + 27, 12, 3, '#16181d');
     }
+  }
+
+  // Logos de las oficinas (imágenes chicas dentro del documento). Al terminar de cargar uno,
+  // se vuelve a pintar la capa estática.
+  const logos = new Map();
+  function logoImage(src) {
+    let img = logos.get(src);
+    if (!img) {
+      img = new Image();
+      img.onload = () => { if (TGL.game && TGL.game.refreshStatic) TGL.game.refreshStatic(); };
+      img.src = src;
+      logos.set(src, img);
+    }
+    return img.complete && img.naturalWidth ? img : null;
   }
 
   function drawRug(ctx) {
@@ -956,7 +985,7 @@
         const q = room(run.t), side = Math.floor((len - 6) / 2);
         add(q.cowork
           ? { k: 'plate', x: run.s + side, y: row.y - 2, w: 6, text: { es: 'COWORKING', en: 'COWORKING' }, bg: '#1d1f24', fg: '#f2a65a' }
-          : { k: 'plate', room: q.id, x: run.s + side, y: row.y - 2, w: 6, text: RENT_TEXT, bg: '#1d1f24', fg: '#ffc367' });
+          : { k: 'plate', room: q.id, x: run.s + Math.floor((len - Math.min(10, len)) / 2), y: row.y - 2, w: Math.min(10, len), text: RENT_TEXT, bg: '#1d1f24', fg: '#ffc367' });
         if (outside && side >= 2) {
           add({ k: 'glass', x: run.s, y: row.y - 2, w: Math.min(4, side) });
           add({ k: 'glass', x: run.e + 1 - Math.min(4, side), y: row.y - 2, w: Math.min(4, side) });
