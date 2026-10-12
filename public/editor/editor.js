@@ -532,7 +532,8 @@
       const text = fill(sp.mine ? 'yoursLeft' : 'reservedLeft', { t: sp.mine ? clock(ms) : Math.max(1, Math.ceil(ms / 60000)) + ' min' });
       ctx.save();
       ctx.font = '7px Silkscreen, monospace';
-      const w = ctx.measureText(text).width + 8, x = (q.x + q.w / 2) * T - w / 2, y = (q.y + 1) * T;
+      // sobre el muro de arriba de la oficina, para no tapar lo que se arma adentro
+      const w = ctx.measureText(text).width + 8, x = (q.x + q.w / 2) * T - w / 2, y = (q.y - 3) * T + 2;
       ctx.fillStyle = '#1d1f24';
       ctx.fillRect(x, y, w, 11);
       ctx.fillStyle = '#f2c94c';
