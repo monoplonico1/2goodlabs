@@ -1,0 +1,128 @@
+<!doctype html>
+<!--
+  Tarjeta de contacto de Ricardo (2goodlabs.com/ricardo). Página suelta, no la genera build.js.
+  Si cambia un dato, cambiarlo aquí y en ricardo-orozco.vcf (lo que se guarda en la agenda).
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Ricardo Orozco · 2GoodLabs</title>
+  <meta name="description" content="Ricardo Orozco, co-founder of 2GoodLabs. Product design & UX. Save my contact.">
+  <meta name="robots" content="noindex">
+  <meta property="og:type" content="profile">
+  <meta property="og:title" content="Ricardo Orozco · 2GoodLabs">
+  <meta property="og:description" content="Co-founder · Product design & UX. Save my contact.">
+  <meta property="og:url" content="https://2goodlabs.com/ricardo/">
+  <meta property="og:image" content="https://2goodlabs.com/og.png">
+  <meta name="theme-color" content="#17140f">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Silkscreen&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #17140f;
+      --panel: #1f2128;
+      --edge: #3a3f4b;
+      --text: #f3f1ea;
+      --muted: #a9adb8;
+      --gold: #ffc367;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      background: var(--ink);
+      color: var(--text);
+      font-family: Inter, system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      display: flex;
+      justify-content: center;
+      padding: max(28px, env(safe-area-inset-top)) 16px max(28px, env(safe-area-inset-bottom));
+    }
+    main { width: 100%; max-width: 420px; }
+    .card {
+      background: var(--panel);
+      border: 2px solid var(--edge);
+      border-radius: 14px;
+      padding: 28px 22px 22px;
+      text-align: center;
+    }
+    .logo { width: 72px; height: 72px; image-rendering: pixelated; border-radius: 12px; }
+    h1 { font-size: 28px; font-weight: 800; margin: 14px 0 4px; letter-spacing: -0.01em; }
+    .role { color: var(--muted); font-size: 15px; margin: 0; }
+    .org {
+      font-family: Silkscreen, monospace;
+      color: var(--gold);
+      font-size: 13px;
+      letter-spacing: 0.06em;
+      margin: 10px 0 0;
+    }
+    .save {
+      display: block;
+      margin: 24px 0 14px;
+      padding: 16px;
+      border-radius: 10px;
+      background: var(--gold);
+      color: var(--ink);
+      font-weight: 800;
+      font-size: 17px;
+      text-decoration: none;
+    }
+    .save:active { transform: translateY(1px); }
+    .links { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+    .links a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 14px;
+      border: 2px solid var(--edge);
+      border-radius: 10px;
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 15px;
+      text-align: left;
+    }
+    .links a:hover, .links a:focus-visible { border-color: var(--gold); outline: none; }
+    .links svg { width: 20px; height: 20px; flex: none; fill: none; stroke: var(--gold); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .links small { display: block; color: var(--muted); font-weight: 400; font-size: 13px; margin-top: 1px; }
+    .about { color: var(--muted); font-size: 14px; line-height: 1.5; margin: 22px 4px 0; text-align: center; }
+    .about a { color: var(--gold); }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="card">
+      <img class="logo" src="/logo.png" alt="2GoodLabs" width="72" height="72">
+      <h1>Ricardo Orozco</h1>
+      <p class="role" data-en="Co-founder · Product design &amp; UX" data-es="Co-founder · Diseño de producto y UX">Co-founder · Product design &amp; UX</p>
+      <p class="org">2GOODLABS</p>
+
+      <a class="save" href="ricardo-orozco.vcf" data-en="Save contact" data-es="Guardar contacto">Save contact</a>
+
+      <ul class="links">
+        <li><a href="mailto:ricardo@2goodlabs.com">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+          <span>Email<small>ricardo@2goodlabs.com</small></span></a></li>
+        <li><a href="https://2goodlabs.com/">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-6h6v6"/></svg>
+          <span>2goodlabs.com<small data-en="AI startups &amp; labs directory" data-es="Directorio de startups y labs de IA">AI startups &amp; labs directory</small></span></a></li>
+        <li><a href="https://rickorozco.co/">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>
+          <span>Portfolio<small>rickorozco.co</small></span></a></li>
+      </ul>
+    </div>
+
+    <p class="about" data-en="We're building a living pixel-art building where AI startups and labs rent an office. &lt;a href=&quot;/&quot;&gt;Find your spot →&lt;/a&gt;" data-es="Estamos construyendo un edificio pixel art vivo donde startups y labs de IA alquilan su oficina. &lt;a href=&quot;/es/&quot;&gt;Encuentra tu lugar →&lt;/a&gt;">We're building a living pixel-art building where AI startups and labs rent an office. <a href="/">Find your spot →</a></p>
+  </main>
+  <script>
+    // Textos en español si el teléfono está en español.
+    if (/^es\b/i.test(navigator.language || '')) {
+      document.documentElement.lang = 'es';
+      document.querySelectorAll('[data-es]').forEach((el) => { el.innerHTML = el.dataset.es; });
+    }
+  </script>
+</body>
+</html>

@@ -37,6 +37,14 @@ export default {
       out.headers.set('Cache-Control', 'no-cache');
       return out;
     }
+    // Tarjetas de contacto (/ricardo/…vcf): con este tipo el teléfono ofrece guardarla en la agenda.
+    if (url.pathname.endsWith('.vcf') && res.ok) {
+      const out = new Response(res.body, res);
+      out.headers.set('Content-Type', 'text/vcard; charset=utf-8');
+      out.headers.set('Content-Disposition', 'inline; filename="' + url.pathname.split('/').pop() + '"');
+      out.headers.set('Cache-Control', 'no-cache');
+      return out;
+    }
     return res;
   },
 };
