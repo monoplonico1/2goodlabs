@@ -97,7 +97,6 @@
       font-size: 15px;
       line-height: 1.55;
     }
-    .pitch[hidden] { display: none; }
     .pitch p { margin: 0 0 10px; }
     .pitch strong { color: var(--text); }
     .pitch a { color: var(--gold); font-weight: 600; }
@@ -112,10 +111,10 @@
     <div class="card">
       <img class="logo" src="/logo.png" alt="2GoodLabs" width="72" height="72">
       <h1>Ricardo Orozco</h1>
-      <p class="role" data-en="Co-founder · Product design &amp; UX" data-es="Co-founder · Diseño de producto y UX">Co-founder · Product design &amp; UX</p>
+      <p class="role">Co-founder · Product design &amp; UX</p>
       <p class="org">2GOODLABS</p>
 
-      <a class="save" href="ricardo-orozco.vcf" data-en="Save contact" data-es="Guardar contacto">Save contact</a>
+      <a class="save" href="ricardo-orozco.vcf">Save contact</a>
 
       <ul class="links">
         <li><a href="https://wa.me/34638774246">
@@ -129,35 +128,21 @@
           <span>Email<small>ricardo@2goodlabs.com</small></span></a></li>
         <li><a href="https://2goodlabs.com/">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-6h6v6"/></svg>
-          <span>2goodlabs.com<small data-en="AI startups &amp; labs directory" data-es="Directorio de startups y labs de IA">AI startups &amp; labs directory</small></span></a></li>
+          <span>2goodlabs.com<small>AI startups &amp; labs directory</small></span></a></li>
         <li><a href="https://rickorozco.co/">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>
           <span>Portfolio<small>rickorozco.co</small></span></a></li>
       </ul>
     </div>
 
-    <section class="pitch" data-lang="en">
+    <section class="pitch">
       <p>Co-founder of <strong>2GoodLabs</strong>, a product lab using AI to go from idea to market in weeks.</p>
       <p>Two live products growing organically: <a href="https://zumiapp.co">Zumi</a>, pet health, and <a href="https://pickpals.co">Pickpals</a>, sports predictions with friends.</p>
       <p>Our thing is <strong>zero to ten</strong>: validate, design, launch and land the first users. Looking for partners who want to build something new.</p>
       <p class="also"><strong>Also:</strong> AI automation projects to optimize processes and cut costs.</p>
     </section>
-    <section class="pitch" data-lang="es" hidden>
-      <p>Co-founder de <strong>2GoodLabs</strong>, un laboratorio de producto que usa IA para pasar de la idea al mercado en semanas.</p>
-      <p>Dos productos en vivo que crecen de forma orgánica: <a href="https://zumiapp.co">Zumi</a>, para la salud de tu mascota, y <a href="https://pickpals.co">Pickpals</a>, predicciones deportivas entre amigos.</p>
-      <p>Lo nuestro es el tramo <strong>de 0 a 10</strong>: validar, diseñar, lanzar y conseguir los primeros usuarios. Busco socios que quieran construir algo nuevo.</p>
-      <p class="also"><strong>También:</strong> proyectos de automatización con IA para optimizar procesos y reducir costos.</p>
-    </section>
 
-    <p class="about" data-en="We're building a living pixel-art building where AI startups and labs rent an office. &lt;a href=&quot;/&quot;&gt;Find your spot →&lt;/a&gt;" data-es="Estamos construyendo un edificio pixel art vivo donde startups y labs de IA alquilan su oficina. &lt;a href=&quot;/es/&quot;&gt;Encuentra tu lugar →&lt;/a&gt;">We're building a living pixel-art building where AI startups and labs rent an office. <a href="/">Find your spot →</a></p>
+    <p class="about">We're building a living pixel-art building where AI startups and labs rent an office. <a href="/">Find your spot →</a></p>
   </main>
-  <script>
-    // Textos en español si el teléfono está en español.
-    if (/^es\b/i.test(navigator.language || '')) {
-      document.documentElement.lang = 'es';
-      document.querySelectorAll('[data-es]').forEach((el) => { el.innerHTML = el.dataset.es; });
-      document.querySelectorAll('[data-lang]').forEach((el) => { el.hidden = el.dataset.lang !== 'es'; });
-    }
-  </script>
 </body>
 </html>
