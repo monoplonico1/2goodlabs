@@ -88,6 +88,21 @@
     .links a:hover, .links a:focus-visible { border-color: var(--gold); outline: none; }
     .links svg { width: 20px; height: 20px; flex: none; fill: none; stroke: var(--gold); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
     .links small { display: block; color: var(--muted); font-weight: 400; font-size: 13px; margin-top: 1px; }
+    .pitch {
+      margin-top: 14px;
+      padding: 18px 20px;
+      border: 2px solid var(--edge);
+      border-radius: 14px;
+      background: var(--panel);
+      font-size: 15px;
+      line-height: 1.55;
+    }
+    .pitch[hidden] { display: none; }
+    .pitch p { margin: 0 0 10px; }
+    .pitch strong { color: var(--text); }
+    .pitch a { color: var(--gold); font-weight: 600; }
+    .pitch .also { margin: 14px 0 0; padding-top: 12px; border-top: 1px solid var(--edge); color: var(--muted); }
+    .pitch .also strong { color: var(--gold); }
     .about { color: var(--muted); font-size: 14px; line-height: 1.5; margin: 22px 4px 0; text-align: center; }
     .about a { color: var(--gold); }
   </style>
@@ -121,6 +136,19 @@
       </ul>
     </div>
 
+    <section class="pitch" data-lang="en">
+      <p>Co-founder of <strong>2GoodLabs</strong>, a product lab using AI to go from idea to market in weeks.</p>
+      <p>Two live products growing organically: <a href="https://zumiapp.co">Zumi</a>, pet health, and <a href="https://pickpals.co">Pickpals</a>, sports predictions with friends.</p>
+      <p>Our thing is <strong>zero to ten</strong>: validate, design, launch and land the first users. Looking for partners who want to build something new.</p>
+      <p class="also"><strong>Also:</strong> AI automation projects to optimize processes and cut costs.</p>
+    </section>
+    <section class="pitch" data-lang="es" hidden>
+      <p>Co-founder de <strong>2GoodLabs</strong>, un laboratorio de producto que usa IA para pasar de la idea al mercado en semanas.</p>
+      <p>Dos productos en vivo que crecen de forma orgánica: <a href="https://zumiapp.co">Zumi</a>, para la salud de tu mascota, y <a href="https://pickpals.co">Pickpals</a>, predicciones deportivas entre amigos.</p>
+      <p>Lo nuestro es el tramo <strong>de 0 a 10</strong>: validar, diseñar, lanzar y conseguir los primeros usuarios. Busco socios que quieran construir algo nuevo.</p>
+      <p class="also"><strong>También:</strong> proyectos de automatización con IA para optimizar procesos y reducir costos.</p>
+    </section>
+
     <p class="about" data-en="We're building a living pixel-art building where AI startups and labs rent an office. &lt;a href=&quot;/&quot;&gt;Find your spot →&lt;/a&gt;" data-es="Estamos construyendo un edificio pixel art vivo donde startups y labs de IA alquilan su oficina. &lt;a href=&quot;/es/&quot;&gt;Encuentra tu lugar →&lt;/a&gt;">We're building a living pixel-art building where AI startups and labs rent an office. <a href="/">Find your spot →</a></p>
   </main>
   <script>
@@ -128,6 +156,7 @@
     if (/^es\b/i.test(navigator.language || '')) {
       document.documentElement.lang = 'es';
       document.querySelectorAll('[data-es]').forEach((el) => { el.innerHTML = el.dataset.es; });
+      document.querySelectorAll('[data-lang]').forEach((el) => { el.hidden = el.dataset.lang !== 'es'; });
     }
   </script>
 </body>
